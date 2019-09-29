@@ -1,0 +1,13 @@
+secrets.py
+bin/*
+!bin/.keep
+wip
+
+*.mpy
+
+*~
+.DS_Store
+\#*\#
+__pycache__
+.#*
+
