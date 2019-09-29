@@ -1,3 +1,7 @@
+## https://github.com/micropython/micropython-lib/blob/master/umqtt.simple/umqtt/simple.py
+## https://github.com/micropython/micropython-lib/blob/master/umqtt.robust/README.rst
+## https://github.com/micropython/micropython-lib/blob/master/umqtt.robust/umqtt/robust.py
+
 from umqtt import simple
 from umqtt.simple import MQTTException
 import ujson

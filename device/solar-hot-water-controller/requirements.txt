@@ -1,5 +1,5 @@
 ../secrets.py
-../lib/homeassistant.py
+../lib/home_assistant.py
 ../lib/esp8266/wifi.py
 ../lib/esp8266/umqtt_robust.py
 ../lib/esp8266/wemos/d1mini/oled.py

@@ -1,31 +1,35 @@
 import secrets
 import wifi
 from umqtt_robust import MQTTClient
-import homeassistant
+import home_assistant
 
 import oled
 
 oled.write('POWER ON')
-oled.write(homeassistant.UID)
+oled.write(home_assistant.UID)
 
-ha_status = homeassistant.StatusSensor()
-ha_wifi_signal_strength = homeassistant.WiFiSignalStrengthSensor()
-ha_temperature_1 = homeassistant.TemperatureSensor() 
-ha_temperature_2 = homeassistant.TemperatureSensor('temperature2')
+ha_status = home_assistant.ConnectivitySensor('Status')
+ha_wifi_signal_strength = home_assistant.SignalStrengthSensor("WiFi Signal")
+ha_temperature = home_assistant.TemperatureSensor('Temperature') 
+ha_temperature_2 = home_assistant.TemperatureSensor('Temperature 2')
+ha_water_pump = home_assistant.PlugSensor('Water Pump')
 
-mqtt = MQTTClient(homeassistant.IDENT, secrets.MQTT_SERVER, user=secrets.MQTT_USER, password=secrets.MQTT_PASSWORD)
+mqtt_id = "_".join((home_assistant.MANUFACTURER, home_assistant.MODEL, home_assistant.UID))
+mqtt = MQTTClient(mqtt_id, secrets.MQTT_SERVER, user=secrets.MQTT_USER, password=secrets.MQTT_PASSWORD)
 
 def mqtt_connected_callback():
     print('MQTT sending config...')
-    mqtt.publish_json(ha_status.config_topic(), ha_status.config(off_delay=60), retain=True)
+    mqtt.publish_json(ha_status.config_topic(), ha_status.config(), retain=True)
     mqtt.publish_json(ha_status.attributes_topic(), { "ip_address": wifi.ip() })
-    mqtt.publish_json(ha_wifi_signal_strength.config_topic(), ha_wifi_signal_strength.config(expire_after=60), retain=True)
-    mqtt.publish_json(ha_temperature_1.config_topic(), ha_temperature_1.config(expire_after=60), retain=True)
-    mqtt.publish_json(ha_temperature_2.config_topic(), ha_temperature_2.config(expire_after=60), retain=True)
+    mqtt.publish_json(ha_wifi_signal_strength.config_topic(), ha_wifi_signal_strength.config(), retain=True)
+    mqtt.publish_json(ha_temperature.config_topic(), ha_temperature.config(), retain=True)
+    mqtt.publish_json(ha_temperature_2.config_topic(), ha_temperature_2.config(), retain=True)
+    mqtt.publish_json(ha_water_pump.config_topic(), ha_water_pump.config(), retain=True)
+    
     print('MQTT config sent.')
 
 mqtt.set_connected_callback(mqtt_connected_callback)
-mqtt.set_last_will(ha_status.state_topic(), ha_status.payload_off())
+mqtt.set_last_will(ha_status.state_topic(), ha_status.payload_off)
 mqtt.connect()
 
 if wifi.isconnected():
@@ -40,7 +44,6 @@ else:
 
 from machine import ADC, Pin
 from utime import sleep
-import esp
 
 import oled
 import pinmap
@@ -50,17 +53,14 @@ adc = ADC(pinmap.A0)
 probe_1 = Pin(pinmap.D5, mode=Pin.OUT)
 probe_2 = Pin(pinmap.D6, mode=Pin.OUT)
 button = Pin(pinmap.D3, mode=Pin.IN)
-relay = Pin(pinmap.D8, mode=Pin.OUT)
+relay = water_pump = Pin(pinmap.D8, mode=Pin.OUT)
 
-probe_1.on()
-probe_2.off()
 relay.off()
 
 number_of_readings = 10
-probe_readings = { 0: ([adc.read()] * number_of_readings), 1: ([adc.read()] * number_of_readings) }
-cycle = -1
+probe_readings = {}
 
-def read_probe(id):
+def read_probe(id, cycle):
     if id == 1:
         probe_1.on()
         probe_2.off()
@@ -70,7 +70,10 @@ def read_probe(id):
     
     sleep(1) # Delay may help give pin time to stabilise?
 
-    probe_readings[id-1][cycle] = adc.read()
+    try:
+        probe_readings[id-1][cycle] = adc.read()
+    except KeyError:
+        probe_readings[id-1] = [adc.read()] * number_of_readings
         
     return sum(probe_readings[id-1]) / number_of_readings
 
@@ -81,47 +84,66 @@ def temperature(val):
 sleep(2)
 
 while True:
-    status_led.on()
-    
-    print('')
+    for cycle in range(number_of_readings):
+        status_led.on()
 
-    cycle = (cycle + 1) % number_of_readings
-    print(cycle)
+        print('')
 
-    r1 = read_probe(1)
-    r2 = read_probe(2)
+        cycle = (cycle + 1) % number_of_readings
+        print(cycle)
 
-    print(probe_readings)
+        r1 = read_probe(1, cycle)
+        r2 = read_probe(2, cycle)
 
-    t1 = temperature(r1)
-    t2 = temperature(r2)
+        # print(probe_readings)
 
-    solar_collector = t1
-    storage_tank = t2
+        t1 = temperature(r1)
+        t2 = temperature(r2)
 
-    if solar_collector > 98:
-        ## too hot, don't want water to vaporise
-        relay.off()
-    elif storage_tank > 60:
-        ## water is hot enough
-        relay.off()
-    elif solar_collector - storage_tank > 12:
-        ## water pump on
-        relay.on()
-    else:
-        relay.off()
+        solar_collector = t1
+        storage_tank = t2
 
-    oled.write('%8s' % wifi.sigbars(), False)
-    oled.write('%4d%4d' % (r1, r2), False)
-    oled.write('%4.0f%4.0f' % (t1, t2), False)
-    oled.write('%8s' % (relay.value() and 'ON' or 'OFF'), True)
+        if solar_collector > 95:
+            ## Too hot, don't want water to vaporise
+            water_pump.off()
 
-    status_led.off()
+        elif storage_tank > 60:
+            ## Water is hot enough
+            water_pump.off()
 
-    if cycle == 0:
-        mqtt.publish(ha_status.state_topic(), ha_status.payload_on(), reconnect=True)
-        mqtt.publish(ha_wifi_signal_strength.state_topic(), str(wifi.rssi()))
-        mqtt.publish(ha_temperature_1.state_topic(), "%.2f" % t1)
-        mqtt.publish(ha_temperature_2.state_topic(), "%.2f" % t2)
+        else:
+            if water_pump.value():
+                ## Pump is on
+                if solar_collector - storage_tank < 6:
+                    ## Stop heating
+                    water_pump.off()
 
-    sleep(relay.value() and 1 or 10)
+            else:
+                ## Pump is off
+                if solar_collector - storage_tank > 12:
+                    ## Start heating
+                    water_pump.on()
+
+        oled.write('%8s' % wifi.sigbars(), False)
+        oled.write('%4d%4d' % (r1, r2), False)
+        oled.write('%4.0f%4.0f' % (t1, t2), False)
+        oled.write('%8s' % (relay.value() and 'ON' or 'OFF'), True)
+
+        status_led.off()
+
+        if cycle == 0:
+            mqtt.publish(ha_status.state_topic(), ha_status.payload_on, reconnect=True)
+
+        if cycle == 2:
+            mqtt.publish(ha_temperature.state_topic(), "%.0f" % t1)
+
+        if cycle == 4:
+            mqtt.publish(ha_temperature_2.state_topic(), "%.0f" % t2)
+
+        if cycle == 6:
+            mqtt.publish(ha_water_pump.state_topic(), relay.value() and ha_water_pump.payload_on or ha_water_pump.payload_off)
+
+        if cycle == 8:
+            mqtt.publish(ha_wifi_signal_strength.state_topic(), str(wifi.rssi()))
+
+        sleep(relay.value() and 1 or 10)
