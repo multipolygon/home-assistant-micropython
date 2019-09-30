@@ -15,31 +15,27 @@ class GenericSensor():
     device_class = None
     
     def __init__(self, name=None, manufacturer=MANUFACTURER, model=MODEL, uid=UID):
-        self.name = name
+        device_class = self.device_class is not None and self.device_class or "generic"
+        self.name = " ".join((i for i in (self.title(self.device_class), name) if i is not None))
         self.manufacturer = manufacturer
         self.model = model
         self.uid = uid
 
-        if self.name == None:
-            if self.device_class != None:
-                self.name = self.title(self.device_class)
-            else:
-                self.name = self.title(self.sensor_type)
-
     def title(self, s):
-        return (s[0].upper() + s[1:]).replace('_', ' ')
+        return " ".join((i[0].upper() + i[1:] for i in s.replace('_', ' ').split()))
+
+    def config_topic(self):
+        object_id = "_".join((self.manufacturer, self.model, self.uid))
+        return ("/".join(("homeassistant", self.sensor_type, object_id, self.name, "config"))).lower().replace(' ', '_')
 
     def base_topic(self):
-        return ("homeassistant/%s/%s_%s_%s/%s" % (self.sensor_type, self.manufacturer, self.model, self.uid, self.name)).lower().replace(' ', '_')
+        return ("/".join((self.manufacturer, self.model, self.uid, self.sensor_type, self.name))).lower().replace(' ', '_')
     
-    def config_topic(self):
-        return "%s/config" % self.base_topic()
-
     def state_topic(self):
-        return "%s/state" % self.base_topic()
+        return self.base_topic() + "/state"
     
     def attributes_topic(self):
-        return "%s/attributes" % self.base_topic()
+        return self.base_topic() + "/attributes"
 
     def device(self):
         return {
@@ -49,7 +45,7 @@ class GenericSensor():
         }
 
     def full_name(self):
-        return " ".join((self.manufacturer, self.model, self.uid, self.name))
+        return " ".join((self.manufacturer, self.model, self.uid, self.title(self.sensor_type), self.name))
 
     def config(self):
         return {

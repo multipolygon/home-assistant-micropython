@@ -6,3 +6,6 @@
 ../lib/esp8266/wemos/d1mini/pinmap.py
 ../lib/esp8266/wemos/d1mini/status_led.py
 main.py
+solar_hot_water_controller.py
+thermistor_adc.py
+
