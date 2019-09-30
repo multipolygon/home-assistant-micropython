@@ -11,7 +11,6 @@ import solar_hot_water_controller
 import thermistor_adc
 
 oled.write('POWER ON')
-oled.write(home_assistant.UID)
 
 adc = ADC(pinmap.A0)
 button = Pin(pinmap.D3, mode=Pin.IN)
@@ -29,7 +28,6 @@ mqtt = MQTTClient(home_assistant.MODEL + home_assistant.UID, secrets.MQTT_SERVER
 
 def mqtt_connected_callback():
     print('MQTT sending config...')
-    oled.write('MQTT OK')
     mqtt.publish_json(ha_status.config_topic(), ha_status.config(), retain=True)
     mqtt.publish_json(ha_status.attributes_topic(), { "ip_address": wifi.ip() })
     mqtt.publish_json(ha_wifi_signal_strength.config_topic(), ha_wifi_signal_strength.config(), retain=True)
@@ -66,15 +64,21 @@ def read_probe(id, loop):
     return sum(probe_readings[id-1]) / number_of_readings
 
 while True:
+    status_led.on()
     oled.write('MQTT...')
     mqtt.connect()
     if wifi.is_connected():
-        oled.write('WiFi IP:')
+        oled.write('WiFi%4d' % wifi.rssi())
         ip = wifi.ip()
         oled.write(ip[0:8])
         oled.write(ip[8:])
+        if mqtt.is_connected():
+            oled.write(home_assistant.UID)
+        else:
+            oled.write('MQTT Err')
     else:
         oled.write('No WiFi!')
+    status_led.off()
     sleep(3)
 
     for loop in range(1000):
@@ -95,12 +99,12 @@ while True:
         oled.write('%4.0f%4.0f' % (t1, t2), False)
         oled.write('%8s' % (relay.value() and 'ON' or 'OFF'), True)
 
-        status_led.off()
-
         if loop % 100 == 0:
             mqtt.publish(ha_status.state_topic(), ha_status.payload_on, reconnect=True)
             mqtt.publish(ha_temperature.state_topic(), "%.0f" % t1)
             mqtt.publish(ha_temperature_2.state_topic(), "%.0f" % t2)
             mqtt.publish(ha_relay.state_topic(), relay.value() and ha_relay.payload_on or ha_relay.payload_off)
+            
+        status_led.off()
 
         sleep(1)

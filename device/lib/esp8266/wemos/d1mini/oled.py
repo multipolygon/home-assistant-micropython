@@ -20,7 +20,6 @@ try:
     display.poweron()
     display.contrast(255)
     display.fill(0)
-    display.text('POWER ON', 0, 0)
     display.show()
 except:
     display = None
