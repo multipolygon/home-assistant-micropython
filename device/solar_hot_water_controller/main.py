@@ -18,27 +18,27 @@ probe_1 = Pin(pinmap.D5, mode=Pin.OUT)
 probe_2 = Pin(pinmap.D6, mode=Pin.OUT)
 relay = Pin(pinmap.D8, mode=Pin.OUT)
 
-ha_status = home_assistant.ConnectivitySensor()
-ha_wifi_signal_strength = home_assistant.SignalStrengthSensor('WiFi')
+home_assistant.MAC = wifi.mac()
+ha_status = home_assistant.ConnectivityBinarySensor("Status")
+ha_wifi_signal_strength = home_assistant.SignalStrengthSensor()
 ha_temperature = home_assistant.TemperatureSensor() 
-ha_temperature_2 = home_assistant.TemperatureSensor('2')
-ha_relay = home_assistant.PlugSensor()
+ha_temperature_2 = home_assistant.TemperatureSensor('Temperature 2')
+ha_relay = home_assistant.Switch('Relay')
 
 mqtt = MQTTClient(home_assistant.MODEL + home_assistant.UID, secrets.MQTT_SERVER, user=secrets.MQTT_USER, password=secrets.MQTT_PASSWORD)
 
 def mqtt_connected_callback():
     print('MQTT sending config...')
     mqtt.publish_json(ha_status.config_topic(), ha_status.config(), retain=True)
-    mqtt.publish_json(ha_status.attributes_topic(), { "ip_address": wifi.ip() })
+    mqtt.publish_json(ha_status.attributes_topic(), { "ip_address": wifi.ip(), "mac_address": wifi.mac() })
     mqtt.publish_json(ha_wifi_signal_strength.config_topic(), ha_wifi_signal_strength.config(), retain=True)
-    mqtt.publish(ha_wifi_signal_strength.state_topic(), str(wifi.rssi()))
     mqtt.publish_json(ha_temperature.config_topic(), ha_temperature.config(), retain=True)
     mqtt.publish_json(ha_temperature_2.config_topic(), ha_temperature_2.config(), retain=True)
     mqtt.publish_json(ha_relay.config_topic(), ha_relay.config(), retain=True)
     print('MQTT config sent.')
 
 mqtt.set_connected_callback(mqtt_connected_callback)
-mqtt.set_last_will(ha_status.state_topic(), ha_status.payload_off)
+mqtt.set_last_will(ha_status.state_topic(), ha_status.PAYLOAD_OFF)
 
 number_of_readings = 10
 probe_readings = {}
@@ -100,10 +100,11 @@ while True:
         oled.write('%8s' % (relay.value() and 'ON' or 'OFF'), True)
 
         if loop % 100 == 0:
-            mqtt.publish(ha_status.state_topic(), ha_status.payload_on, reconnect=True)
+            mqtt.publish(ha_status.state_topic(), ha_status.PAYLOAD_ON, reconnect=True)
+            mqtt.publish(ha_wifi_signal_strength.state_topic(), str(wifi.rssi()))
             mqtt.publish(ha_temperature.state_topic(), "%.0f" % t1)
             mqtt.publish(ha_temperature_2.state_topic(), "%.0f" % t2)
-            mqtt.publish(ha_relay.state_topic(), relay.value() and ha_relay.payload_on or ha_relay.payload_off)
+            mqtt.publish(ha_relay.state_topic(), relay.value() and ha_relay.PAYLOAD_ON or ha_relay.PAYLOAD_OFF)
             
         status_led.off()
 

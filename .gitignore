@@ -1,4 +1,5 @@
 secrets.py
+version.py
 bin/*
 !bin/.keep
 wip

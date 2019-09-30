@@ -1,4 +1,5 @@
-../secrets.py
+../../secrets.py
+../../version.py
 ../lib/home_assistant.py
 ../lib/esp8266/wifi.py
 ../lib/esp8266/umqtt_robust.py

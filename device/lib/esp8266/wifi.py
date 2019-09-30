@@ -1,4 +1,5 @@
 import network
+import ubinascii
 from utime import sleep
 
 import secrets
@@ -35,6 +36,10 @@ def connect(timeout=30):
 
 def rssi():
     return sta_if.status('rssi')
+
+def mac():
+    s = ubinascii.hexlify(network.WLAN().config('mac')).decode("utf-8").upper()
+    return ":".join((s[i:i+2] for i in range(0,len(s),2)))
 
 def signal_bars():
     if is_connected():
