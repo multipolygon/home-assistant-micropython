@@ -8,7 +8,7 @@ network.WLAN(network.AP_IF).active(False) ## Disable Access Point
 sta_if = network.WLAN(network.STA_IF)
 sta_if.active(False)
 
-def isconnected():
+def is_connected():
     return sta_if.isconnected() and sta_if.status() == network.STAT_GOT_IP
 
 def power_on():
@@ -24,7 +24,7 @@ def connect(timeout=30):
     sta_if.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
     for i in range(timeout):
         print(i)
-        if isconnected():
+        if is_connected():
             print('WiFi connected.')
             return True
         else:
@@ -36,23 +36,21 @@ def connect(timeout=30):
 def rssi():
     return sta_if.status('rssi')
 
-def sigbars():
-    if isconnected():
+def signal_bars():
+    if is_connected():
         n = rssi()
-        if n < -100:
-            return 'o____'
-        elif n < -80:
-            return 'oo___'
+        if n < -90:
+            return '.___'
         elif n < -60:
-            return 'ooO__'
+            return '..__'
         elif n < -30:
-            return 'ooOO_'
+            return '..o_'
         elif n < 0:
-            return 'ooOOO'
+            return '..oO'
         else:
-            return 'ERR: %d' % n
+            return 'E%d' % n
     else:
-        return     '_____'
+        return     '____'
 
 def ip():
     if sta_if.status() == network.STAT_GOT_IP:
