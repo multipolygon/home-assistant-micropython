@@ -25,7 +25,13 @@ ha_temperature = home_assistant.TemperatureSensor()
 ha_temperature_2 = home_assistant.TemperatureSensor('Temperature 2')
 ha_relay = home_assistant.Switch('Relay')
 
-mqtt = MQTTClient(home_assistant.MODEL + home_assistant.UID, secrets.MQTT_SERVER, user=secrets.MQTT_USER, password=secrets.MQTT_PASSWORD)
+mqtt = MQTTClient(
+    bytearray(home_assistant.MODEL + home_assistant.UID),
+    secrets.MQTT_SERVER,
+    port=secrets.MQTT_PORT,
+    user=bytearray(secrets.MQTT_USER),
+    password=bytearray(secrets.MQTT_PASSWORD)
+)
 
 def mqtt_connected_callback():
     print('MQTT sending config...')
@@ -92,6 +98,7 @@ while True:
         t1 = thermistor_adc.temperature(adc1)
         t2 = thermistor_adc.temperature(adc2)
 
+        relay_was = relay.value()
         solar_hot_water_controller.logic(t1, t2, relay)
 
         oled.write('%4s%4s' % (wifi.is_connected() and wifi.rssi() or 'Err', mqtt.is_connected() and 'OK' or 'Err'), False)
@@ -99,7 +106,7 @@ while True:
         oled.write('%4.0f%4.0f' % (t1, t2), False)
         oled.write('%8s' % (relay.value() and 'ON' or 'OFF'), True)
 
-        if loop % 100 == 0:
+        if relay_was != relay.value() or loop % (relay.value() and 10 or 100) == 0:
             mqtt.publish(ha_status.state_topic(), ha_status.PAYLOAD_ON, reconnect=True)
             mqtt.publish(ha_wifi_signal_strength.state_topic(), str(wifi.rssi()))
             mqtt.publish(ha_temperature.state_topic(), "%.0f" % t1)

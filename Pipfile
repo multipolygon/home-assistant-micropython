@@ -9,6 +9,7 @@ verify_ssl = true
 esptool = "*"
 mpfshell = "*"
 mpy-cross = "*"
+paho-mqtt = "*"
 
 [requires]
 python_version = "3.7"

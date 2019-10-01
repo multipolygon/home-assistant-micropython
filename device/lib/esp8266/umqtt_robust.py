@@ -3,7 +3,6 @@
 ## https://github.com/micropython/micropython-lib/blob/master/umqtt.robust/umqtt/robust.py
 
 from umqtt import simple
-from umqtt.simple import MQTTException
 import ujson
 from utime import sleep
 
@@ -28,8 +27,8 @@ class MQTTClient(simple.MQTTClient):
         if wifi.connect(timeout=10):
             try:
                 super().connect()
-            except OSError as e:
-                pass
+            except Exception as e:
+                print(e)
             else:
                 print('MQTT connected.')
                 self._is_connected = True
@@ -44,7 +43,8 @@ class MQTTClient(simple.MQTTClient):
         print("%s => %s" % (topic, message))
         try:
             super().publish(bytearray(topic), bytearray(message), **kwargs)
-        except (MQTTException, OSError, AttributeError) as e:
+        except Exception as e:
+            print(e)
             self._is_connected = False
             if reconnect:
                 print('MQTT Reconnecting...')
