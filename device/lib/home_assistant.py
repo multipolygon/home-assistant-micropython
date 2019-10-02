@@ -12,38 +12,72 @@ MODEL = "ESP8266"
 UID = ubinascii.hexlify(machine.unique_id()).decode("utf-8").upper()
 MAC = UID
 VERSION = version.build_date
+TOPIC_PREFIX = None
+DISCOVERY_PREFIX = "homeassistant"
 
 def titlecase(s):
     return " ".join((i[0].upper() + i[1:] for i in s.replace('_', ' ').split()))
 
+def underscore(s):
+    return s.lower().replace(' ', '_')
+
 class MQTTDiscovery():
     COMPONENT = "generic"
     
-    def __init__(self, name=None):
+    def __init__(self, name=None, state={}):
         self._name = name
+        self._state = state
+        
+        if not self.COMPONENT in state:
+            state[self.COMPONENT] = {}
+            
+        if underscore(self.name()) in state[self.COMPONENT]:
+            raise AttributeError('State name conflict!')
+        else:
+            state[self.COMPONENT][underscore(self.name())] = {
+                "state": None,
+                "meta": {},
+            }
 
     def name(self):
         return self._name or self.COMPONENT
 
+    def state(self):
+        return self._state
+
+    def set_state(self, new_state):
+        self._state[self.COMPONENT][underscore(self.name())]["state"] = new_state
+        return self._state
+
+    def value_template(self):
+        return "{{value_json.%s.%s.state}}" % (self.COMPONENT, underscore(self.name()))
+        
+    def set_attributes(self, new_attributes):
+        self._state[self.COMPONENT][underscore(self.name())]["meta"] = new_attributes
+        return self._state
+    
+    def json_attributes_template(self):
+        return "{{value_json.%s.%s.meta|tojson}}" % (self.COMPONENT, underscore(self.name()))
+    
     def full_name(self):
         return titlecase(" ".join((MANUFACTURER, MODEL, UID, self.name())))
+
+    def topic_prefix(self):
+        return TOPIC_PREFIX and (TOPIC_PREFIX + "/") or ""
     
     def config_topic(self):
         object_id = "_".join((MANUFACTURER, MODEL, UID))
-        return "/".join(("homeassistant", self.COMPONENT, object_id, self.name(), "config")).lower().replace(' ', '_')
+        return self.topic_prefix() + "/".join((DISCOVERY_PREFIX, self.COMPONENT, object_id, self.name(), "config")).lower().replace(' ', '_')
 
     def base_topic(self):
-        return "/".join((MANUFACTURER, MODEL, UID, self.COMPONENT, self.name())).lower().replace(' ', '_')
+        return self.topic_prefix() + "/".join((MANUFACTURER, MODEL, UID)).lower().replace(' ', '_')
     
     def state_topic(self):
         return self.base_topic() + "/state"
-    
-    def attributes_topic(self):
-        return self.base_topic() + "/attributes"
-    
-    def availability_topic(self):
-        return self.base_topic() + "/availability"
 
+    def attributes_topic(self):
+        return self.state_topic()
+    
     def device(self):
         return {
             "manufacturer": MANUFACTURER,
@@ -59,6 +93,10 @@ class Switch(MQTTDiscovery):
     STATE_OFF = "OFF"
     PAYLOAD_ON = "ON"
     PAYLOAD_OFF = "OFF"
+
+    def set_state(self, new_state):
+        self._state[self.COMPONENT][underscore(self.name())]["state"] = new_state and self.STATE_ON or self.STATE_OFF
+        return self._state
     
     def command_topic(self):
         return self.base_topic() + "/command"
@@ -68,6 +106,7 @@ class Switch(MQTTDiscovery):
             "name": self.full_name(),
             "command_topic": self.command_topic(),
             "state_topic": self.state_topic(),
+            "value_template": self.value_template(),
             "optimistic": False,
             "retain": True,
         }
@@ -84,6 +123,7 @@ class GenericSensor(MQTTDiscovery):
             "name": self.full_name(),
             "device_class": self.DEVICE_CLASS,
             "state_topic": self.state_topic(),
+            "value_template": self.value_template(),
             "device": self.device(),
         }
     
@@ -105,6 +145,7 @@ class SignalStrengthSensor(GenericSensor):
             "device_class": self.DEVICE_CLASS,
             "unit_of_measurement": "dBm",
             "state_topic": self.state_topic(),
+            "value_template": self.value_template(),
             "force_update": True,
             "expire_after": expire_after, ## seconds
             "device": self.device(),
@@ -120,6 +161,7 @@ class TemperatureSensor(GenericSensor):
             "device_class": self.DEVICE_CLASS,
             "unit_of_measurement": "°C",
             "state_topic": self.state_topic(),
+            "value_template": self.value_template(),
             "force_update": True,
             "expire_after": expire_after, ## seconds
             "device": self.device(),
@@ -138,13 +180,19 @@ class BinarySensor(GenericSensor):
     COMPONENT = "binary_sensor"
     PAYLOAD_ON = "ON"
     PAYLOAD_OFF = "OFF"
+
+    def set_state(self, new_state):
+        self._state[self.COMPONENT][underscore(self.name())]["state"] = new_state and self.PAYLOAD_ON or self.PAYLOAD_OFF
+        return self._state
     
     def config(self, off_delay=900):
         return {
             "name": self.full_name(),
             "device_class": self.DEVICE_CLASS,
             "state_topic": self.state_topic(),
+            "value_template": self.value_template(),
             "json_attributes_topic": self.attributes_topic(),
+            "json_attributes_template": self.json_attributes_template(),
             "device": self.device(),
             "off_delay": off_delay, ## seconds
         }

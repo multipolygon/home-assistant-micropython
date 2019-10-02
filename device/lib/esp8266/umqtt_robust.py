@@ -60,3 +60,9 @@ class MQTTClient(simple.MQTTClient):
 
     def publish_json(self, topic, message, **kwargs):
         return self.publish(topic, ujson.dumps(message), **kwargs)
+
+    def set_last_will(self, topic, message, **kwargs):
+        return super().set_last_will(bytearray(topic), bytearray(message), **kwargs)
+        
+    def set_last_will_json(self, topic, message, **kwargs):
+        return self.set_last_will(topic, ujson.dumps(message), **kwargs)
