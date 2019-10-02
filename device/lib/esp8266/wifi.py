@@ -7,7 +7,6 @@ import secrets
 network.WLAN(network.AP_IF).active(False) ## Disable Access Point
 
 sta_if = network.WLAN(network.STA_IF)
-sta_if.active(False)
 
 def is_connected():
     return sta_if.isconnected() and sta_if.status() == network.STAT_GOT_IP
@@ -19,7 +18,7 @@ def power_off():
     ## Does this save power???
     sta_if.active(False)
 
-def connect(timeout=30):
+def connect(timeout=30, power_save=False):
     print('WiFi Connecting...')
     power_on()
     sta_if.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
@@ -30,8 +29,9 @@ def connect(timeout=30):
             return True
         else:
             sleep(1)
-    print('WiFi failed!')
-    sta_if.active(False)
+    print('WiFi timed out!')
+    if power_save:
+        power_off()
     return False
 
 def rssi():
@@ -62,5 +62,3 @@ def ip():
         return sta_if.ifconfig()[0]
     else:
         return ''
-
-power_off()

@@ -27,7 +27,7 @@ except:
 
 charbuffer = framebuf.FrameBuffer1(memoryview(bytearray(8)), 8, 8)
 
-def isavailable():
+def is_available():
     return not error
 
 def clear():
@@ -62,7 +62,7 @@ def timestamp():
     display.text("%2d:%02d" % (localtime[3], localtime[4]), w - bw + 1, 1, 0)
     display.show()
 
-def poweroff():
+def power_off():
     if not error:
         display.poweroff()
 
