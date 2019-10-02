@@ -88,7 +88,7 @@ Plug in ESP8266 via USB and find the port...
 
 ### Windows
 
-Go into device manager and confirm what port your device is on. We'll need this information later. I'm on COM port 3. Screenshot:
+Go into device manager and confirm what port your device is on:
 
 https://cdn.instructables.com/F08/LFZ6/IXGFN0MB/F08LFZ6IXGFN0MB.LARGE.jpg?auto=webp&frame=1&width=914&fit=bounds
 
