@@ -118,12 +118,13 @@ class GenericSensor(MQTTDiscovery):
     def name(self):
         return self._name or self.DEVICE_CLASS or self.COMPONENT
 
-    def config(self):
+    def config(self, expire_after=None):
         return {
             "name": self.full_name(),
             "device_class": self.DEVICE_CLASS,
             "state_topic": self.state_topic(),
             "value_template": self.value_template(),
+            "expire_after": expire_after, ## seconds
             "device": self.device(),
         }
     
@@ -132,6 +133,19 @@ class BatterySensor(GenericSensor):
 
 class HumiditySensor(GenericSensor):    
     DEVICE_CLASS = "humidity" # Percentage of humidity in the air.
+
+    def config(self, expire_after=900):
+        return {
+            "name": self.full_name(),
+            "icon": "mdi:water-percent",
+            "device_class": self.DEVICE_CLASS,
+            "unit_of_measurement": "%",
+            "state_topic": self.state_topic(),
+            "value_template": self.value_template(),
+            "force_update": True,
+            "expire_after": expire_after, ## seconds
+            "device": self.device(),
+        }
 
 class IlluminanceSensor(GenericSensor):
     DEVICE_CLASS = "illuminance" # The current light level in lx or lm.

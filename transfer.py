@@ -25,7 +25,7 @@ for i in requirements:
     if cd != dirname:
         cd = dirname
         commands.append("lcd %s" % dirname)
-    if dirname == dir:
+    if filename == 'main.py':
         commands.append("put %s" % filename)
     else:
         mpy_cross.run(path)
