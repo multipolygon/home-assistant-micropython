@@ -38,13 +38,6 @@ ha_temperature = home_assistant.TemperatureSensor('Temperature A', state)
 ha_temperature_2 = home_assistant.TemperatureSensor('Temperature B', state)
 ha_relay = home_assistant.Switch('Relay', state)
 
-mqtt = MQTTClient(
-    bytearray(home_assistant.MODEL + home_assistant.UID),
-    secrets.MQTT_SERVER,
-    user=bytearray(secrets.MQTT_USER),
-    password=bytearray(secrets.MQTT_PASSWORD)
-)
-
 def mqtt_connected_callback():
     print('MQTT sending config...')
     mqtt.publish_json(ha_status.config_topic(), ha_status.config(), retain=True)
