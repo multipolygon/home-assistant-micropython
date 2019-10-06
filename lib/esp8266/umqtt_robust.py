@@ -6,7 +6,7 @@ from umqtt import simple
 import ujson
 from utime import sleep
 
-import wifi
+from lib.esp8266 import wifi
 
 class MQTTClient(simple.MQTTClient):
     def set_last_will(self, topic, message, **kwargs):

@@ -1,6 +1,6 @@
 from machine import Pin
 
-import pinmap
+from lib.esp8266.wemos.d1mini import pinmap
 
 led = Pin(pinmap.LED, Pin.OUT)
 

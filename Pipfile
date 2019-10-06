@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 esptool = "*"
 mpfshell = "*"
+rshell = "*"
 mpy-cross = "*"
 paho-mqtt = "*"
 

@@ -3,7 +3,7 @@ import utime
 import framebuf
 from ssd1306 import SSD1306_I2C
 
-import pinmap
+from lib.esp8266.wemos.d1mini import pinmap
 
 error = False
 

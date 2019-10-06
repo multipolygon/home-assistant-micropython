@@ -2,7 +2,7 @@ import network
 import ubinascii
 from utime import sleep
 
-import secrets
+from lib import secrets
 
 network.WLAN(network.AP_IF).active(False) ## Disable Access Point
 
@@ -33,6 +33,11 @@ def connect(timeout=30, power_save=False):
     if power_save:
         power_off()
     return False
+
+def disconnect(power_save=True):
+    sta_if.disconnect()
+    if power_save:
+        power_off()
 
 def rssi():
     return sta_if.status('rssi')
