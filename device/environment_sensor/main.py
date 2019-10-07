@@ -117,4 +117,4 @@ wifi.disconnect()
 print('deep sleeping for %d min...' % sleep_for)
 ## https://docs.micropython.org/en/latest/library/esp.html#esp.deepsleep
 ## Note, GPIO pin 16 (or D0 on the Wemos D1 Mini) must be wired to the Reset pin. See README
-# esp.deepsleep(sleep_for * 60 * 1000000)
+esp.deepsleep(sleep_for * 60 * 1000000)
