@@ -1,10 +1,11 @@
 import esp
 from utime import sleep
-import pinmap
-import status_led
-import oled
-import secrets
-import wifi
+
+from lib import secrets
+from lib.esp8266 import wifi
+from lib.esp8266.wemos.d1mini import oled
+from lib.esp8266.wemos.d1mini import pinmap
+from lib.esp8266.wemos.d1mini import status_led
 
 status_led.on()
 oled.write('POWER ON')
