@@ -1,6 +1,7 @@
-import network
-import ubinascii
+from machine import unique_id
+from ubinascii import hexlify
 from utime import sleep
+import network
 
 from lib import secrets
 
@@ -42,8 +43,11 @@ def disconnect(power_save=True):
 def rssi():
     return sta_if.status('rssi')
 
+def uid():
+    return hexlify(unique_id()).decode("utf-8").upper()
+
 def mac():
-    s = ubinascii.hexlify(network.WLAN().config('mac')).decode("utf-8").upper()
+    s = hexlify(network.WLAN().config('mac')).decode("utf-8").upper()
     return ":".join((s[i:i+2] for i in range(0,len(s),2)))
 
 def signal_bars():
