@@ -94,7 +94,7 @@ if mqtt.is_connected():
 
     # print('Set state...')
     status_sensor.set_state(True)
-    status_sensor.set_attributes({ "ip_address": wifi.ip(), "mac_address": wifi.mac() })
+    status_sensor.set_attributes({ "ip": wifi.ip(), "mac": wifi.mac() })
     wifi_signal_sensor.set_state(wifi.rssi())
     temperature_sensor.set_state(round(temperature, 2))
     humidity_sensor.set_state(round(humidity, 2))

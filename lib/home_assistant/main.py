@@ -1,4 +1,5 @@
 ## https://www.home-assistant.io/docs/mqtt/discovery/
+## https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/mqtt/abbreviations.py
 ## https://www.home-assistant.io/components/sensor/#device-class
 ## https://www.home-assistant.io/components/binary_sensor/#device-class
 ## Note to self, do not put any proceedural code or logic in this module!
@@ -63,11 +64,11 @@ class HomeAssistant():
         return self.merge_config(
             {
                 "name": self.full_name(),
-                "state_topic": self.state_topic(),
-                "value_template": self.value_template(),
-                "json_attnributes_topic": self.attributes_topic(),
-                "json_attributes_template": self.json_attributes_template(),
-                "device": self.device(),
+                "stat_t": self.state_topic(),
+                "val_tpl": self.value_template(),
+                "json_attr_t": self.attributes_topic(),
+                "json_attr_tpl": self.json_attributes_template(),
+                "dev": self.device(),
             },
             self.component_config(**args)
         )
@@ -98,11 +99,11 @@ class HomeAssistant():
     
     def device(self):
         return {
-            "manufacturer": self.MANUFACTURER,
-            "model": self.MODEL,
-            "identifiers": self.UID,
-            "sw_version": self.BUILD_DATE,
-            "connections": [["mac", self.MAC]],
+            "mf": self.MANUFACTURER,
+            "mdl": self.MODEL,
+            "ids": self.UID,
+            "sw": self.BUILD_DATE,
+            "cns": [["mac", self.MAC]],
         }
 
     def titlecase(self, s):

@@ -9,11 +9,11 @@ class Sensor(HomeAssistant):
     def name(self):
         return self._name or self.DEVICE_CLASS or self.COMPONENT
 
-    def component_config(self, expire_after=None):
+    def component_config(self, expire_after=None, force_update = True):
         return {
-            "device_class": self.DEVICE_CLASS,
-            "icon": self.ICON,
-            "unit_of_measurement": self.UNIT_OF_MEASUREMENT,
-            "force_update": True,
-            "expire_after": expire_after, ## seconds
+            "dev_cla": self.DEVICE_CLASS,
+            "ic": self.ICON,
+            "unit_of_meas": self.UNIT_OF_MEASUREMENT,
+            "frc_upd": force_update,
+            "exp_aft": expire_after, ## seconds
         }

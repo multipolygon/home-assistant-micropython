@@ -13,6 +13,6 @@ class BinarySensor(HomeAssistant):
     
     def component_config(self, off_delay=900):
         return {
-            "device_class": self.DEVICE_CLASS,
-            "off_delay": off_delay, ## seconds
+            "dev_cla": self.DEVICE_CLASS,
+            "off_dly": off_delay, ## seconds
         }
