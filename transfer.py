@@ -20,7 +20,9 @@ try:
 except FileExistsError:
     pass
 
-copyfile(os.path.join(lib_dir, 'boot.py'), os.path.join(build_dir, 'boot.py'))
+# copyfile(os.path.join(lib_dir, 'boot.py'), os.path.join(build_dir, 'boot.py'))
+
+# commands.append("put ./boot.py")
 
 with open(os.path.join(build_dir, 'main.py'), 'w') as f:
     f.write("import _main")
@@ -37,15 +39,16 @@ for source_file in glob.iglob(os.path.join(source_dir, "**", "*.py"), recursive=
         os.makedirs(target_dir, exist_ok=True)
         target_file = os.path.join(target_dir, source_file_name.replace('.py', '.mpy'))
         print(' --> ' + target_file)
-        mpy_cross.run("-o", target_file, source_file)
-        mk_dirs = []
-        for sub_dir in target_dir.replace(build_dir, "").split('/'):
-            if len(sub_dir) > 0:
-                mk_dirs.append(sub_dir)
-                command = "md %s" % os.path.join(*mk_dirs)
-                if command not in commands:
-                    commands.append(command)
-        commands.append("put %s" % target_file.replace(build_dir, "."))
+        if not os.path.isfile(target_file) or os.path.getmtime(source_file) > os.path.getmtime(target_file):
+            mpy_cross.run("-o", target_file, source_file)
+            mk_dirs = []
+            for sub_dir in target_dir.replace(build_dir, "").split('/'):
+                if len(sub_dir) > 0:
+                    mk_dirs.append(sub_dir)
+                    command = "md %s" % os.path.join(*mk_dirs)
+                    if command not in commands:
+                        commands.append(command)
+            commands.append("put %s" % target_file.replace(build_dir, "."))
 
 print('---------------------------------------------------------------')
     
@@ -67,15 +70,16 @@ for requirement in requirements:
     os.makedirs(target_dir, exist_ok=True)
     target_file = os.path.join(target_dir, requirement_file_name.replace('.py', '.mpy'))
     print(' --> ' + target_file)
-    mpy_cross.run("-o", target_file, requirement_file)
-    mk_dirs = []
-    for sub_dir in target_dir.replace(build_dir, "").split('/'):
-        if len(sub_dir) > 0:
-            mk_dirs.append(sub_dir)
-            command = "md %s" % os.path.join(*mk_dirs)
-            if command not in commands:
-                commands.append(command)
-    commands.append("put %s" % target_file.replace(build_dir, "."))
+    if not os.path.isfile(target_file) or os.path.getmtime(requirement_file) > os.path.getmtime(target_file):
+        mpy_cross.run("-o", target_file, requirement_file)
+        mk_dirs = []
+        for sub_dir in target_dir.replace(build_dir, "").split('/'):
+            if len(sub_dir) > 0:
+                mk_dirs.append(sub_dir)
+                command = "md %s" % os.path.join(*mk_dirs)
+                if command not in commands:
+                    commands.append(command)
+        commands.append("put %s" % target_file.replace(build_dir, "."))
     
 print('---------------------------------------------------------------')
 
