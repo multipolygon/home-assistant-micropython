@@ -14,5 +14,3 @@ home_assistant/sensors/signal_strength.py
 home_assistant/sensors/temperature.py
 home_assistant/sensors/humidity.py
 home_assistant/sensors/illuminance.py
-
-
