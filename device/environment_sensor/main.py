@@ -40,11 +40,11 @@ def read_adc():
 status_led.off()
 oled.write('POWER ON')
 
-print('Read DHT sensor...')
+# print('Read DHT sensor...')
 temperature, humidity = read_temperature_humidity_sensor()
-print('Read light sensor...')
+# print('Read light sensor...')
 light_level = read_light_sensor()
-print('Read ADC...')
+# print('Read ADC...')
 adc_reading = read_adc()
 
 oled.write('%4.0f%4.0f' % (temperature, humidity))
@@ -53,7 +53,7 @@ oled.write('%8d' % (adc_reading))
 
 gc.collect()
 
-print('MQTT...')
+# print('MQTT...')
 mqtt = MQTTClient(
     wifi.mac(),
     secrets.MQTT_SERVER,
@@ -61,7 +61,7 @@ mqtt = MQTTClient(
     password=bytearray(secrets.MQTT_PASSWORD)
 )
 
-print('MQTT connecting...')
+# print('MQTT connecting...')
 mqtt.connect()
 oled.write('%4s%4s' % (wifi.is_connected() and wifi.rssi() or 'Err', mqtt.is_connected() and 'OK' or 'Err'))
 
@@ -70,7 +70,7 @@ sleep_for = 15 # minutes
 if mqtt.is_connected():
     state = {} ## State is a 'global' object containing all sensor data
 
-    print('Initialise sensors...')
+    # print('Initialise sensors...')
     status_sensor = ConnectivityBinarySensor("Status", state, secrets.MQTT_USER)
     wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state, secrets.MQTT_USER)
     temperature_sensor = TemperatureSensor(None, state, secrets.MQTT_USER)
@@ -78,7 +78,7 @@ if mqtt.is_connected():
     illuminance_sensor = IlluminanceSensor(None, state, secrets.MQTT_USER)
     analogue_sensor = Sensor('Analogue', state, secrets.MQTT_USER)
     
-    print('MQTT send config...')
+    # print('MQTT send config...')
     mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=sleep_for*60+60), retain=True)
     gc.collect()
     mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(expire_after=sleep_for*60+60), retain=True)
@@ -92,7 +92,7 @@ if mqtt.is_connected():
     mqtt.publish_json(analogue_sensor.config_topic(), analogue_sensor.config(expire_after=sleep_for*60+60), retain=True)
     gc.collect()
 
-    print('Set state...')
+    # print('Set state...')
     status_sensor.set_state(True)
     status_sensor.set_attributes({ "ip_address": wifi.ip(), "mac_address": wifi.mac() })
     wifi_signal_sensor.set_state(wifi.rssi())
@@ -101,13 +101,13 @@ if mqtt.is_connected():
     illuminance_sensor.set_state(round(light_level, 2))
     analogue_sensor.set_state(round(adc_reading, 2))
 
-    print('MQTT send state...')
+    # print('MQTT send state...')
     mqtt.publish_json(status_sensor.state_topic(), state) ## Note, all sensors share the same state topic.
     
-    print('Done.')
+    # print('Done.')
     
 else:
-    print('Error, not connected!')
+    # print('Error, not connected!')
     status_led.on()
 
 sleep(10)
