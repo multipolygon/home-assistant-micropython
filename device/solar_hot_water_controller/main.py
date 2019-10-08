@@ -8,6 +8,7 @@ from lib.esp8266.wemos.d1mini import oled
 from lib.esp8266.wemos.d1mini import pinmap
 from lib.esp8266.wemos.d1mini import status_led
 
+from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.binary_sensors.connectivity import ConnectivityBinarySensor
 from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 from lib.home_assistant.sensors.temperature import TemperatureSensor
@@ -15,6 +16,8 @@ from lib.home_assistant.switch import Switch
 
 import controller
 import thermistor
+
+HomeAssistant.NAME = "Solar Hot Water Controller"
 
 oled.write('POWER ON')
 

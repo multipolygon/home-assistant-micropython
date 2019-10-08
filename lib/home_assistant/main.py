@@ -18,6 +18,7 @@ def mac():
     return ":".join((s[i:i+2] for i in range(0,len(s),2)))
 
 class HomeAssistant():
+    NAME = None
     MANUFACTURER = "Echidna"
     MODEL = "ESP8266"
     UID = hexlify(unique_id()).decode("utf-8").upper()
@@ -99,6 +100,7 @@ class HomeAssistant():
     
     def device(self):
         return {
+            "name": (self.NAME and (self.NAME + " ") or "") + self.UID,
             "mf": self.MANUFACTURER,
             "mdl": self.MODEL,
             "ids": self.UID,

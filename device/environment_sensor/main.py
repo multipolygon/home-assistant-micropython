@@ -13,12 +13,15 @@ from lib.esp8266.wemos.d1mini import status_led
 from lib.esp8266.bh1750.bh1750 import BH1750
 from lib.esp8266.sht30.sht30 import SHT30
 
+from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.binary_sensors.connectivity import ConnectivityBinarySensor
 from lib.home_assistant.sensor import Sensor
 from lib.home_assistant.sensors.humidity import HumiditySensor
 from lib.home_assistant.sensors.illuminance import IlluminanceSensor
 from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 from lib.home_assistant.sensors.temperature import TemperatureSensor
+
+HomeAssistant.NAME = "Environment Sensor"
 
 def read_temperature_humidity_sensor():
     sht30 = SHT30(scl_pin = pinmap.SCL, sda_pin = pinmap.SDA)

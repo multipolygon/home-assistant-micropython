@@ -6,9 +6,12 @@ from lib.esp8266 import wifi
 from lib.esp8266.umqtt_robust import MQTTClient
 from lib.esp8266.wemos.d1mini import pinmap
 
+from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.binary_sensors.connectivity import ConnectivityBinarySensor
 from lib.home_assistant.binary_sensors.motion import MotionBinarySensor
 from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
+
+HomeAssistant.NAME = "PIR Motion Sensor"
 
 led = Pin(pinmap.LED, Pin.OUT)
 sensor = Pin(pinmap.D3, mode=Pin.IN)

@@ -7,9 +7,12 @@ from lib.esp8266.umqtt_robust import MQTTClient
 from lib.esp8266.wemos.d1mini import pinmap
 from lib.esp8266.wemos.d1mini import status_led
 
+from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.binary_sensors.connectivity import ConnectivityBinarySensor
 from lib.home_assistant.binary_sensors.power import PowerBinarySensor
 from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
+
+HomeAssistant.NAME = "Power Detector"
 
 status_led.on()
 
