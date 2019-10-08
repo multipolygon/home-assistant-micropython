@@ -13,6 +13,7 @@ from lib.home_assistant.binary_sensors.power import PowerBinarySensor
 from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 
 HomeAssistant.NAME = "Power Detector"
+HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 status_led.on()
 
@@ -24,15 +25,15 @@ mqtt = MQTTClient(
 )
 
 state = {}
-status_sensor = ConnectivityBinarySensor("Status", state, secrets.MQTT_USER)
+status_sensor = ConnectivityBinarySensor("Status", state)
 status_sensor.set_state(False)
-power_sensor = PowerBinarySensor(None, state, secrets.MQTT_USER)
+power_sensor = PowerBinarySensor(None, state)
 power_sensor.set_state(False)
 mqtt.set_last_will_json(status_sensor.state_topic(), state)
 status_sensor.set_state(True)
 power_sensor.set_state(True)
 
-wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state, secrets.MQTT_USER)
+wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state)
 
 def mqtt_connected_callback():
     print('MQTT sending config...')

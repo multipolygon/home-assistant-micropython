@@ -12,6 +12,7 @@ from lib.home_assistant.binary_sensors.motion import MotionBinarySensor
 from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 
 HomeAssistant.NAME = "PIR Motion Sensor"
+HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 led = Pin(pinmap.LED, Pin.OUT)
 sensor = Pin(pinmap.D3, mode=Pin.IN)
@@ -25,14 +26,14 @@ mqtt = MQTTClient(
     password=bytearray(secrets.MQTT_PASSWORD)
 )
 
-status_sensor = ConnectivityBinarySensor("Status", state, secrets.MQTT_USER)
+status_sensor = ConnectivityBinarySensor("Status", state)
 status_sensor.set_state(False)
-motion_sensor = MotionBinarySensor(None, state, secrets.MQTT_USER)
+motion_sensor = MotionBinarySensor(None, state)
 motion_sensor.set_state(False)
 mqtt.set_last_will_json(status_sensor.state_topic(), state)
 status_sensor.set_state(True)
 
-wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state, secrets.MQTT_USER)
+wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state)
 
 def mqtt_connected_callback():
     print('MQTT sending config...')

@@ -22,6 +22,7 @@ from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 from lib.home_assistant.sensors.temperature import TemperatureSensor
 
 HomeAssistant.NAME = "Environment Sensor"
+HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 def read_temperature_humidity_sensor():
     sht30 = SHT30(scl_pin = pinmap.SCL, sda_pin = pinmap.SDA)
@@ -61,15 +62,15 @@ gc.collect()
 
 print('Initialise sensors...')
 state = {} ## State is a 'global' object containing all sensor data
-status_sensor = ConnectivityBinarySensor("Status", state, secrets.MQTT_USER)
-wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state, secrets.MQTT_USER)
-analogue_sensor = Sensor('Analogue', state, secrets.MQTT_USER)
+status_sensor = ConnectivityBinarySensor("Status", state)
+wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state)
+analogue_sensor = Sensor('Analogue', state)
 if temperature:
-    temperature_sensor = TemperatureSensor(None, state, secrets.MQTT_USER)
+    temperature_sensor = TemperatureSensor(None, state)
 if humidity:
-    humidity_sensor = HumiditySensor(None, state, secrets.MQTT_USER)
+    humidity_sensor = HumiditySensor(None, state)
 if light_level:
-    illuminance_sensor = IlluminanceSensor(None, state, secrets.MQTT_USER)
+    illuminance_sensor = IlluminanceSensor(None, state)
 
 print('MQTT...')
 mqtt = MQTTClient(

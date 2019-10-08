@@ -26,12 +26,12 @@ class HomeAssistant():
     BUILD_DATE = build_date
     DISCOVERY_PREFIX = "homeassistant"
     COMPONENT = "generic"
+    TOPIC_PREFIX = None
     
-    def __init__(self, name=None, state={}, topic_prefix=None):
+    def __init__(self, name=None, state={}):
         self._name = name
         self._state = state
         self.init_state()
-        self._topic_prefix = topic_prefix
 
     def name(self):
         return self._name or self.COMPONENT
@@ -81,7 +81,7 @@ class HomeAssistant():
         return self.titlecase(" ".join((self.MANUFACTURER, self.MODEL, self.UID, self.name())))
 
     def topic_prefix(self):
-        return self._topic_prefix and (self._topic_prefix + "/") or ""
+        return self.TOPIC_PREFIX and (self.TOPIC_PREFIX + "/") or ""
     
     def base_topic(self):
         return self.topic_prefix() + "/".join((self.MANUFACTURER, self.MODEL, self.UID)).lower().replace(' ', '_')

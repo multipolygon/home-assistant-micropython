@@ -18,6 +18,7 @@ import controller
 import thermistor
 
 HomeAssistant.NAME = "Solar Hot Water Controller"
+HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 oled.write('POWER ON')
 
@@ -35,15 +36,15 @@ mqtt = MQTTClient(
     password=bytearray(secrets.MQTT_PASSWORD)
 )
 
-status_sensor = ConnectivityBinarySensor("Status", state, secrets.MQTT_USER)
+status_sensor = ConnectivityBinarySensor("Status", state)
 status_sensor.set_state(False)
 mqtt.set_last_will_json(status_sensor.state_topic(), state)
 status_sensor.set_state(True)
 
-wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state, secrets.MQTT_USER)
-temperature_sensor_a = TemperatureSensor('Temperature A', state, secrets.MQTT_USER)
-temperature_sensor_b = TemperatureSensor('Temperature B', state, secrets.MQTT_USER)
-relay_switch = Switch('Relay', state, secrets.MQTT_USER)
+wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state)
+temperature_sensor_a = TemperatureSensor('Temperature A', state)
+temperature_sensor_b = TemperatureSensor('Temperature B', state)
+relay_switch = Switch('Relay', state)
 
 def mqtt_connected_callback():
     print('MQTT sending config...')
