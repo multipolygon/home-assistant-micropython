@@ -25,7 +25,7 @@ def read_temperature_humidity_sensor():
     if sht30.is_present():
         return sht30.measure()
     else:
-        return (0, 0)
+        return (None, None)
 
 def read_light_sensor():
     i2c = I2C(scl=Pin(pinmap.SCL), sda=Pin(pinmap.SDA))
@@ -35,7 +35,7 @@ def read_light_sensor():
         bh1750.off()
         return lux
     else:
-        return 0
+        return None
 
 def read_adc():
     return ADC(pinmap.A0).read()
@@ -50,8 +50,8 @@ light_level = read_light_sensor()
 print('Read ADC...')
 adc_reading = read_adc()
 
-oled.write('%4.0f%4.0f' % (temperature, humidity))
-oled.write('%7.1f' % (light_level))
+oled.write('%4.0f%4.0f' % (temperature or 0, humidity or 0))
+oled.write('%7.1f' % (light_level or 0))
 oled.write('%8d' % (adc_reading))
 
 gc.collect()
@@ -60,10 +60,13 @@ print('Initialise sensors...')
 state = {} ## State is a 'global' object containing all sensor data
 status_sensor = ConnectivityBinarySensor("Status", state, secrets.MQTT_USER)
 wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state, secrets.MQTT_USER)
-temperature_sensor = TemperatureSensor(None, state, secrets.MQTT_USER)
-humidity_sensor = HumiditySensor(None, state, secrets.MQTT_USER)
-illuminance_sensor = IlluminanceSensor(None, state, secrets.MQTT_USER)
 analogue_sensor = Sensor('Analogue', state, secrets.MQTT_USER)
+if temperature:
+    temperature_sensor = TemperatureSensor(None, state, secrets.MQTT_USER)
+if humidity:
+    humidity_sensor = HumiditySensor(None, state, secrets.MQTT_USER)
+if light_level:
+    illuminance_sensor = IlluminanceSensor(None, state, secrets.MQTT_USER)
 
 print('MQTT...')
 mqtt = MQTTClient(
@@ -81,14 +84,17 @@ def publish_config():
     gc.collect()
     mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(expire_after=sleep_for*60+60), retain=True)
     gc.collect()
-    mqtt.publish_json(temperature_sensor.config_topic(), temperature_sensor.config(expire_after=sleep_for*60+60), retain=True)
-    gc.collect()
-    mqtt.publish_json(humidity_sensor.config_topic(), humidity_sensor.config(expire_after=sleep_for*60+60), retain=True)
-    gc.collect()
-    mqtt.publish_json(illuminance_sensor.config_topic(), illuminance_sensor.config(expire_after=sleep_for*60+60), retain=True)
-    gc.collect()
     mqtt.publish_json(analogue_sensor.config_topic(), analogue_sensor.config(expire_after=sleep_for*60+60), retain=True)
     gc.collect()
+    if temperature:
+        mqtt.publish_json(temperature_sensor.config_topic(), temperature_sensor.config(expire_after=sleep_for*60+60), retain=True)
+        gc.collect()
+    if humidity:
+        mqtt.publish_json(humidity_sensor.config_topic(), humidity_sensor.config(expire_after=sleep_for*60+60), retain=True)
+        gc.collect()
+    if light_level:
+        mqtt.publish_json(illuminance_sensor.config_topic(), illuminance_sensor.config(expire_after=sleep_for*60+60), retain=True)
+        gc.collect()
     status_sensor.set_attributes({ "ip": wifi.ip(), "mac": wifi.mac() })
 
 def mqtt_receive(topic, msg):
@@ -113,10 +119,13 @@ if mqtt.is_connected():
     print('Set state...')
     status_sensor.set_state(True)
     wifi_signal_sensor.set_state(wifi.rssi())
-    temperature_sensor.set_state(round(temperature, 2))
-    humidity_sensor.set_state(round(humidity, 2))
-    illuminance_sensor.set_state(round(light_level, 2))
     analogue_sensor.set_state(round(adc_reading, 2))
+    if temperature:
+        temperature_sensor.set_state(round(temperature, 2))
+    if humidity:
+        humidity_sensor.set_state(round(humidity, 2))
+    if light_level:
+        illuminance_sensor.set_state(round(light_level, 2))
 
     print('MQTT send state...')
     mqtt.publish_json(status_sensor.state_topic(), state) ## Note, all sensors share the same state topic.
