@@ -1,1 +1,1 @@
-pipenv run python transfer.py $1
+pipenv run python transfer.py "$@"

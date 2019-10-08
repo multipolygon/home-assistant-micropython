@@ -1,11 +1,25 @@
-import os, sys, subprocess, datetime, glob
+from argparse import ArgumentParser
 from shutil import copyfile
 import mpy_cross
+import os, sys, subprocess, datetime, glob
+
+parser = ArgumentParser()
+parser.add_argument("--clean", action="store_true", help="Remove build files.")
+parser.add_argument("--modified-only", action="store_true", help="Only transfer modified files.")
+parser.add_argument("--build-only", action="store_true", help="Build only without calling mpfshell.")
+parser.add_argument("source", action="store", type=str, help="Directory containing micropython main.py file and other device code.")
+args = parser.parse_args()
 
 lib_dir = os.path.abspath(os.path.join(".", "lib"))
-source_dir = os.path.abspath(sys.argv[1])
+source_dir = os.path.abspath(args.source)
 build_dir = os.path.join(source_dir, "_build")
 build_lib_dir = os.path.join(build_dir, "lib")
+
+if not os.path.isdir(lib_dir):
+    raise FileNotFoundError(lib_dir)
+
+if not os.path.isdir(source_dir):
+    raise FileNotFoundError(source_dir)
 
 port = list(set(os.listdir("/dev")).intersection(['tty.usbserial-1420', 'ttyUSB0', 'ttyUSB1']))[0]
 
@@ -39,7 +53,7 @@ for source_file in glob.iglob(os.path.join(source_dir, "**", "*.py"), recursive=
         os.makedirs(target_dir, exist_ok=True)
         target_file = os.path.join(target_dir, source_file_name.replace('.py', '.mpy'))
         print(' --> ' + target_file)
-        if not os.path.isfile(target_file) or os.path.getmtime(source_file) > os.path.getmtime(target_file):
+        if not os.path.isfile(target_file) or not args.modified_only or  os.path.getmtime(source_file) > os.path.getmtime(target_file):
             mpy_cross.run("-o", target_file, source_file)
             mk_dirs = []
             for sub_dir in target_dir.replace(build_dir, "").split('/'):
@@ -70,7 +84,7 @@ for requirement in requirements:
     os.makedirs(target_dir, exist_ok=True)
     target_file = os.path.join(target_dir, requirement_file_name.replace('.py', '.mpy'))
     print(' --> ' + target_file)
-    if not os.path.isfile(target_file) or os.path.getmtime(requirement_file) > os.path.getmtime(target_file):
+    if not os.path.isfile(target_file) or not args.modified_only or os.path.getmtime(requirement_file) > os.path.getmtime(target_file):
         mpy_cross.run("-o", target_file, requirement_file)
         mk_dirs = []
         for sub_dir in target_dir.replace(build_dir, "").split('/'):
@@ -95,4 +109,7 @@ command = "mpfshell -c %s" % "\; ".join(commands)
 
 print(command)
 
-subprocess.call(command, shell=True)
+if args.build_only:
+    print('Dry run.')
+else:
+    subprocess.call(command, shell=True)
