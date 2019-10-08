@@ -95,7 +95,7 @@ class HomeAssistant():
         return self.state_topic()
     
     def json_attributes_template(self):
-        return "{{value_json.%s.%s.meta|tojson}}" % (self.COMPONENT, self.underscore(self.name()))
+        return "{{value_json.%s.%s.meta or{}|tojson}}" % (self.COMPONENT, self.underscore(self.name()))
     
     def device(self):
         return {
