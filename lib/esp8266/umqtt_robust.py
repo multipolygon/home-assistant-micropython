@@ -22,7 +22,7 @@ class MQTTClient(simple.MQTTClient):
             return False
     
     def connect(self):
-        print('MQTT Connect...')
+        print('MQTT connect...')
         self._is_connected = False
         if wifi.connect(timeout=10):
             try:
@@ -39,7 +39,7 @@ class MQTTClient(simple.MQTTClient):
         return False
 
     def publish(self, topic, message, reconnect=False, **kwargs):
-        print('MQTT Publish...')
+        print('MQTT publish...')
         print("%s => %s" % (topic, message))
         try:
             super().publish(bytearray(topic), bytearray(message), **kwargs)
@@ -47,13 +47,13 @@ class MQTTClient(simple.MQTTClient):
             print(e)
             self._is_connected = False
             if reconnect:
-                print('MQTT Reconnecting...')
+                print('MQTT reconnecting...')
                 if self.connect():
                     return self.publish(topic, message, **kwargs)
         else:
             print('MQTT publish sent.')
             self._is_connected = True
-            sleep(0.5)
+            sleep(1)
             return True
         print('MQTT publish failed!')
         return False
