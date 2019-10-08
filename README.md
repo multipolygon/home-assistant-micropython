@@ -1,4 +1,12 @@
-# ESP MicroPython
+# MicroPython IoT Devices for Home Assistant
+
+## Project Details
+
+- [Home Assistant](https://www.home-assistant.io) component library with automatic [MQTT Discovery](https://www.home-assistant.io/docs/mqtt/discovery)
+- MQTT wrapper for fail-safe device behaviour
+- Device code for various IoT sensors and applications
+- Device support: ESP8266 (and maybe ESP32)
+- Useful scripts for automating builds, file transfer to device and MQTT debugging
 
 ## Install
 
