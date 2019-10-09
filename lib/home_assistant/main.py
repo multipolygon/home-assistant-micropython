@@ -5,7 +5,6 @@
 ## Note to self, do not put any proceedural code or logic in this module!
 
 from machine import unique_id
-from network import WLAN
 from ubinascii import hexlify
 
 try:
@@ -13,49 +12,44 @@ try:
 except:
     build_date = '?'
 
-def mac():
-    s = hexlify(WLAN().config('mac')).decode("utf-8").upper()
-    return ":".join((s[i:i+2] for i in range(0,len(s),2)))
-
 class HomeAssistant():
     NAME = None
     MANUFACTURER = "Echidna"
     MODEL = "ESP8266"
     UID = hexlify(unique_id()).decode("utf-8").upper()
-    MAC = mac()
     BUILD_DATE = build_date
     DISCOVERY_PREFIX = "homeassistant"
     COMPONENT = "generic"
     TOPIC_PREFIX = None
     
-    def __init__(self, name=None, state={}):
+    def __init__(self, name=None, state={}, attributes={}):
         self._name = name
         self._state = state
-        self.init_state()
+        self._attributes = attributes
 
     def name(self):
         return self._name or self.COMPONENT
 
+    def slug(self):
+        return self.underscore(self.name())
+
     def state(self):
         return self._state
     
-    def init_state(self):
-        if not self.COMPONENT in self._state:
-            self._state[self.COMPONENT] = {}
-
-        attr = self.underscore(self.name())
-        if attr in self._state[self.COMPONENT]:
-            raise AttributeError('State name conflict! %s %s' % (self.COMPONENT, attr))
-        else:
-            self._state[self.COMPONENT][attr] = {}
-
-    def set_state(self, new_state):
-        self._state[self.COMPONENT][self.underscore(self.name())]["state"] = new_state
-        return self._state
+    def attributes(self):
+        return self._attributes
         
-    def set_attributes(self, new_attributes):
-        self._state[self.COMPONENT][self.underscore(self.name())]["meta"] = new_attributes
-        return self._state
+    def set_state(self, val):
+        return self._set_obj(self._state, val)
+
+    def set_attributes(self, val):
+        return self._set_obj(self._attributes, val)
+
+    def _set_obj(self, obj, val):
+        if self.COMPONENT not in obj:
+            obj[self.COMPONENT] = {}
+        obj[self.COMPONENT][self.slug()] = val
+        return obj
 
     def config_topic(self):
         object_id = "_".join((self.MANUFACTURER, self.MODEL, self.UID))
@@ -64,11 +58,13 @@ class HomeAssistant():
     def config(self, **args):
         return self.merge_config(
             {
+                "~": self.base_topic(),
                 "name": self.full_name(),
-                "stat_t": self.state_topic(),
+                "stat_t": self.state_topic().replace(self.base_topic(), "~"),
                 "val_tpl": self.value_template(),
-                "json_attr_t": self.attributes_topic(),
-                "json_attr_tpl": self.json_attributes_template(),
+                "json_attr_t": self.attributes_topic().replace(self.base_topic(), "~"),
+                "json_attr_tpl": self.attributes_template(),
+                "unique_id": self.unique_id(),
                 "dev": self.device(),
             },
             self.component_config(**args)
@@ -90,13 +86,16 @@ class HomeAssistant():
         return self.base_topic() + "/state"
     
     def value_template(self):
-        return "{{value_json.%s.%s.state}}" % (self.COMPONENT, self.underscore(self.name()))
+        return "{{value_json.%s and value_json.%s.%s}}" % (self.COMPONENT, self.COMPONENT, self.slug())
 
     def attributes_topic(self):
-        return self.state_topic()
+        return self.base_topic() + "/attr"
     
-    def json_attributes_template(self):
-        return "{{value_json.%s.%s.meta or{}|tojson}}" % (self.COMPONENT, self.underscore(self.name()))
+    def attributes_template(self):
+        return "{{(value_json.%s and value_json.%s.%s or {})|tojson}}" % (self.COMPONENT, self.COMPONENT, self.slug())
+
+    def unique_id(self):
+        return self.base_topic() + "/" + "/".join((self.COMPONENT, self.slug()))
     
     def device(self):
         return {
@@ -105,7 +104,6 @@ class HomeAssistant():
             "mdl": self.MODEL,
             "ids": self.UID,
             "sw": self.BUILD_DATE,
-            "cns": [["mac", self.MAC]],
         }
 
     def titlecase(self, s):
