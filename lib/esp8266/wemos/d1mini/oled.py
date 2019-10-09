@@ -35,7 +35,7 @@ def clear():
     display.show()
 
 def write(line, show=True):
-    print(line)
+    # print(line)
     if not error:
         display.scroll(0, -1 * lh)
         display.fill_rect(0, h - lh, w, lh, 0)
@@ -44,7 +44,7 @@ def write(line, show=True):
             display.show()
 
 def bigchar(char):
-    print(char)
+    # print(char)
     if not error:
         display.fill(0)
         charbuffer.fill(0)

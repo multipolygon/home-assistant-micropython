@@ -2,6 +2,7 @@ from lib.home_assistant.main import HomeAssistant
 
 class BinarySensor(HomeAssistant):
     COMPONENT = "binary_sensor"
+    JSON_NAMESPACE = "binary"
     PAYLOAD_ON = "ON"
     PAYLOAD_OFF = "OFF"
 

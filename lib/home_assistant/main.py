@@ -20,36 +20,28 @@ class HomeAssistant():
     BUILD_DATE = build_date
     DISCOVERY_PREFIX = "homeassistant"
     COMPONENT = "generic"
+    JSON_NAMESPACE = None
     TOPIC_PREFIX = None
     
-    def __init__(self, name=None, state={}, attributes={}):
+    def __init__(self, name=None, state={}):
         self._name = name
         self._state = state
-        self._attributes = attributes
 
     def name(self):
         return self._name or self.COMPONENT
 
     def slug(self):
-        return self.underscore(self.name())
+        return self.name().lower().replace(' ', '_')
 
     def state(self):
         return self._state
     
-    def attributes(self):
-        return self._attributes
-        
     def set_state(self, val):
-        return self._set_obj(self._state, val)
-
-    def set_attributes(self, val):
-        return self._set_obj(self._attributes, val)
-
-    def _set_obj(self, obj, val):
-        if self.COMPONENT not in obj:
-            obj[self.COMPONENT] = {}
-        obj[self.COMPONENT][self.slug()] = val
-        return obj
+        ns = self.JSON_NAMESPACE or self.COMPONENT
+        if (ns) not in self._state:
+            self._state[ns] = {}
+        self._state[ns][self.slug()] = val
+        return self._state
 
     def config_topic(self):
         object_id = "_".join((self.MANUFACTURER, self.MODEL, self.UID))
@@ -63,18 +55,17 @@ class HomeAssistant():
                 "stat_t": self.state_topic().replace(self.base_topic(), "~"),
                 "val_tpl": self.value_template(),
                 "json_attr_t": self.attributes_topic().replace(self.base_topic(), "~"),
-                "json_attr_tpl": self.attributes_template(),
-                "unique_id": self.unique_id(),
+                "uniq_id": self.attributes_topic(),
                 "dev": self.device(),
             },
             self.component_config(**args)
         )
 
     def component_config(self, **args):
-        return {}
+        return None
     
     def full_name(self):
-        return self.titlecase(" ".join((self.MANUFACTURER, self.MODEL, self.UID, self.name())))
+        return " ".join((self.MANUFACTURER, self.MODEL, self.UID, self.name()))
 
     def topic_prefix(self):
         return self.TOPIC_PREFIX and (self.TOPIC_PREFIX + "/") or ""
@@ -86,15 +77,9 @@ class HomeAssistant():
         return self.base_topic() + "/state"
     
     def value_template(self):
-        return "{{value_json.%s and value_json.%s.%s}}" % (self.COMPONENT, self.COMPONENT, self.slug())
+        return "{{value_json.%s.%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug())
 
     def attributes_topic(self):
-        return self.base_topic() + "/attr"
-    
-    def attributes_template(self):
-        return "{{(value_json.%s and value_json.%s.%s or {})|tojson}}" % (self.COMPONENT, self.COMPONENT, self.slug())
-
-    def unique_id(self):
         return self.base_topic() + "/" + "/".join((self.COMPONENT, self.slug()))
     
     def device(self):
@@ -106,14 +91,9 @@ class HomeAssistant():
             "sw": self.BUILD_DATE,
         }
 
-    def titlecase(self, s):
-        return " ".join((i[0].upper() + i[1:] for i in s.replace('_', ' ').split()))
-
-    def underscore(self, s):
-        return s.lower().replace(' ', '_')
-    
     def merge_config(self, target, source):
-        for key in source.keys():
-            if source[key] != None:
-                target[key] = source[key]
+        if target and source:
+            for key in source.keys():
+                if source[key] != None:
+                    target[key] = source[key]
         return target

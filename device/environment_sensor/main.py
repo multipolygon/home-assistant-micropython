@@ -21,7 +21,7 @@ from lib.home_assistant.sensors.illuminance import IlluminanceSensor
 from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 from lib.home_assistant.sensors.temperature import TemperatureSensor
 
-HomeAssistant.NAME = "Environment Sensor"
+HomeAssistant.NAME = "Env Sensor"
 HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 def read_temperature_humidity_sensor():
@@ -47,11 +47,11 @@ def read_adc():
 status_led.off()
 oled.write('POWER ON')
 
-print('Read DHT sensor...')
+# print('Read DHT sensor...')
 temperature, humidity = read_temperature_humidity_sensor()
-print('Read light sensor...')
+# print('Read light sensor...')
 light_level = read_light_sensor()
-print('Read ADC...')
+# print('Read ADC...')
 adc_reading = read_adc()
 
 oled.write('%4.0f%4.0f' % (temperature or 0, humidity or 0))
@@ -60,19 +60,19 @@ oled.write('%8d' % (adc_reading))
 
 gc.collect()
 
-print('Initialise sensors...')
+# print('Initialise sensors...')
 state = {} ## State is a 'global' object containing all sensor data
 status_sensor = ConnectivityBinarySensor("Status", state)
-wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state)
-analogue_sensor = Sensor('Analogue', state)
+wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
+analogue_sensor = Sensor('ADC', state)
 if temperature:
-    temperature_sensor = TemperatureSensor(None, state)
+    temperature_sensor = TemperatureSensor("Temp", state)
 if humidity:
-    humidity_sensor = HumiditySensor(None, state)
+    humidity_sensor = HumiditySensor("Humid", state)
 if light_level:
-    illuminance_sensor = IlluminanceSensor(None, state)
+    illuminance_sensor = IlluminanceSensor("Lux", state)
 
-print('MQTT...')
+# print('MQTT...')
 mqtt = MQTTClient(
     wifi.mac(),
     secrets.MQTT_SERVER,
@@ -83,8 +83,10 @@ mqtt = MQTTClient(
 sleep_for = 10 # minutes
 
 def publish_config():
-    print('MQTT send config...')
+    # print('MQTT send config...')
     mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=sleep_for*60+60), retain=True)
+    gc.collect()
+    mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() })
     gc.collect()
     mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(expire_after=sleep_for*60+60), retain=True)
     gc.collect()
@@ -99,16 +101,15 @@ def publish_config():
     if light_level:
         mqtt.publish_json(illuminance_sensor.config_topic(), illuminance_sensor.config(expire_after=sleep_for*60+60), retain=True)
         gc.collect()
-    status_sensor.set_attributes({ "ip": wifi.ip(), "mac": wifi.mac() })
 
 def mqtt_receive(topic, msg):
     if msg == b"ON":
-        print('MQTT config requested!')
+        # print('MQTT config requested!')
         publish_config()
     
 mqtt.set_callback(mqtt_receive)
 
-print('MQTT connecting...')
+# print('MQTT connecting...')
 mqtt.connect()
 oled.write('%4s%4s' % (wifi.is_connected() and wifi.rssi() or 'Err', mqtt.is_connected() and 'OK' or 'Err'))
 
@@ -120,7 +121,7 @@ if mqtt.is_connected():
         sleep(1)
         mqtt.check_msg()
 
-    print('Set state...')
+    # print('Set state...')
     status_sensor.set_state(True)
     wifi_signal_sensor.set_state(wifi.rssi())
     analogue_sensor.set_state(round(adc_reading, 2))
@@ -131,13 +132,13 @@ if mqtt.is_connected():
     if light_level:
         illuminance_sensor.set_state(round(light_level, 2))
 
-    print('MQTT send state...')
+    # print('MQTT send state...')
     mqtt.publish_json(status_sensor.state_topic(), state) ## Note, all sensors share the same state topic.
     
-    print('Done.')
+    # print('Done.')
     
 else:
-    print('Error, not connected!')
+    # print('Error, not connected!')
     status_led.on()
 
 sleep(10)
@@ -146,7 +147,7 @@ status_led.off()
 mqtt.disconnect()
 wifi.disconnect()
 
-print('deep sleeping for %d min...' % sleep_for)
+# print('deep sleeping for %d min...' % sleep_for)
 ## https://docs.micropython.org/en/latest/library/esp.html#esp.deepsleep
 ## Note, GPIO pin 16 (or D0 on the Wemos D1 Mini) must be wired to the Reset pin. See README
 ## Note: ESP8266 only - use machine.deepsleep() on ESP32
