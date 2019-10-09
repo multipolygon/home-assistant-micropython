@@ -17,7 +17,7 @@ from lib.home_assistant.switch import Switch
 import controller
 import thermistor
 
-HomeAssistant.NAME = "Solar Hot Water Controller"
+HomeAssistant.NAME = "Solar HWS"
 HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 oled.write('POWER ON')
@@ -41,20 +41,20 @@ status_sensor.set_state(False)
 mqtt.set_last_will_json(status_sensor.state_topic(), state)
 status_sensor.set_state(True)
 
-wifi_signal_sensor = SignalStrengthSensor("WiFi Signal Strength", state)
-temperature_sensor_a = TemperatureSensor('Temperature A', state)
-temperature_sensor_b = TemperatureSensor('Temperature B', state)
+wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
+temperature_sensor_a = TemperatureSensor('Temp A', state)
+temperature_sensor_b = TemperatureSensor('Temp B', state)
 relay_switch = Switch('Relay', state)
 
 def mqtt_connected_callback():
-    print('MQTT sending config...')
+    # print('MQTT sending config...')
     mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(), retain=True)
-    status_sensor.set_attributes({ "ip": wifi.ip(), "mac": wifi.mac() })
+    mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() })
     mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True)
     mqtt.publish_json(temperature_sensor_a.config_topic(), temperature_sensor_a.config(), retain=True)
     mqtt.publish_json(temperature_sensor_b.config_topic(), temperature_sensor_b.config(), retain=True)
     mqtt.publish_json(relay_switch.config_topic(), relay_switch.config(), retain=True)
-    print('MQTT config sent.')
+    # print('MQTT config sent.')
 
 mqtt.set_connected_callback(mqtt_connected_callback)
 
@@ -77,7 +77,7 @@ def read_probe(id, loop):
     except KeyError:
         probe_readings[id-1] = [adc.read()] * number_of_readings
 
-    print(probe_readings[id-1])
+    # print(probe_readings[id-1])
         
     return sum(probe_readings[id-1]) / number_of_readings
 
@@ -100,8 +100,8 @@ while True:
     sleep(3)
 
     for loop in range(1000):
-        print('')
-        print(loop)
+        # print('')
+        # print(loop)
         status_led.on()
 
         adc1 = read_probe(1, loop)
@@ -119,10 +119,10 @@ while True:
         oled.write('%8s' % (relay.value() and 'ON' or 'OFF'), True)
 
         if relay_was != relay.value() or loop % (relay.value() and 10 or 100) == 0:
-            wifi_signal_sensor.set_state(wifi.rssi())
             temperature_sensor_a.set_state(round(t1, 2))
             temperature_sensor_b.set_state(round(t2, 2))
             relay_switch.set_state(relay.value())
+            wifi_signal_sensor.set_state(wifi.rssi())
             mqtt.publish_json(status_sensor.state_topic(), state, reconnect=True) ## Note, all sensors share the same state topic.
             
         status_led.off()

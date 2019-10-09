@@ -88,7 +88,7 @@ def publish_config():
     gc.collect()
     mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() })
     gc.collect()
-    mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(expire_after=sleep_for*60+60), retain=True)
+    mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True)
     gc.collect()
     mqtt.publish_json(analogue_sensor.config_topic(), analogue_sensor.config(expire_after=sleep_for*60+60), retain=True)
     gc.collect()
