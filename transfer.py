@@ -4,9 +4,9 @@ import mpy_cross
 import os, sys, subprocess, datetime, glob
 
 parser = ArgumentParser()
-parser.add_argument("--clean", action="store_true", help="Remove build files.")
-parser.add_argument("--modified-only", action="store_true", help="Only transfer modified files.")
-parser.add_argument("--build-only", action="store_true", help="Build only without calling mpfshell.")
+parser.add_argument("-c", "--clean", action="store_true", help="Remove build files.")
+parser.add_argument("-m", "--modified-only", action="store_true", help="Only transfer modified files.")
+parser.add_argument("-b", "--build-only", action="store_true", help="Build only without calling mpfshell.")
 parser.add_argument("source", action="store", type=str, help="Directory containing micropython main.py file and other device code.")
 args = parser.parse_args()
 

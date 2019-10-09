@@ -13,3 +13,5 @@ _build
 __pycache__
 .#*
 
+request*.sh
+
