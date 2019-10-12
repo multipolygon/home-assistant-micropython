@@ -1,4 +1,4 @@
-from machine import ADC, Pin
+from machine import ADC, Pin, reset
 from utime import sleep
 
 from lib import secrets
@@ -42,8 +42,8 @@ mqtt.set_last_will_json(status_sensor.state_topic(), state)
 status_sensor.set_state(True)
 
 wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
-temperature_sensor_a = TemperatureSensor('Temp A', state)
-temperature_sensor_b = TemperatureSensor('Temp B', state)
+temperature_sensor_a = TemperatureSensor('Temperature A', state)
+temperature_sensor_b = TemperatureSensor('Temperature B', state)
 relay_switch = Switch('Relay', state)
 
 def mqtt_connected_callback():
@@ -77,11 +77,9 @@ def read_probe(id, loop):
     except KeyError:
         probe_readings[id-1] = [adc.read()] * number_of_readings
 
-    # print(probe_readings[id-1])
-        
     return sum(probe_readings[id-1]) / number_of_readings
 
-while True:
+try:
     status_led.on()
     oled.write('MQTT...')
     mqtt.connect()
@@ -96,12 +94,11 @@ while True:
             oled.write('MQTT Err')
     else:
         oled.write('No WiFi!')
-    status_led.off()
-    sleep(3)
+        status_led.off()
+        sleep(3)
 
-    for loop in range(1000):
-        # print('')
-        # print(loop)
+    for loop in range(50000):
+        print('')
         status_led.on()
 
         adc1 = read_probe(1, loop)
@@ -116,7 +113,7 @@ while True:
         oled.write('%4s%4s' % (wifi.is_connected() and wifi.rssi() or 'Err', mqtt.is_connected() and 'OK' or 'Err'), False)
         oled.write('%4d%4d' % (adc1, adc2), False)
         oled.write('%4.0f%4.0f' % (t1, t2), False)
-        oled.write('%8s' % (relay.value() and 'ON' or 'OFF'), True)
+        oled.write('%4d%4s' % (loop % 1000, relay.value() and 'ON' or 'OFF'))
 
         if relay_was != relay.value() or loop % (relay.value() and 10 or 100) == 0:
             temperature_sensor_a.set_state(round(t1, 2))
@@ -124,7 +121,29 @@ while True:
             relay_switch.set_state(relay.value())
             wifi_signal_sensor.set_state(wifi.rssi())
             mqtt.publish_json(status_sensor.state_topic(), state, reconnect=True) ## Note, all sensors share the same state topic.
-            
+
         status_led.off()
 
         sleep(1)
+
+except Exception as exception:
+    try:
+        relay.off()
+        oled.write('ERROR!')
+        oled.write(exception.__class__.__name__)
+        oled.write(str(exception))
+        mqtt.publish_json(status_sensor.attributes_topic(), { "exception": exception.__class__.__name__ + ": " + str(exception) })
+        status_sensor.set_state(False)
+        mqtt.publish_json(status_sensor.state_topic(), state)
+    except:
+        pass
+
+try:
+    relay.off()
+    status_led.on() 
+    oled.write('RESET...')
+    sleep(5)
+except:
+    pass
+
+reset()
