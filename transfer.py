@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from shutil import copyfile
 import mpy_cross
 import os, sys, subprocess, datetime, glob
+from platform import system
 
 parser = ArgumentParser()
 parser.add_argument("-c", "--clean", action="store_true", help="Remove build files.")
@@ -21,11 +22,20 @@ if not os.path.isdir(lib_dir):
 if not os.path.isdir(source_dir):
     raise FileNotFoundError(source_dir)
 
-port = list(set(os.listdir("/dev")).intersection(['tty.usbserial-1420', 'ttyUSB0', 'ttyUSB1']))[0]
+if system() == "Windows":
+    port = "COM1" ## TODO: How to detect active ports on Windows?
+else:
+    port = list(set(os.listdir("/dev")).intersection(['tty.usbserial-1420', 'ttyUSB0', 'ttyUSB1']))[0]
+
+def pathfix(path):
+    if system() == "Windows":
+        return path.replace("c:\\", "/").replace("C:\\", "/").replace("\\", "/")
+    else:
+        return path
 
 commands = [
     "open %s" % port,
-    "lcd %s" % build_dir,
+    "lcd %s" % pathfix(build_dir.replace(os.path.abspath("."), ".")),
 ]
 
 try:
@@ -59,10 +69,10 @@ for source_file in glob.iglob(os.path.join(source_dir, "**", "*.py"), recursive=
             for sub_dir in target_dir.replace(build_dir, "").split('/'):
                 if len(sub_dir) > 0:
                     mk_dirs.append(sub_dir)
-                    command = "md %s" % os.path.join(*mk_dirs)
+                    command = "md %s" % pathfix(os.path.join(*mk_dirs))
                     if command not in commands:
                         commands.append(command)
-            commands.append("put %s" % target_file.replace(build_dir, "."))
+            commands.append("put %s" % pathfix(target_file.replace(build_dir, ".")))
 
 print('---------------------------------------------------------------')
     
@@ -90,10 +100,10 @@ for requirement in requirements:
         for sub_dir in target_dir.replace(build_dir, "").split('/'):
             if len(sub_dir) > 0:
                 mk_dirs.append(sub_dir)
-                command = "md %s" % os.path.join(*mk_dirs)
+                command = "md %s" % pathfix(os.path.join(*mk_dirs))
                 if command not in commands:
                     commands.append(command)
-        commands.append("put %s" % target_file.replace(build_dir, "."))
+        commands.append("put %s" % pathfix(target_file.replace(build_dir, ".")))
     
 print('---------------------------------------------------------------')
 
@@ -105,7 +115,8 @@ for c in commands:
     
 print('---------------------------------------------------------------')
 
-command = "mpfshell -c %s" % "\; ".join(commands)
+joiner = "; " if system() == "Windows" else "\\; "
+command = "mpfshell -c %s" % joiner.join(commands)
 
 print(command)
 
