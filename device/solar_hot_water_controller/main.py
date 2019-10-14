@@ -49,7 +49,7 @@ relay_switch = Switch("Relay", state)
 def mqtt_send_config():
     print("MQTT sending config...")
     try:
-        mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(), retain=True)
+        mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=3600), retain=True)
         mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() })
         mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True)
         mqtt.publish_json(temperature_sensor_a.config_topic(), temperature_sensor_a.config(), retain=True)

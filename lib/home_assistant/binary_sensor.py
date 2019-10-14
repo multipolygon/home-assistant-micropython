@@ -12,7 +12,7 @@ class BinarySensor(HomeAssistant):
     def set_state(self, new_state):
         return super().set_state(new_state and self.PAYLOAD_ON or self.PAYLOAD_OFF)
     
-    def component_config(self, off_delay=900):
+    def component_config(self, off_delay=None):
         return {
             "dev_cla": self.DEVICE_CLASS,
             "off_dly": off_delay, ## seconds
