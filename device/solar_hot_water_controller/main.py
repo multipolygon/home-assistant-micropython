@@ -106,8 +106,8 @@ try:
         adc1 = read_probe(1, loop)
         adc2 = read_probe(2, loop)
 
-        t1 = thermistor.temperature(adc1)
-        t2 = thermistor.temperature(adc2)
+        t1 = thermistor.solar_collector(adc1)
+        t2 = thermistor.storage_tank(adc2)
 
         relay_was = relay.value()
         controller.logic(t1, t2, relay)
