@@ -18,6 +18,7 @@ import controller
 import thermistor
 
 HomeAssistant.NAME = "Solar HWS"
+HomeAssistant.UID = "Solar HWS"
 HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 print(oled.write('POWER ON'))
