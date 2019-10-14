@@ -1,5 +1,5 @@
 def logic(solar_collector, storage_tank, water_pump):
-    if solar_collector >= 98:
+    if solar_collector >= 110:
         ## Too hot, don't want water to vaporise
         water_pump.off()
 
