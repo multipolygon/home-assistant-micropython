@@ -1,21 +1,32 @@
-def logic(solar_collector, storage_tank, water_pump):
-    if solar_collector >= 100:
-        ## Too hot, don't want water to vaporise
-        water_pump.off()
+from utime import ticks_ms, ticks_diff
 
-    elif storage_tank >= 60:
-        ## Water is hot enough
-        water_pump.off()
+DUTY_CYCLE = 5 # minutes
+REST_CYCLE = 5 # minutes
 
-    else:
-        if water_pump.value():
-            ## Pump is on
-            if solar_collector - storage_tank <= 6:
-                ## Stop heating
-                water_pump.off()
+last_change = None
+timer = None
 
-        else:
-            ## Pump is off
-            if solar_collector - storage_tank >= 12:
-                ## Start heating
-                water_pump.on()
+def logic(solar_collector, storage_tank, current_state):
+    global last_change
+    global timer
+    
+    timer = REST_CYCLE if last_change == None else ticks_diff(ticks_ms(), last_change) / 1000 / 60 # minutes
+
+    new_state = (
+        # Pump is already running:
+        storage_tank < 60 and
+        solar_collector < 110 and
+        solar_collector - storage_tank > 6 and
+        timer < DUTY_CYCLE
+    ) if current_state else (
+        # Pump is currently off:
+        storage_tank < 60 and
+        solar_collector < 110 and
+        solar_collector - storage_tank > 12 and
+        timer >= REST_CYCLE
+    )
+    
+    if current_state != new_state:
+        last_change = ticks_ms()
+
+    return new_state

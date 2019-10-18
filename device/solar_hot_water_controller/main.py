@@ -1,5 +1,6 @@
 from machine import ADC, Pin, reset
 from utime import sleep
+from sys import print_exception
 
 from lib import secrets
 from lib.esp8266 import wifi
@@ -28,6 +29,8 @@ button = Pin(pinmap.D3, mode=Pin.IN)
 probe_1 = Pin(pinmap.D5, mode=Pin.OUT)
 probe_2 = Pin(pinmap.D6, mode=Pin.OUT)
 relay = Pin(pinmap.D8, mode=Pin.OUT)
+relay.value(0) # off
+
 state = {} ## State is a 'global' object containing all sensor values
 
 mqtt = MQTTClient(
@@ -106,12 +109,12 @@ try:
         t2 = thermistor.storage_tank(adc2)
 
         relay_was = relay.value()
-        controller.logic(t1, t2, relay)
+        relay.value(controller.logic(t1, t2, relay.value() == 1))
 
         oled.write('%4s %s%s%s' % (wifi.is_connected() and wifi.rssi() or "--", mqtt.is_connected() and "+" or "-", config_sent and "+" or "-", state_sent and "+" or "-"), False)
         oled.write('%4d%4d' % (adc1, adc2), False)
         oled.write('%4.0f%4.0f' % (t1, t2), False)
-        oled.write('%4d%4s' % (loop % 1000, relay.value() and 'ON' or 'OFF'))
+        oled.write('%4.0f%4s' % (controller.timer, relay.value() and 'ON' or 'OFF'))
 
         if relay_was != relay.value() or loop % (relay.value() and 10 or 100) == 0:
             print("MQTT sending state...")
@@ -130,9 +133,10 @@ try:
 except Exception as exception:
     try:
         relay.off()
-        print(oled.write('ERROR!'))
-        print(oled.write(exception.__class__.__name__))
-        print(oled.write(str(exception)))
+        oled.write('ERROR!')
+        oled.write(exception.__class__.__name__)
+        oled.write(str(exception))
+        print_exception(exception)
         mqtt.publish_json(status_sensor.attributes_topic(), { "exception": exception.__class__.__name__ + ": " + str(exception) })
         status_sensor.set_state(False)
         mqtt.publish_json(status_sensor.state_topic(), state)
