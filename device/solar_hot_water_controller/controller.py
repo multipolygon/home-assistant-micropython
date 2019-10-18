@@ -15,15 +15,13 @@ def logic(solar_collector, storage_tank, current_state):
     new_state = (
         # Pump is already running:
         storage_tank < 60 and
-        solar_collector < 110 and
         solar_collector - storage_tank > 6 and
-        timer < DUTY_CYCLE
+        (solar_collector < 100 or timer < DUTY_CYCLE)
     ) if current_state else (
         # Pump is currently off:
         storage_tank < 60 and
-        solar_collector < 110 and
         solar_collector - storage_tank > 12 and
-        timer >= REST_CYCLE
+        (solar_collector < 100 or timer >= REST_CYCLE)
     )
     
     if current_state != new_state:
