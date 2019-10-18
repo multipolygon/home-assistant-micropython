@@ -3,35 +3,42 @@ from utime import ticks_ms, ticks_diff
 MAX_DUTY_CYCLE = 5 # minutes
 FAILURE_DELAY = 60 # minutes
 
+NORMAL = ON = TURN_ON = STAY_ON = True
+FAIL = OFF = TURN_OFF = STAY_OFF = False
+
 last_change = ticks_ms()
-timer = 0
-normal_operation = True
+operating_mode = NORMAL
+
+def timer():
+    return ticks_diff(ticks_ms(), last_change) / 1000 / 60 # minutes
 
 def logic(solar_collector, storage_tank, current_state):
     global last_change
-    global timer
-    global normal_operation
+    global operating_mode
 
-    timer = ticks_diff(ticks_ms(), last_change) / 1000 / 60 # minutes
-
-    normal_operation = (
-        current_state == False or timer < MAX_DUTY_CYCLE
-    ) if normal_operation else (
-        timer > FAILURE_DELAY
-    )
-
-    new_state = (
-        # Pump is already running:
-        normal_operation and
-        storage_tank < 60 and
-        solar_collector - storage_tank > 6
-    ) if current_state else (
-        # Pump is currently off:
-        normal_operation and
-        storage_tank < 60 and
-        solar_collector - storage_tank > 12
-    )
+    ## Detect and set failure states ##
     
+    if operating_mode == NORMAL:
+        if current_state == ON and timer() > MAX_DUTY_CYCLE:
+            operating_mode = FAIL
+            
+    elif operating_mode == FAIL:
+        if current_state == OFF and timer() > FAILURE_DELAY:
+            operating_mode = NORMAL
+
+    ## Turn pump on and off ##
+            
+    if operating_mode == NORMAL:
+        temperature_difference = solar_collector - storage_tank
+
+        if current_state == OFF:
+            new_state = TURN_ON if storage_tank < 60 and temperature_difference > 12 else STAY_OFF
+            
+        elif current_state == ON:
+            new_state = TURN_OFF if storage_tank > 60 or temperature_difference < 6 else STAY_ON
+
+    ## Reset timer ##
+            
     if current_state != new_state:
         last_change = ticks_ms()
 

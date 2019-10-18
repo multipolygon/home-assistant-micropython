@@ -114,7 +114,7 @@ try:
         oled.write('%4s %s%s%s' % (wifi.is_connected() and wifi.rssi() or "--", mqtt.is_connected() and "+" or "-", config_sent and "+" or "-", state_sent and "+" or "-"), False)
         oled.write('%4d%4d' % (adc1, adc2), False)
         oled.write('%4.0f%4.0f' % (t1, t2), False)
-        oled.write('%4.0f%4s' % (controller.timer, controller.normal_operation and (relay.value() and 'ON' or 'OFF') or 'ERR'))
+        oled.write('%4.0f%4s' % (controller.timer(), controller.operating_mode and (relay.value() and 'ON' or 'OFF') or 'ERR'))
 
         if relay_was != relay.value() or loop % (relay.value() and 10 or 100) == 0:
             print("MQTT sending state...")
