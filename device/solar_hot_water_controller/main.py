@@ -41,16 +41,21 @@ mqtt = MQTTClient(
 )
 
 status_sensor = ConnectivityBinarySensor("Status", state)
+failure_sensor = ConnectivityBinarySensor("Failure", state)
 wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
 temperature_sensor_a = TemperatureSensor("Temp A", state)
 temperature_sensor_b = TemperatureSensor("Temp B", state)
 relay_switch = Switch("Relay", state)
+
+status_sensor.set_state(True)
+failure_sensor.set_state(False)
 
 def mqtt_send_config():
     print("MQTT sending config...")
     try:
         mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=3600), retain=True)
         mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() })
+        mqtt.publish_json(failure_sensor.config_topic(), failure_sensor.config(off_delay=3600), retain=True)
         mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True)
         mqtt.publish_json(temperature_sensor_a.config_topic(), temperature_sensor_a.config(), retain=True)
         mqtt.publish_json(temperature_sensor_b.config_topic(), temperature_sensor_b.config(), retain=True)
@@ -118,12 +123,16 @@ try:
 
         if relay_was != relay.value() or loop % (relay.value() and 10 or 100) == 0:
             print("MQTT sending state...")
+            failure_sensor.set_state(controller.operating_mode == controller.FAIL)
             temperature_sensor_a.set_state(round(t1, 2))
             temperature_sensor_b.set_state(round(t2, 2))
             relay_switch.set_state(relay.value())
             wifi_signal_sensor.set_state(wifi.rssi())
             print(state)
             state_sent = mqtt.publish_json(status_sensor.state_topic(), state, reconnect=True) ## All sensors share the same state topic
+            if controller.operating_mode == controller.FAIL:
+                mqtt.publish_json(failure_sensor.attributes_topic(), { "reason": controller.failure_reason })
+                
             print(" > sent.")
 
         status_led.off()
@@ -137,9 +146,9 @@ except Exception as exception:
         oled.write(exception.__class__.__name__)
         oled.write(str(exception))
         print_exception(exception)
-        mqtt.publish_json(status_sensor.attributes_topic(), { "exception": exception.__class__.__name__ + ": " + str(exception) })
-        status_sensor.set_state(False)
-        mqtt.publish_json(status_sensor.state_topic(), state)
+        failure_sensor.set_state(True)
+        mqtt.publish_json(failure_sensor.state_topic(), state)
+        mqtt.publish_json(failure_sensor.attributes_topic(), { "reason": exception.__class__.__name__ + ": " + str(exception) })
     except:
         pass
 
@@ -150,6 +159,6 @@ try:
 except:
     pass
 
-sleep(5)
+sleep(10)
 
 reset()

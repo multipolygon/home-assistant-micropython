@@ -8,6 +8,7 @@ FAIL = OFF = TURN_OFF = STAY_OFF = False
 
 last_change = ticks_ms()
 operating_mode = NORMAL
+failure_reason = "None"
 
 def timer():
     return ticks_diff(ticks_ms(), last_change) / 1000 / 60 # minutes
@@ -15,13 +16,14 @@ def timer():
 def logic(solar_collector, storage_tank, current_state):
     global last_change
     global operating_mode
+    global failure_reason
 
     ## Detect and set failure states ##
     
     if operating_mode == NORMAL:
         if current_state == ON and timer() > MAX_DUTY_CYCLE:
             operating_mode = FAIL
-            
+            failure_reason = "max duty cycle"
             
     elif operating_mode == FAIL:
         if current_state == OFF and timer() > FAILURE_DELAY:
