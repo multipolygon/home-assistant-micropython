@@ -16,12 +16,12 @@ def logic(solar_collector, storage_tank, current_state):
         # Pump is already running:
         storage_tank < 60 and
         solar_collector - storage_tank > 6 and
-        (solar_collector < 100 or timer < DUTY_CYCLE)
+        timer < DUTY_CYCLE
     ) if current_state else (
         # Pump is currently off:
         storage_tank < 60 and
         solar_collector - storage_tank > 12 and
-        (solar_collector < 100 or timer >= REST_CYCLE)
+        timer >= REST_CYCLE
     )
     
     if current_state != new_state:
