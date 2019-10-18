@@ -38,10 +38,6 @@ mqtt = MQTTClient(
 )
 
 status_sensor = ConnectivityBinarySensor("Status", state)
-status_sensor.set_state(False)
-mqtt.set_last_will_json(status_sensor.state_topic(), state)
-status_sensor.set_state(True)
-
 wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
 temperature_sensor_a = TemperatureSensor("Temp A", state)
 temperature_sensor_b = TemperatureSensor("Temp B", state)
