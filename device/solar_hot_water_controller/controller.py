@@ -22,6 +22,7 @@ def logic(solar_collector, storage_tank, current_state):
         if current_state == ON and timer() > MAX_DUTY_CYCLE:
             operating_mode = FAIL
             
+            
     elif operating_mode == FAIL:
         if current_state == OFF and timer() > FAILURE_DELAY:
             operating_mode = NORMAL
@@ -36,6 +37,9 @@ def logic(solar_collector, storage_tank, current_state):
             
         elif current_state == ON:
             new_state = TURN_OFF if storage_tank > 60 or temperature_difference < 6 else STAY_ON
+
+    elif operating_mode == FAIL:
+        new_state = TURN_OFF
 
     ## Reset timer ##
             
