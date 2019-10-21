@@ -11,6 +11,7 @@ home_assistant/sensor.py
 home_assistant/binary_sensor.py
 home_assistant/switch.py
 home_assistant/binary_sensors/connectivity.py
+home_assistant/binary_sensors/problem.py
 home_assistant/sensors/signal_strength.py
 home_assistant/sensors/temperature.py
 

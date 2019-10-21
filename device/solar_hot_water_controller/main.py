@@ -11,6 +11,7 @@ from lib.esp8266.wemos.d1mini import status_led
 
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.binary_sensors.connectivity import ConnectivityBinarySensor
+from lib.home_assistant.binary_sensors.problem import ProblemBinarySensor
 from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 from lib.home_assistant.sensors.temperature import TemperatureSensor
 from lib.home_assistant.switch import Switch
@@ -41,21 +42,21 @@ mqtt = MQTTClient(
 )
 
 status_sensor = ConnectivityBinarySensor("Status", state)
-failure_sensor = ConnectivityBinarySensor("Failure", state)
+fault_sensor = ProblemBinarySensor("Fault", state)
 wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
 temperature_sensor_a = TemperatureSensor("Temp A", state)
 temperature_sensor_b = TemperatureSensor("Temp B", state)
 relay_switch = Switch("Relay", state)
 
 status_sensor.set_state(True)
-failure_sensor.set_state(False)
+fault_sensor.set_state(False)
 
 def mqtt_send_config():
     print("MQTT sending config...")
     try:
         mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=3600), retain=True)
         mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() })
-        mqtt.publish_json(failure_sensor.config_topic(), failure_sensor.config(off_delay=3600), retain=True)
+        mqtt.publish_json(fault_sensor.config_topic(), fault_sensor.config(off_delay=3600), retain=True)
         mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True)
         mqtt.publish_json(temperature_sensor_a.config_topic(), temperature_sensor_a.config(), retain=True)
         mqtt.publish_json(temperature_sensor_b.config_topic(), temperature_sensor_b.config(), retain=True)
@@ -113,6 +114,9 @@ try:
         t1 = thermistor.solar_collector(adc1)
         t2 = thermistor.storage_tank(adc2)
 
+        t1 = 100
+        t2 = 50
+
         relay_was = relay.value()
         relay.value(controller.logic(t1, t2, relay.value() == 1))
 
@@ -123,15 +127,15 @@ try:
 
         if relay_was != relay.value() or loop % (relay.value() and 10 or 100) == 0:
             print("MQTT sending state...")
-            failure_sensor.set_state(controller.operating_mode == controller.FAIL)
+            fault_sensor.set_state(controller.operating_mode == controller.FAULT)
             temperature_sensor_a.set_state(round(t1, 2))
             temperature_sensor_b.set_state(round(t2, 2))
             relay_switch.set_state(relay.value())
             wifi_signal_sensor.set_state(wifi.rssi())
             print(state)
             state_sent = mqtt.publish_json(status_sensor.state_topic(), state, reconnect=True) ## All sensors share the same state topic
-            if controller.operating_mode == controller.FAIL:
-                mqtt.publish_json(failure_sensor.attributes_topic(), { "reason": controller.failure_reason })
+            if controller.operating_mode == controller.FAULT:
+                mqtt.publish_json(fault_sensor.attributes_topic(), { "reason": controller.fault_reason })
                 
             print(" > sent.")
 
@@ -146,9 +150,9 @@ except Exception as exception:
         oled.write(exception.__class__.__name__)
         oled.write(str(exception))
         print_exception(exception)
-        failure_sensor.set_state(True)
-        mqtt.publish_json(failure_sensor.state_topic(), state)
-        mqtt.publish_json(failure_sensor.attributes_topic(), { "reason": exception.__class__.__name__ + ": " + str(exception) })
+        fault_sensor.set_state(True)
+        mqtt.publish_json(fault_sensor.state_topic(), state)
+        mqtt.publish_json(fault_sensor.attributes_topic(), { "reason": exception.__class__.__name__ + ": " + str(exception) })
     except:
         pass
 

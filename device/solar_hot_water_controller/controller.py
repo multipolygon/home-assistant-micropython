@@ -1,14 +1,14 @@
 from utime import ticks_ms, ticks_diff
 
-MAX_DUTY_CYCLE = 5 # minutes
-FAILURE_DELAY = 60 # minutes
+MAX_DUTY_CYCLE = .5 # minutes
+FAULT_DELAY = .60 # minutes
 
 NORMAL = ON = TURN_ON = STAY_ON = True
-FAIL = OFF = TURN_OFF = STAY_OFF = False
+FAULT = OFF = TURN_OFF = STAY_OFF = False
 
 last_change = ticks_ms()
 operating_mode = NORMAL
-failure_reason = "None"
+fault_reason = "None"
 
 def timer():
     return ticks_diff(ticks_ms(), last_change) / 1000 / 60 # minutes
@@ -16,17 +16,17 @@ def timer():
 def logic(solar_collector, storage_tank, current_state):
     global last_change
     global operating_mode
-    global failure_reason
+    global fault_reason
 
-    ## Detect and set failure states ##
+    ## Detect and set fault states ##
     
     if operating_mode == NORMAL:
         if current_state == ON and timer() > MAX_DUTY_CYCLE:
-            operating_mode = FAIL
-            failure_reason = "max duty cycle"
+            operating_mode = FAULT
+            fault_reason = "max duty cycle"
             
-    elif operating_mode == FAIL:
-        if current_state == OFF and timer() > FAILURE_DELAY:
+    elif operating_mode == FAULT:
+        if current_state == OFF and timer() > FAULT_DELAY:
             operating_mode = NORMAL
 
     ## Turn pump on and off ##
@@ -40,7 +40,7 @@ def logic(solar_collector, storage_tank, current_state):
         elif current_state == ON:
             new_state = TURN_OFF if storage_tank > 60 or temperature_difference < 6 else STAY_ON
 
-    elif operating_mode == FAIL:
+    elif operating_mode == FAULT:
         new_state = TURN_OFF
 
     ## Reset timer ##
