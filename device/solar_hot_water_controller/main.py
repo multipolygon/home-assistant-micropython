@@ -114,9 +114,6 @@ try:
         t1 = thermistor.solar_collector(adc1)
         t2 = thermistor.storage_tank(adc2)
 
-        t1 = 100
-        t2 = 50
-
         relay_was = relay.value()
         relay.value(controller.logic(t1, t2, relay.value() == 1))
 
