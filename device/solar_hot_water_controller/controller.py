@@ -35,10 +35,10 @@ def logic(solar_collector, storage_tank, current_state):
         temperature_difference = solar_collector - storage_tank
 
         if current_state == OFF:
-            new_state = TURN_ON if storage_tank < 60 and temperature_difference > 12 else STAY_OFF
+            new_state = TURN_ON if storage_tank < 60 and solar_collector < 100 and temperature_difference > 12 else STAY_OFF
             
         elif current_state == ON:
-            new_state = TURN_OFF if storage_tank > 60 or temperature_difference < 6 else STAY_ON
+            new_state = TURN_OFF if storage_tank > 60 or solar_collector > 100 or temperature_difference < 6 else STAY_ON
 
     elif operating_mode == FAULT:
         new_state = TURN_OFF
