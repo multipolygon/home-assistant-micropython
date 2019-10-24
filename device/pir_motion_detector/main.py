@@ -1,5 +1,6 @@
-from machine import ADC, Pin
+from machine import ADC, Pin, reset
 from utime import sleep
+from sys import print_exception
 
 from lib import secrets
 from lib.esp8266 import wifi
@@ -27,30 +28,31 @@ mqtt = MQTTClient(
 )
 
 status_sensor = ConnectivityBinarySensor("Status", state)
-status_sensor.set_state(False)
 motion_sensor = MotionBinarySensor(None, state)
-motion_sensor.set_state(False)
-mqtt.set_last_will_json(status_sensor.state_topic(), state)
-status_sensor.set_state(True)
-
 wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
 
-def mqtt_connected_callback():
-    # print('MQTT sending config...')
-    mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=60), retain=True)
-    mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() })
-    mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True)
-    mqtt.publish_json(motion_sensor.config_topic(), motion_sensor.config(off_delay=60), retain=True)
-    # print('MQTT config sent.')
+def mqtt_send_config():
+    return (
+        mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=900), retain=True) and
+        mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() }) and 
+        mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True) and
+        mqtt.publish_json(motion_sensor.config_topic(), motion_sensor.config(off_delay=900), retain=True)
+    )
 
-mqtt.set_connected_callback(mqtt_connected_callback)
+status_sensor.set_state(True)
+motion_sensor.set_state(detected)
 
-while True:
-    mqtt.connect()
+try:
+    led.value(False)
+    
+    if not mqtt.connect():
+        raise Exception('Failed to connect')
+
+    if not mqtt_send_config():
+        raise Exception('Failed to send config')
 
     for loop in range(50000):
-        # print('')
-        # print(loop)
+        print(loop)
 
         led.value(not sensor.value())
 
@@ -58,6 +60,15 @@ while True:
             detected = sensor.value()
             motion_sensor.set_state(detected)
             wifi_signal_sensor.set_state(wifi.rssi())
-            mqtt.publish_json(motion_sensor.state_topic(), state, reconnect=True)
+            if not mqtt.publish_json(motion_sensor.state_topic(), state, reconnect=True):
+                raise Exception('Failed to publish state')
 
         sleep(2)
+
+except Exception as exception:
+    print_exception(exception)
+    for loop in range(30):
+        led.value(loop % 2 == 0)
+        sleep(0.5)
+
+reset()
