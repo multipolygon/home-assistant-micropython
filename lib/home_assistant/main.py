@@ -55,7 +55,6 @@ class HomeAssistant():
                 "stat_t": self.state_topic().replace(self.base_topic(), "~"),
                 "val_tpl": self.value_template(),
                 "json_attr_t": self.attributes_topic().replace(self.base_topic(), "~"),
-                "uniq_id": self.attributes_topic(),
                 "dev": self.device(),
             },
             self.component_config(**args)
@@ -72,15 +71,21 @@ class HomeAssistant():
     
     def base_topic(self):
         return self.topic_prefix() + "/".join((self.MANUFACTURER, self.MODEL, self.UID)).lower().replace(' ', '_')
+
+    def component_base_topic(self):
+        return self.base_topic() + "/".join(("", self.JSON_NAMESPACE or self.COMPONENT, self.slug()))
     
     def state_topic(self):
-        return self.base_topic() + "/state"
+        return self.base_topic()
     
     def value_template(self):
         return "{{value_json.%s.%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug())
 
     def attributes_topic(self):
-        return self.base_topic() + "/" + "/".join((self.COMPONENT, self.slug()))
+        return self.component_base_topic() + "/attr"
+
+    def command_topic(self):
+        return self.component_base_topic() + "/cmd"
     
     def device(self):
         return {

@@ -10,12 +10,9 @@ class Switch(HomeAssistant):
     def set_state(self, new_state):
         return super().set_state(new_state and self.STATE_ON or self.STATE_OFF)
     
-    def command_topic(self):
-        return self.base_topic() + "/command"
-    
-    def component_config(self, optimistic=False, retain=True):
+    def component_config(self, optimistic=True, retain=True):
         return {
-            "cmd_t": self.command_topic(),
+            "cmd_t": self.command_topic().replace(self.base_topic(), "~"),
             "opt": optimistic,
             "ret": retain,
         }
