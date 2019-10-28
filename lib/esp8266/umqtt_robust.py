@@ -21,10 +21,10 @@ class MQTTClient(simple.MQTTClient):
         except AttributeError:
             return False
     
-    def connect(self):
+    def connect(self, timeout=10):
         # print('MQTT connect...')
         self._is_connected = False
-        if wifi.connect(timeout=10):
+        if wifi.connect(timeout=timeout):
             try:
                 super().connect()
             except Exception as e:

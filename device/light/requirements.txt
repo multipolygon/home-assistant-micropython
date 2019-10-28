@@ -1,0 +1,13 @@
+secrets.py
+
+esp8266/wifi.py
+esp8266/umqtt_robust.py
+esp8266/wemos/d1mini/pinmap.py
+esp8266/wemos/d1mini/status_led.py
+
+home_assistant/main.py
+home_assistant/sensor.py
+home_assistant/binary_sensor.py
+home_assistant/light.py
+home_assistant/binary_sensors/connectivity.py
+home_assistant/sensors/signal_strength.py
