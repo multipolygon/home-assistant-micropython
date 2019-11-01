@@ -39,6 +39,13 @@ class MQTTClient(simple.MQTTClient):
         # print('MQTT failed!')
         return False
 
+    def disconnect(self):
+        try:
+            super().disconnect()
+            return True
+        except:
+            return False
+
     def publish(self, topic, message, reconnect=False, **kwargs):
         # print('MQTT publish...')
         # print("%s => %s" % (topic, message))
