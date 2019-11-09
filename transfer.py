@@ -25,7 +25,7 @@ if not os.path.isdir(source_dir):
 if system() == "Windows":
     port = "COM1" ## TODO: How to detect active ports on Windows?
 else:
-    port = list(set(os.listdir("/dev")).intersection(['tty.usbserial-1420', 'ttyUSB0', 'ttyUSB1']))[0]
+    port = list(set(os.listdir("/dev")).intersection(['tty.usbserial-144310', 'tty.usbserial-1420', 'ttyUSB0', 'ttyUSB1']))[0]
 
 def pathfix(path):
     if system() == "Windows":
