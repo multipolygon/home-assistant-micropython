@@ -11,9 +11,6 @@ esp8266/bh1750/bh1750.py
 
 home_assistant/main.py
 home_assistant/sensor.py
-home_assistant/binary_sensor.py
-home_assistant/binary_sensors/connectivity.py
-home_assistant/sensors/signal_strength.py
 home_assistant/sensors/temperature.py
 home_assistant/sensors/humidity.py
 home_assistant/sensors/illuminance.py

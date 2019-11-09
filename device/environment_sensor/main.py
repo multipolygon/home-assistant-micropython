@@ -14,11 +14,9 @@ from lib.esp8266.bh1750.bh1750 import BH1750
 from lib.esp8266.sht30.sht30 import SHT30
 
 from lib.home_assistant.main import HomeAssistant
-from lib.home_assistant.binary_sensors.connectivity import ConnectivityBinarySensor
 from lib.home_assistant.sensor import Sensor
 from lib.home_assistant.sensors.humidity import HumiditySensor
 from lib.home_assistant.sensors.illuminance import IlluminanceSensor
-from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 from lib.home_assistant.sensors.temperature import TemperatureSensor
 from lib.home_assistant.sensors.battery import BatterySensor
 
@@ -77,9 +75,7 @@ sleep(5)
 
 print('HA sensors...')
 state = {} ## State is a 'global' object containing all sensor data
-status_sensor = ConnectivityBinarySensor("Status", state)
-wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
-analogue_sensor = BatterySensor(None, state) if ADC_BATTERY_VOLTAGE else Sensor('ADC', state)
+analog_sensor = BatterySensor(None, state) if ADC_BATTERY_VOLTAGE else Sensor('Analog', state)
 if temperature:
     temperature_sensor = TemperatureSensor("Temp", state)
 if humidity:
@@ -95,17 +91,11 @@ mqtt = MQTTClient(
 )
 
 SLEEP_FOR = 600 # seconds
-EXPIRE_AFTER = SLEEP_FOR * 3.5
+EXPIRE_AFTER = SLEEP_FOR * 2.5
 
 def publish_config():
     print('MQTT config...')
-    mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=EXPIRE_AFTER), retain=True)
-    gc.collect()
-    mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() })
-    gc.collect()
-    mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True)
-    gc.collect()
-    mqtt.publish_json(analogue_sensor.config_topic(), analogue_sensor.config(expire_after=EXPIRE_AFTER), retain=True)
+    mqtt.publish_json(analog_sensor.config_topic(), analog_sensor.config(expire_after=EXPIRE_AFTER), retain=True)
     gc.collect()
     if temperature != None:
         mqtt.publish_json(temperature_sensor.config_topic(), temperature_sensor.config(expire_after=EXPIRE_AFTER), retain=True)
@@ -117,20 +107,6 @@ def publish_config():
         mqtt.publish_json(illuminance_sensor.config_topic(), illuminance_sensor.config(expire_after=EXPIRE_AFTER), retain=True)
         gc.collect()
 
-def read_counter():
-    try:
-        with open('counter.txt') as f:
-            return int(f.read())
-    except:
-        return 0
-
-def write_counter(n):
-    with open('counter.txt', 'w') as f:
-        f.write(str(n))
-
-reset_counter = read_counter()
-print('Reset counter: %d' % reset_counter)
-
 for loop in range(3):
     print("Loop: %d" % loop)
 
@@ -140,14 +116,11 @@ for loop in range(3):
     oled.write('MQTT%4s' % 'OK' if mqtt.is_connected() else 'ERR')
     
     if mqtt.is_connected():
-        if reset_cause() != DEEPSLEEP_RESET or reset_counter == 0 or reset_counter >= 150:
+        if reset_cause() != DEEPSLEEP_RESET:
             publish_config()
-            reset_counter = 0
 
         print('Set state...')
-        status_sensor.set_state(True)
-        wifi_signal_sensor.set_state(wifi.rssi())
-        analogue_sensor.set_state(round(adc_reading, 2))
+        analog_sensor.set_state(round(adc_reading, 2))
         if temperature != None:
             temperature_sensor.set_state(round(temperature, 2))
         if humidity != None:
@@ -155,8 +128,12 @@ for loop in range(3):
         if light_level != None:
             illuminance_sensor.set_state(round(light_level, 2))
 
-        print('MQTT send...')
-        mqtt.publish_json(status_sensor.state_topic(), state) ## Note, all sensors share the same state topic.
+        print('Set attr...')
+        analog_sensor.set_attr({ "UID": HomeAssistant.UID, "IP": wifi.ip(), "MAC": wifi.mac(), "RSSI": wifi.rssi() })
+
+        print('MQTT state...')
+        ## Note, all sensors share the same state and attr topic:
+        mqtt.publish_json(analog_sensor.state_topic(), state)
 
         print('Done.')
         break
@@ -165,8 +142,6 @@ for loop in range(3):
         print('Not connected!')
         status_led.on()
         sleep(5)
-
-write_counter(reset_counter + 1 if reset_counter < 100000 else 0)
 
 sleep(10)
 

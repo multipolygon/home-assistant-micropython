@@ -8,9 +8,7 @@ from lib.esp8266.umqtt_robust import MQTTClient
 from lib.esp8266.wemos.d1mini import pinmap
 
 from lib.home_assistant.main import HomeAssistant
-from lib.home_assistant.binary_sensors.connectivity import ConnectivityBinarySensor
 from lib.home_assistant.binary_sensors.motion import MotionBinarySensor
-from lib.home_assistant.sensors.signal_strength import SignalStrengthSensor
 
 HomeAssistant.NAME = "PIR Motion Sensor"
 HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
@@ -27,20 +25,12 @@ mqtt = MQTTClient(
     password=bytearray(secrets.MQTT_PASSWORD)
 )
 
-status_sensor = ConnectivityBinarySensor("Status", state)
 motion_sensor = MotionBinarySensor(None, state)
-wifi_signal_sensor = SignalStrengthSensor("WiFi", state)
 
 def mqtt_send_config():
-    return (
-        mqtt.publish_json(status_sensor.config_topic(), status_sensor.config(off_delay=900), retain=True) and
-        mqtt.publish_json(status_sensor.attributes_topic(), { "ip": wifi.ip(), "mac": wifi.mac() }) and 
-        mqtt.publish_json(wifi_signal_sensor.config_topic(), wifi_signal_sensor.config(), retain=True) and
-        mqtt.publish_json(motion_sensor.config_topic(), motion_sensor.config(off_delay=900), retain=True)
-    )
+    return mqtt.publish_json(motion_sensor.config_topic(), motion_sensor.config(), retain=True)
 
-status_sensor.set_state(True)
-motion_sensor.set_state(detected)
+send_failure_count = 0
 
 try:
     led.value(False)
@@ -59,9 +49,12 @@ try:
         if sensor.value() != detected or loop % 30 == 0:
             detected = sensor.value()
             motion_sensor.set_state(detected)
-            wifi_signal_sensor.set_state(wifi.rssi())
+            motion_sensor.set_attr({ "UID": HomeAssistant.UID, "IP": wifi.ip(), "MAC": wifi.mac(), "RSSI": wifi.rssi() })
             if not mqtt.publish_json(motion_sensor.state_topic(), state, reconnect=True):
-                raise Exception('Failed to publish state')
+                send_failure_count += 1
+                print('Failed to send state (%d)' % send_failure_count)
+                if send_failure_count >= 5:
+                    raise Exception('Failed to send state')
 
         sleep(2)
 

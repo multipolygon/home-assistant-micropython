@@ -38,9 +38,13 @@ class HomeAssistant():
     
     def set_state(self, val):
         ns = self.JSON_NAMESPACE or self.COMPONENT
-        if (ns) not in self._state:
+        if ns not in self._state:
             self._state[ns] = {}
         self._state[ns][self.slug()] = val
+        return self._state
+
+    def set_attr(self, val):
+        self._state['attr'] = val
         return self._state
 
     def config_topic(self):
@@ -55,6 +59,8 @@ class HomeAssistant():
                 "stat_t": self.state_topic().replace(self.base_topic(), "~"),
                 "val_tpl": self.value_template(),
                 "json_attr_t": self.attributes_topic().replace(self.base_topic(), "~"),
+                "json_attr_tpl": self.attributes_template(),
+                "uniq_id": self.full_name(),
                 "dev": self.device(),
             },
             self.component_config(**args)
@@ -82,7 +88,10 @@ class HomeAssistant():
         return "{{value_json.%s.%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug())
 
     def attributes_topic(self):
-        return self.component_base_topic() + "/attr"
+        return self.base_topic()
+
+    def attributes_template(self):
+        return "{{value_json.attr|tojson}}"
 
     def command_topic(self):
         return self.component_base_topic() + "/cmd"

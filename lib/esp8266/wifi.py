@@ -27,16 +27,19 @@ def connect(timeout=30, power_save=False):
     power_on()
     sta_if.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
     for i in range(timeout):
-        print(i)
         if is_connected():
-            print('WiFi connected.')
-            return True
+            break
         else:
+            print(i)
             sleep(1)
-    print('WiFi timed out!')
-    if power_save:
-        power_off()
-    return False
+    if is_connected():
+        print('WiFi connected.')
+        return True
+    else:
+        print('WiFi timed out!')
+        if power_save:
+            power_off()
+        return False
 
 def disconnect(power_save=True):
     sta_if.disconnect()
