@@ -20,12 +20,25 @@ from lib.home_assistant.sensors.illuminance import IlluminanceSensor
 from lib.home_assistant.sensors.temperature import TemperatureSensor
 from lib.home_assistant.sensors.battery import BatterySensor
 
-ADC_BATTERY_VOLTAGE = False
+## Config
 
+ADC_BATTERY_VOLTAGE = False
+SLEEP_FOR = 10 # minutes
 HomeAssistant.NAME = "Env Sensor"
 HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
+## Boot
+
 print(HomeAssistant.UID)
+
+status_led.off()
+oled.write('POWER ON')
+oled.write('')
+oled.write('')
+oled.write('')
+sleep(1)
+
+## Device Sensors
 
 def read_temperature_humidity_sensor():
     sht30 = SHT30(scl_pin = pinmap.SCL, sda_pin = pinmap.SDA)
@@ -47,13 +60,6 @@ def read_light_sensor():
 def read_adc():
     return ADC(pinmap.A0).read() / 1024 * 100
     
-status_led.off()
-oled.write('POWER ON')
-oled.write('')
-oled.write('')
-oled.write('')
-sleep(1)
-
 print('DHT sensor...')
 temperature, humidity = read_temperature_humidity_sensor()
 if temperature != None:
@@ -73,6 +79,8 @@ print(oled.write('%6.1f%%V' % adc_reading))
 gc.collect()
 sleep(5)
 
+## Home Assistant
+
 print('HA sensors...')
 state = {} ## State is a 'global' object containing all sensor data
 analog_sensor = BatterySensor(None, state) if ADC_BATTERY_VOLTAGE else Sensor('Analog', state)
@@ -83,6 +91,8 @@ if humidity:
 if light_level:
     illuminance_sensor = IlluminanceSensor("Lux", state)
 
+## MQTT
+
 mqtt = MQTTClient(
     wifi.mac(),
     secrets.MQTT_SERVER,
@@ -90,11 +100,9 @@ mqtt = MQTTClient(
     password=bytearray(secrets.MQTT_PASSWORD)
 )
 
-SLEEP_FOR = 600 # seconds
-EXPIRE_AFTER = SLEEP_FOR * 2.5
-
 def publish_config():
     print('MQTT config...')
+    EXPIRE_AFTER = SLEEP_FOR * 60 * 2.5
     mqtt.publish_json(analog_sensor.config_topic(), analog_sensor.config(expire_after=EXPIRE_AFTER), retain=True)
     gc.collect()
     if temperature != None:
@@ -106,6 +114,8 @@ def publish_config():
     if light_level != None:
         mqtt.publish_json(illuminance_sensor.config_topic(), illuminance_sensor.config(expire_after=EXPIRE_AFTER), retain=True)
         gc.collect()
+
+## Publish-Retry Loop
 
 for loop in range(3):
     print("Loop: %d" % loop)
@@ -143,6 +153,8 @@ for loop in range(3):
         status_led.on()
         sleep(5)
 
+## Deep Sleep
+
 sleep(10)
 
 mqtt.disconnect()
@@ -151,10 +163,10 @@ wifi.disconnect()
 status_led.off()
 oled.power_off()
 
-# print('deep sleeping for %d sec...' % SLEEP_FOR)
+print('Sleep for %d min...' % SLEEP_FOR)
 ## https://docs.micropython.org/en/latest/library/esp.html#esp.deepsleep
 ## Note, GPIO pin 16 (or D0 on the Wemos D1 Mini) must be wired to the Reset pin. See README
 ## Note: ESP8266 only - use machine.deepsleep() on ESP32
 ## https://docs.micropython.org/en/latest/esp8266/tutorial/powerctrl.html#deep-sleep-mode
 
-deepsleep(SLEEP_FOR * 1000000) 
+deepsleep(SLEEP_FOR * 60 * 1000000) 
