@@ -10,19 +10,50 @@ from lib.esp8266.wemos.d1mini import status_led
 
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.light import Light
-# from lib.home_assistant.switch import Switch
+from lib.home_assistant.switch import Switch
 
-## Device ##
+## Config ##
 
-relay = Pin(pinmap.D1, mode=Pin.OUT) ## Default: D1
-button = Pin(pinmap.D3, mode=Pin.IN)
+PIR_MODE = False
+SWITCH_IS_LIGHT = True
+RESET_INTERVAL = 24 * 60 * 60
+UPDATE_INTERVAL = 10
+STATE_PUBLISH_INTERVAL = 10 * 60
 
-PIR_MODE = True
+RELAY_PIN = pinmap.D5 ## Default: D1
+BUTTON_PIN = pinmap.D3
 
 RELAY_ON = 1
 RELAY_OFF = 0
 BUTTON_PRESS = 0
 MOTION_DETECTED = 1
+
+## Device ##
+
+relay = Pin(RELAY_PIN, mode=Pin.OUT)
+button = Pin(BUTTON_PIN, mode=Pin.IN)
+
+## State ##
+
+state = False
+
+def on():
+    global state
+    state = True
+    status_led.on()
+    relay.value(RELAY_ON)
+
+def off():
+    global state
+    state = False
+    status_led.off()
+    relay.value(RELAY_OFF)
+
+def toggle():
+    if relay.value() == RELAY_ON:
+        off()
+    else:
+        on()
 
 ## Home Assistant ##
 
@@ -31,7 +62,7 @@ HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 print(HomeAssistant.UID)
 
-switch = Switch() ## or Light()
+switch = Light() if SWITCH_IS_LIGHT else Switch()
 
 ## MQTT ##
 
@@ -42,29 +73,28 @@ mqtt = MQTTClient(
     password=bytearray(secrets.MQTT_PASSWORD)
 )
 
-def mqtt_send_config():
-    print("MQTT send config")
+def mqtt_publish_config():
+    print("MQTT publish config")
     return mqtt.publish_json(switch.config_topic(), switch.config(), retain=True)
 
-def mqtt_send_state(clear_command=False):
+def mqtt_send_state():
     print("MQTT send state")
-    status_led.led.value(relay.value() != RELAY_ON) ## LED is inverted
-    switch.set_state(relay.value() == RELAY_ON)
+    switch.set_state(state)
     switch.set_attr({ "UID": HomeAssistant.UID, "IP": wifi.ip(), "MAC": wifi.mac(), "RSSI": wifi.rssi() })
-    mqtt.publish_json(switch.state_topic(), switch.state(), reconnect=True)
-    if clear_command:
-        print("MQTT clear command")
-        mqtt.publish(switch.command_topic(), "OVERRIDE", retain=True)
+    if not mqtt.publish_json(switch.state_topic(), switch.state(), reconnect=True):
+        status_led.slow_blink()
+
+def mqtt_send_command():
+    print("MQTT send command")
+    mqtt.publish(switch.command_topic(), state and switch.PAYLOAD_ON or switch.PAYLOAD_OFF, retain=True)
 
 def mqtt_receive(topic, message):
     print("MQTT receive")
     if topic == bytearray(switch.command_topic()):
         if message == bytearray(switch.STATE_ON):
-            relay.on()
-            mqtt_send_state()
+            on()
         elif message == bytearray(switch.STATE_OFF):
-            relay.off()
-            mqtt_send_state()
+            off()
 
 mqtt.set_callback(mqtt_receive)
 
@@ -74,55 +104,63 @@ def mqtt_connected():
 
 mqtt.set_connected_callback(mqtt_connected)
 
+mqtt.connect()
+mqtt.check_msg()
+
 ## Time ##
 
-startup = ticks_ms()
+start_up_at = updated_at = state_published_at = ticks_ms()
 
-def uptime():
-    return ticks_diff(ticks_ms(), startup) // 1000 # seconds
+def time_diff(time_stamp):
+    return ticks_diff(ticks_ms(), time_stamp) // 1000 # seconds
+
+def time_since_start_up():
+    return time_diff(start_up_at)
+
+def time_since_update():
+    return time_diff(updated_at)
+
+def time_since_state_published():
+    return time_diff(state_published_at)
 
 ## Main Loop ##
 
-config_sent = False
+config_sent = mqtt_publish_config()
 
 try:
     while True:
-        t = uptime() ## seconds
+        if time_since_start_up() > RESET_INTERVAL:
+            print('Time to reset')
+            reset()
 
-        if t > 24 * 60 * 60:
-            raise Exception('Daily reset')
-
-        if mqtt.is_connected():
-            print('MQTT Check msg')
+        if time_since_update() > UPDATE_INTERVAL:
+            print('Time to update')
+            updated_at = ticks_ms()
             mqtt.check_msg()
 
-            if not(config_sent) and wifi.rssi() > -80:
-                config_sent = mqtt_send_config()
-
-            if t % 600 == 0:
+            if time_since_state_published() > STATE_PUBLISH_INTERVAL:
+                print('Time to publish state')
+                state_published_at = ticks_ms()
+                if not config_sent:
+                    config_sent = mqtt_publish_config()
                 mqtt_send_state()
 
-        elif t % 10 == 0:
-            print("MQTT connect")
-            mqtt.connect()
+        if PIR_MODE:
+            if button.value() == MOTION_DETECTED and relay.value() == RELAY_OFF:
+                on()
+                mqtt_send_command()
+                mqtt_send_state()
+        else:
+            if button.value() == BUTTON_PRESS:
+                toggle()
+                mqtt_send_command()
+                mqtt_send_state()
 
-        for loop in range(100):
-            if PIR_MODE and relay.value() == RELAY_OFF and button.value() == MOTION_DETECTED:
-                relay.on()
-                mqtt_send_state(True)
-                sleep(1)
-            elif not(PIR_MODE) and button.value() == BUTTON_PRESS:
-                relay.value(not(relay.value()))
-                mqtt_send_state(True)
-                sleep(1)
-            else:
-                sleep(0.1)
+        sleep(0.1)
 
 except Exception as exception:
     print_exception(exception)
-    for loop in range(20):
-        status_led.led.value(loop % 2 == 0)
-        sleep_ms(500)
-
-print("Reset")
-reset()
+    status_led.fast_blink()
+    sleep(10)
+    status_led.off()
+    reset()

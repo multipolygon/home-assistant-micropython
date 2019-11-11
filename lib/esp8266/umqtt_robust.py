@@ -21,7 +21,7 @@ class MQTTClient(simple.MQTTClient):
         except AttributeError:
             return False
     
-    def connect(self, timeout=10):
+    def connect(self, timeout=1):
         # print('MQTT connect...')
         self._is_connected = False
         if wifi.connect(timeout=timeout):
@@ -46,7 +46,7 @@ class MQTTClient(simple.MQTTClient):
         except:
             return False
 
-    def publish(self, topic, message, reconnect=False, **kwargs):
+    def publish(self, topic, message, reconnect=False, timeout=1, **kwargs):
         # print('MQTT publish...')
         # print("%s => %s" % (topic, message))
         try:
@@ -56,7 +56,7 @@ class MQTTClient(simple.MQTTClient):
             self._is_connected = False
             if reconnect:
                 # print('MQTT reconnecting...')
-                if self.connect():
+                if self.connect(timeout):
                     return self.publish(topic, message, **kwargs)
         else:
             # print('MQTT publish sent.')
@@ -74,3 +74,13 @@ class MQTTClient(simple.MQTTClient):
         
     def set_last_will_json(self, topic, message, **kwargs):
         return self.set_last_will(topic, ujson.dumps(message), **kwargs)
+
+    def check_msg(self):
+        try:
+            super().check_msg()
+            return True
+        except:
+            self._is_connected = False
+            return False
+
+    

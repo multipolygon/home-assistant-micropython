@@ -23,7 +23,7 @@ from lib.home_assistant.sensors.battery import BatterySensor
 ## Config
 
 ADC_BATTERY_VOLTAGE = False
-SLEEP_FOR = 10 # minutes
+SLEEP_FOR = 30 # minutes
 HomeAssistant.NAME = "Env Sensor"
 HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
@@ -139,7 +139,13 @@ for loop in range(3):
             illuminance_sensor.set_state(round(light_level, 2))
 
         print('Set attr...')
-        analog_sensor.set_attr({ "UID": HomeAssistant.UID, "IP": wifi.ip(), "MAC": wifi.mac(), "RSSI": wifi.rssi() })
+        analog_sensor.set_attr({
+            "UID": HomeAssistant.UID,
+            "IP": wifi.ip(),
+            "MAC": wifi.mac(),
+            "RSSI": wifi.rssi(),
+            "Interval": SLEEP_FOR,
+        })
 
         print('MQTT state...')
         ## Note, all sensors share the same state and attr topic:
