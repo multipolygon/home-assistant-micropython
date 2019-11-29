@@ -8,3 +8,6 @@ import gc
 #webrepl.start()
 gc.collect()
 
+if "main.py" not in uos.listdir():
+    print("import main")
+    import main # main.mpy

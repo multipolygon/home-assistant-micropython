@@ -13,9 +13,34 @@ from lib.home_assistant.light import Light
 
 _24hrs = 24 * 60 * 60 # seconds
 
+## Config ##
+
+BRIGHTNESS = False
+
 ## Device ##
 
 pin = Pin(pinmap.D1, mode=Pin.OUT) ## Relay default is D1
+pwm_duty = 1024
+
+if BRIGHTNESS:
+    pwm = machine.PWM(pin, freq=1000)
+
+def on(duty=None):
+    global pwm_duty
+    status_led.on()
+    if BRIGHTNESS:
+        if duty:
+            pwm_duty = duty
+        pwm.duty(pwm_duty)
+    else:
+        pin.on()
+        
+def off():
+    status_led.off()
+    if BRIGHTNESS:
+        pwm.deinit()
+    else:
+        pin.off()
 
 ## Home Assistant ##
 
@@ -37,23 +62,28 @@ mqtt = MQTTClient(
 
 def mqtt_send_config():
     print("MQTT send config")
-    return mqtt.publish_json(light.config_topic(), light.config(), retain=True)
+    return mqtt.publish_json(light.config_topic(), light.config(brightness=BRIGHTNESS), retain=True)
 
 def mqtt_send_state(clear_command=False):
     print("MQTT send state")
-    status_led.led.value(not pin.value()) ## LED is inverted
-    light.set_state(pin.value())
     light.set_attr({ "UID": HomeAssistant.UID, "IP": wifi.ip(), "MAC": wifi.mac(), "RSSI": wifi.rssi() })
     mqtt.publish_json(light.state_topic(), light.state(), reconnect=True)
 
 def mqtt_receive(topic, message):
+    global pwm_duty
     print("MQTT receive")
-    if topic == bytearray(light.command_topic()):
+    if topic == bytearray(light.brightness_command_topic()):
+        duty = int(message)
+        print("PWM: %d" % duty)
+        on(duty)
+    elif topic == bytearray(light.command_topic()):
         if message == bytearray(light.STATE_ON):
-            pin.on()
+            on()
+            light.set_state(True)
             mqtt_send_state()
         elif message == bytearray(light.STATE_OFF):
-            pin.off()
+            off()
+            light.set_state(False)
             mqtt_send_state()
 
 mqtt.set_callback(mqtt_receive)
@@ -61,6 +91,9 @@ mqtt.set_callback(mqtt_receive)
 def mqtt_connected():
     print("MQTT subscribe: " + light.command_topic())
     mqtt.subscribe(bytearray(light.command_topic()))
+    if BRIGHTNESS:
+        print("MQTT subscribe: " + light.brightness_command_topic())
+        mqtt.subscribe(bytearray(light.brightness_command_topic()))
 
 mqtt.set_connected_callback(mqtt_connected)
 

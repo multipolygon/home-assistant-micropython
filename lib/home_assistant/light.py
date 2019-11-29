@@ -8,8 +8,11 @@ class Light(HomeAssistant):
     def set_state(self, new_state):
         return super().set_state(new_state and self.STATE_ON or self.STATE_OFF)
 
-    def config(self, optimistic=True, retain=True):
-        return {
+    def brightness_command_topic(self):
+        return self.component_base_topic() + "/brightness"
+
+    def config(self, optimistic=True, retain=True, brightness=False):
+        c = {
             "~": self.base_topic(),
             "name": self.full_name(),
             "stat_t": self.state_topic().replace(self.base_topic(), "~"),
@@ -22,4 +25,10 @@ class Light(HomeAssistant):
             "uniq_id": self.full_name(),
             "dev": self.device(),
         }
+
+        if brightness:
+            c["brightness_command_topic"] = self.brightness_command_topic().replace(self.base_topic(), "~")
+            c["brightness_scale"] = 1024
+
+        return c
 

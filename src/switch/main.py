@@ -9,18 +9,17 @@ from lib.esp8266.wemos.d1mini import pinmap
 from lib.esp8266.wemos.d1mini import status_led
 
 from lib.home_assistant.main import HomeAssistant
+# from lib.home_assistant.switch import Switch as Light
 from lib.home_assistant.light import Light
-from lib.home_assistant.switch import Switch
 
 ## Config ##
 
 PIR_MODE = False
-SWITCH_IS_LIGHT = True
 RESET_INTERVAL = 24 * 60 * 60
 UPDATE_INTERVAL = 10
 STATE_PUBLISH_INTERVAL = 10 * 60
 
-RELAY_PIN = pinmap.D5 ## Default: D1
+RELAY_PIN = pinmap.D1 ## Default: D1
 BUTTON_PIN = pinmap.D3
 
 RELAY_ON = 1
@@ -62,7 +61,7 @@ HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
 print(HomeAssistant.UID)
 
-switch = Light() if SWITCH_IS_LIGHT else Switch()
+switch = Light()
 
 ## MQTT ##
 

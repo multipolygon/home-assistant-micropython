@@ -1,4 +1,4 @@
-secrets.py
+secrets.*
 version.py
 bin/*
 !bin/.keep
