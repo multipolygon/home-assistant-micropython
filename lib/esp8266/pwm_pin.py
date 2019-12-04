@@ -1,8 +1,7 @@
 from machine import Pin, PWM
-from lib.esp8266.wemos.d1mini import pinmap
 
 class PWMPin():
-    def __init__(self, gpio=pinmap.D1, pwm_enabled=True):
+    def __init__(self, gpio, pwm_enabled=True):
         ## Relay default is D1
         self.pin = Pin(gpio, mode=Pin.OUT)
         self.pwm_enabled = pwm_enabled

@@ -4,76 +4,60 @@ from utime import sleep
 import network
 import esp
 
-from lib import secrets
+class WiFi():
+    def __init__(self, ssid, password):
+        esp.osdebug(None)
+        network.WLAN(network.AP_IF).active(False) ## Disable Access Point
+        self.sta_if = network.WLAN(network.STA_IF)
+        self.ssid = ssid
+        self.password = password
 
-esp.osdebug(None)
+    def is_connected(self):
+        return self.sta_if.isconnected() and self.sta_if.status() == network.STAT_GOT_IP
 
-network.WLAN(network.AP_IF).active(False) ## Disable Access Point
+    def power_on(self):
+        self.sta_if.active(True)
 
-sta_if = network.WLAN(network.STA_IF)
+    def power_off(self):
+        ## Does this save power???
+        self.sta_if.active(False)
 
-def is_connected():
-    return sta_if.isconnected() and sta_if.status() == network.STAT_GOT_IP
-
-def power_on():
-    sta_if.active(True)
-    
-def power_off():
-    ## Does this save power???
-    sta_if.active(False)
-
-def connect(timeout=30, power_save=False):
-    print('WiFi Connecting...')
-    power_on()
-    sta_if.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-    for i in range(timeout):
-        if is_connected():
-            break
+    def connect(self, timeout=30, power_save=False):
+        print('WiFi Connecting...')
+        self.power_on()
+        self.sta_if.connect(self.ssid, self.password)
+        for i in range(timeout):
+            if self.is_connected():
+                break
+            else:
+                print(i)
+                sleep(1)
+        if self.is_connected():
+            print('WiFi connected.')
+            return True
         else:
-            print(i)
-            sleep(1)
-    if is_connected():
-        print('WiFi connected.')
-        return True
-    else:
-        print('WiFi timed out!')
+            print('WiFi timed out!')
+            if power_save:
+                power_off()
+            return False
+
+    def disconnect(self, power_save=True):
+        self.sta_if.disconnect()
         if power_save:
-            power_off()
-        return False
+            self.power_off()
 
-def disconnect(power_save=True):
-    sta_if.disconnect()
-    if power_save:
-        power_off()
+    def rssi(self):
+        return self.sta_if.status('rssi')
 
-def rssi():
-    return sta_if.status('rssi')
+    def uid(self):
+        return self.hexlify(unique_id()).decode("utf-8").upper()
 
-def uid():
-    return hexlify(unique_id()).decode("utf-8").upper()
+    def mac(self):
+        s = hexlify(network.WLAN().config('mac')).decode("utf-8").upper()
+        return ":".join((s[i:i+2] for i in range(0,len(s),2)))
 
-def mac():
-    s = hexlify(network.WLAN().config('mac')).decode("utf-8").upper()
-    return ":".join((s[i:i+2] for i in range(0,len(s),2)))
-
-def signal_bars():
-    if is_connected():
-        n = rssi()
-        if n < -90:
-            return '.___'
-        elif n < -60:
-            return '..__'
-        elif n < -30:
-            return '..o_'
-        elif n < 0:
-            return '..oO'
+    def ip(self):
+        if self.sta_if.status() == network.STAT_GOT_IP:
+            return self.sta_if.ifconfig()[0]
         else:
-            return 'E%d' % n
-    else:
-        return     '____'
-
-def ip():
-    if sta_if.status() == network.STAT_GOT_IP:
-        return sta_if.ifconfig()[0]
-    else:
-        return ''
+            return ''

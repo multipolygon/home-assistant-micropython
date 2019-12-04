@@ -1,21 +1,14 @@
-from lib import secrets
-from lib.esp8266 import wifi
-from lib.esp8266.umqtt_robust import MQTTClient
-from lib.home_assistant.main import HomeAssistant
-
 class HomeAssistantMQTT():
-    def __init__(self, name=None, topic_prefix=None, send_config=True):
-        print(HomeAssistant.UID)
-        if name:
-            HomeAssistant.NAME = "Light"
-        HomeAssistant.TOPIC_PREFIX = topic_prefix if topic_prefix else secrets.MQTT_USER
+    def __init__(self, WiFi, MQTTClient, secrets):
         self.state = {}
         self.integrations = {}
         self.configs = {}
         self.callbacks = {}
 
+        self.wifi = WiFi(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
+
         self.mqtt = MQTTClient(
-            wifi.mac(),
+            self.wifi.mac(),
             secrets.MQTT_SERVER,
             user=bytearray(secrets.MQTT_USER),
             password=bytearray(secrets.MQTT_PASSWORD)
@@ -32,8 +25,7 @@ class HomeAssistantMQTT():
 
         def mqtt_connected():
             print('MQTT Connected!')
-            if send_config:
-                self.send_config()
+            self.send_config()
             for topic, callback in self.callbacks.items():
                 print('Subscribe: %s' % topic)
                 self.mqtt.subscribe(bytearray(topic))
@@ -62,10 +54,9 @@ class HomeAssistantMQTT():
         print("MQTT send state")
         for name, integration in self.integrations.items():
             integration.set_attr({
-                "UID": HomeAssistant.UID,
-                "IP": wifi.ip(),
-                "MAC": wifi.mac(),
-                "RSSI": wifi.rssi(),
+                "IP": self.wifi.ip(),
+                "MAC": self.wifi.mac(),
+                "RSSI": self.wifi.rssi(),
             })
             # Optimisation: Return on first item since they all share the same state:
             return self.mqtt.publish_json(
@@ -78,7 +69,10 @@ class HomeAssistantMQTT():
         self.callbacks[topic] = callback
             
     def connect(self, timeout=30):
-        return True if self.mqtt.is_connected() else self.mqtt.connect(timeout=timeout)
+        if self.wifi.connect(timeout=timeout):
+            return self.mqtt.connect()
+        else:
+            return False
 
     def is_connected(self):
         return self.mqtt.is_connected()

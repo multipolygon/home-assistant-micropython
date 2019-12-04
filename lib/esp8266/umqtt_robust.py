@@ -6,8 +6,6 @@ from umqtt import simple
 import ujson
 from utime import sleep
 
-from lib.esp8266 import wifi
-
 class MQTTClient(simple.MQTTClient):
     def set_last_will(self, topic, message, **kwargs):
         super().set_last_will(bytearray(topic), bytearray(message), **kwargs)
@@ -21,23 +19,22 @@ class MQTTClient(simple.MQTTClient):
         except AttributeError:
             return False
     
-    def connect(self, timeout=1):
-        # print('MQTT connect...')
-        self._is_connected = False
-        if wifi.connect(timeout=timeout):
+    def connect(self):
+        if self.is_connected():
+            print('MQTT already connected')
+        else:
+            print('MQTT connect...')
             try:
-                super().connect()
+                self._is_connected = (super().connect() == 0)
             except Exception as e:
-                # print(e)
-                pass
-            else:
-                # print('MQTT connected.')
-                self._is_connected = True
+                self._is_connected = False
+            if self.is_connected():
+                print('MQTT connected.')
                 if hasattr(self, 'connected_callback') and self.connected_callback != None:
                     self.connected_callback()
-                return True
-        # print('MQTT failed!')
-        return False
+            else:
+                print('MQTT failed!')
+        return self.is_connected()
 
     def disconnect(self):
         try:

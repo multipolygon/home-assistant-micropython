@@ -1,13 +1,25 @@
+from lib import secrets
+from lib.esp8266.wifi import WiFi
 from lib.esp8266.home_assistant_mqtt import HomeAssistantMQTT
 from lib.esp8266.mqtt_strategy.connect_and_wait import run
 from lib.esp8266.pwm_pin import PWMPin
+from lib.esp8266.umqtt_robust import MQTTClient
+from lib.esp8266.wemos.d1mini import pinmap
 from lib.esp8266.wemos.d1mini import status_led
 from lib.home_assistant.light import Light
+from lib.home_assistant.main import HomeAssistant
 import config
 
-ha = HomeAssistantMQTT("Light")
+print(HomeAssistant.UID)
+
+HomeAssistant.NAME = "Light"
+HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
+
+ha = HomeAssistantMQTT(WiFi, MQTTClient, secrets)
+
 ha.register('light', Light, { 'brightness': config.BRIGHTNESS })
-pwm_pin = PWMPin(pwm_enabled=config.BRIGHTNESS)
+
+pwm_pin = PWMPin(pinmap.D1, pwm_enabled=config.BRIGHTNESS)
 pwm_pin.off()
 
 def send_state():
@@ -41,4 +53,4 @@ if config.BRIGHTNESS:
         brightness_command_received
     )
 
-run(ha)
+run(ha, status_led=status_led)

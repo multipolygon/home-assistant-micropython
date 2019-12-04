@@ -1,4 +1,3 @@
-from lib.esp8266.wemos.d1mini import status_led
 from machine import reset
 from sys import print_exception
 from utime import sleep, ticks_ms, ticks_diff
@@ -10,9 +9,9 @@ startup = ticks_ms()
 def uptime():
     return ticks_diff(ticks_ms(), startup) // 1000 # seconds
 
-connection_attempts = 0
+def run(mqtt, status_led=None, daily_reset=True, connected_callback=None):
+    connection_attempts = 0
 
-def run(mqtt, daily_reset=True, connected_callback=None):
     try:
         while True:
             if mqtt.is_connected():
@@ -35,7 +34,9 @@ def run(mqtt, daily_reset=True, connected_callback=None):
 
     except Exception as exception:
         print_exception(exception)
-        status_led.fast_blink()
+        if status_led:
+            status_led.fast_blink()
         sleep(10)
-        status_led.off()
+        if status_led:
+            status_led.off()
         reset()
