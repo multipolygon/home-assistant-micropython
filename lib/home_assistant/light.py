@@ -8,6 +8,9 @@ class Light(HomeAssistant):
     def set_state(self, new_state):
         return super().set_state(new_state and self.STATE_ON or self.STATE_OFF)
 
+    def set_brightness_state(self, new_state):
+        return super().set_state(new_state, attr="bri")
+
     def brightness_command_topic(self):
         return self.component_base_topic() + "/brightness"
 
@@ -27,8 +30,10 @@ class Light(HomeAssistant):
         }
 
         if brightness:
-            c["brightness_command_topic"] = self.brightness_command_topic().replace(self.base_topic(), "~")
-            c["brightness_scale"] = 1024
+            c["bri_cmd_t"] = self.brightness_command_topic().replace(self.base_topic(), "~")
+            c["bri_scl"] = 1024
+            c["bri_stat_t"] = self.state_topic().replace(self.base_topic(), "~")
+            c["bri_val_tpl"] = self.value_template('bri')
 
         return c
 

@@ -36,11 +36,13 @@ class HomeAssistant():
     def state(self):
         return self._state
     
-    def set_state(self, val):
+    def set_state(self, val, attr="_"):
         ns = self.JSON_NAMESPACE or self.COMPONENT
         if ns not in self._state:
             self._state[ns] = {}
-        self._state[ns][self.slug()] = val
+        if self.slug() not in self._state[ns]:
+            self._state[ns][self.slug()] = {}
+        self._state[ns][self.slug()][attr] = val
         return self._state
 
     def set_attr(self, val):
@@ -84,8 +86,8 @@ class HomeAssistant():
     def state_topic(self):
         return self.base_topic()
     
-    def value_template(self):
-        return "{{value_json.%s.%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug())
+    def value_template(self, attr='_'):
+        return "{{value_json.%s.%s.%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug(), attr)
 
     def attributes_topic(self):
         return self.base_topic()
