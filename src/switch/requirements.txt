@@ -1,11 +1,10 @@
 button.py
-esp8266/home_assistant_mqtt.py
-esp8266/mqtt_strategy/connect_and_wait.py
-esp8266/pwm_pin.py
-esp8266/umqtt_robust.py
+home_assistant_mqtt.py
+pwm_pin.py
+umqtt_robust.py
 esp8266/wemos/d1mini/pinmap.py
 esp8266/wemos/d1mini/status_led.py
-esp8266/wifi.py
+wifi.py
 home_assistant/light.py
 home_assistant/main.py
 home_assistant/switch.py

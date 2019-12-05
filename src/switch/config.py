@@ -1,4 +1,3 @@
-from machine import Pin
 from lib.esp8266.wemos.d1mini import pinmap
 
 ## 1-Button and PIR shields are D3 by default
@@ -13,4 +12,5 @@ LIGHT = True
 ## If True, a button press will toggle the output pin. Set to False to always turn ON and never OFF. False is useful for PIR sensors.
 BUTTON_TOGGLE = True
 
-BUTTON_INVERTED = True ## Set to False for PIR sensor
+## Set to False for PIR shield
+BUTTON_INVERTED = True
