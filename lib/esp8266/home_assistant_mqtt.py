@@ -23,9 +23,12 @@ class HomeAssistantMQTT():
 
         self.mqtt.set_callback(mqtt_receive)
 
+        self.config_sent = False
+
         def mqtt_connected():
             print('MQTT Connected!')
-            self.send_config()
+            if not self.config_sent:
+                self.config_sent = self.send_config()
             for topic, callback in self.callbacks.items():
                 print('Subscribe: %s' % topic)
                 self.mqtt.subscribe(bytearray(topic))
@@ -77,5 +80,11 @@ class HomeAssistantMQTT():
     def is_connected(self):
         return self.mqtt.is_connected()
 
+    def publish(self, *args, **kwargs):
+        return self.mqtt.publish(*args, **kwargs)
+
     def wait_msg(self):
         self.mqtt.wait_msg()
+
+    def check_msg(self):
+        self.mqtt.check_msg()

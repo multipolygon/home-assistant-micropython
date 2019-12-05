@@ -43,7 +43,7 @@ class MQTTClient(simple.MQTTClient):
         except:
             return False
 
-    def publish(self, topic, message, reconnect=False, timeout=1, **kwargs):
+    def publish(self, topic, message, reconnect=False, **kwargs):
         # print('MQTT publish...')
         # print("%s => %s" % (topic, message))
         try:
@@ -53,7 +53,7 @@ class MQTTClient(simple.MQTTClient):
             self._is_connected = False
             if reconnect:
                 # print('MQTT reconnecting...')
-                if self.connect(timeout):
+                if self.connect():
                     return self.publish(topic, message, **kwargs)
         else:
             # print('MQTT publish sent.')
@@ -80,4 +80,10 @@ class MQTTClient(simple.MQTTClient):
             self._is_connected = False
             return False
 
-    
+    def wait_msg(self):
+        try:
+            super().wait_msg()
+            return True
+        except:
+            self._is_connected = False
+            return False

@@ -28,6 +28,6 @@ class PWMPin():
 
     def toggle(self):
         if self.state:
-            off()
+            self.off()
         else:
-            on()
+            self.on()

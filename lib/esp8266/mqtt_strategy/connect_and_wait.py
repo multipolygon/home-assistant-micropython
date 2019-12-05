@@ -1,8 +1,9 @@
 from machine import reset
 from sys import print_exception
 from utime import sleep, ticks_ms, ticks_diff
+import urandom
 
-_24hrs = 24 * 60 * 60 # seconds
+one_day = 24 * 60 * 60 # seconds
 
 startup = ticks_ms()
 
@@ -14,10 +15,10 @@ def run(mqtt, status_led=None, daily_reset=True, connected_callback=None):
 
     try:
         while True:
+            if daily_reset and uptime() > one_day:
+                raise Exception('Daily reset')
+            
             if mqtt.is_connected():
-                if daily_reset and uptime() > _24hrs:
-                    raise Exception('Daily reset')
-
                 mqtt.wait_msg()
 
             else:
@@ -30,7 +31,8 @@ def run(mqtt, status_led=None, daily_reset=True, connected_callback=None):
                     if connection_attempts > 10:
                         raise Exception('Failed to connect')
                     connection_attempts += 1
-                    sleep(5)
+                    print('Sleeping...')
+                    sleep(urandom.getrandbits(4))
 
     except Exception as exception:
         print_exception(exception)

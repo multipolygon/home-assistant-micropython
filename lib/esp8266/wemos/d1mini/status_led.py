@@ -13,6 +13,12 @@ def off():
     pwm.deinit()
     led.on()
 
+def set(state):
+    if state:
+        on()
+    else:
+        off()
+
 def slow_blink():
     pwm.freq(1)
     pwm.duty(512)
