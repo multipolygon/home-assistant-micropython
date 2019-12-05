@@ -1,5 +1,14 @@
+from machine import reset
+from machine import unique_id
+from sys import print_exception
+from utime import sleep, ticks_ms, ticks_diff
+import struct
+import urandom
+
 class HomeAssistantMQTT():
     def __init__(self, WiFi, MQTTClient, secrets):
+        urandom.seed(struct.unpack('i', unique_id())[0] + ticks_ms())
+        
         self.state = {}
         self.integrations = {}
         self.configs = {}
@@ -28,7 +37,7 @@ class HomeAssistantMQTT():
         def mqtt_connected():
             print('MQTT Connected!')
             if not self.config_sent:
-                self.config_sent = self.send_config()
+                self.config_sent = self.publish_config()
             for topic, callback in self.callbacks.items():
                 print('Subscribe: %s' % topic)
                 self.mqtt.subscribe(bytearray(topic))
@@ -42,8 +51,8 @@ class HomeAssistantMQTT():
     def set_state(self, name, state):
         self.integrations[name].set_state(state)
 
-    def send_config(self):
-        print("MQTT send config")
+    def publish_config(self):
+        print("MQTT publish config")
         success = True
         for name, integration in self.integrations.items():
             success &= self.mqtt.publish_json(
@@ -53,8 +62,8 @@ class HomeAssistantMQTT():
             )
         return success
         
-    def send_state(self):
-        print("MQTT send state")
+    def publish_state(self):
+        print("MQTT publish state")
         for name, integration in self.integrations.items():
             integration.set_attr({
                 "IP": self.wifi.ip(),
@@ -88,3 +97,42 @@ class HomeAssistantMQTT():
 
     def check_msg(self):
         self.mqtt.check_msg()
+
+    def connect_and_loop(self, callback, status_led=None, daily_reset=True, connected_callback=None):
+        DAILY_RESET_INTERVAL = 24 * 60 * 60 # seconds
+        connection_attempts = 0
+        startup = ticks_ms()
+
+        def uptime():
+            return ticks_diff(ticks_ms(), startup) // 1000 # seconds
+
+        try:
+            while True:
+                if daily_reset and uptime() > DAILY_RESET_INTERVAL:
+                    raise Exception('Daily reset')
+
+                if self.is_connected():
+                    callback()
+
+                else:
+                    if self.connect(timeout=30):
+                        connection_attempts = 0
+                        if connected_callback:
+                            connected_callback()
+
+                    else:
+                        if connection_attempts > 10:
+                            raise Exception('Failed to connect')
+                        connection_attempts += 1
+                        print('Sleeping...')
+                        sleep(urandom.getrandbits(6))
+
+        except Exception as exception:
+            print_exception(exception)
+            if status_led:
+                status_led.fast_blink()
+            sleep(10)
+            if status_led:
+                status_led.off()
+            reset()
+        
