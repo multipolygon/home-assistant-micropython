@@ -2,9 +2,13 @@
 ## https://github.com/micropython/micropython-lib/blob/master/umqtt.robust/README.rst
 ## https://github.com/micropython/micropython-lib/blob/master/umqtt.robust/umqtt/robust.py
 
+from sys import print_exception
 from umqtt import simple
-import ujson
+from umqtt.simple import MQTTException
 from utime import sleep
+import ujson
+
+exceptions = (OSError, MQTTException)
 
 class MQTTClient(simple.MQTTClient):
     def set_last_will(self, topic, message, **kwargs):
@@ -26,7 +30,8 @@ class MQTTClient(simple.MQTTClient):
             print('MQTT connect...')
             try:
                 self._is_connected = (super().connect() == 0)
-            except Exception as e:
+            except exceptions as e:
+                print_exception(e)
                 self._is_connected = False
             if self.is_connected():
                 print('MQTT connected.')
@@ -37,19 +42,16 @@ class MQTTClient(simple.MQTTClient):
         return self.is_connected()
 
     def disconnect(self):
-        try:
-            super().disconnect()
-            return True
-        except:
-            return False
+        super().disconnect()
+        return True
 
     def publish(self, topic, message, reconnect=False, **kwargs):
         # print('MQTT publish...')
         # print("%s => %s" % (topic, message))
         try:
             super().publish(bytearray(topic), bytearray(message), **kwargs)
-        except Exception as e:
-            # print(e)
+        except exceptions as e:
+            print_exception(e)
             self._is_connected = False
             if reconnect:
                 # print('MQTT reconnecting...')
@@ -72,11 +74,22 @@ class MQTTClient(simple.MQTTClient):
     def set_last_will_json(self, topic, message, **kwargs):
         return self.set_last_will(topic, ujson.dumps(message), **kwargs)
 
+    def subscribe(self, topic, qos=0):
+        try:
+            super().subscribe(topic, qos)
+            sleep(1)
+            return True
+        except exceptions as e:
+            print_exception(e)
+            self._is_connected = False
+            return False
+
     def check_msg(self):
         try:
             super().check_msg()
             return True
-        except:
+        except exceptions as e:
+            print_exception(e)
             self._is_connected = False
             return False
 
@@ -84,6 +97,7 @@ class MQTTClient(simple.MQTTClient):
         try:
             super().wait_msg()
             return True
-        except:
+        except exceptions as e:
+            print_exception(e)
             self._is_connected = False
             return False

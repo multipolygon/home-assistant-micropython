@@ -38,9 +38,13 @@ class HomeAssistantMQTT():
             print('MQTT Connected!')
             if not self.config_sent:
                 self.config_sent = self.publish_config()
-            for topic, callback in self.callbacks.items():
-                print('Subscribe: %s' % topic)
-                self.mqtt.subscribe(bytearray(topic))
+            if len(self.callbacks) > 0:
+                ## TODO: Find the common root of all registered callback topics                
+                for name, integration in self.integrations.items():
+                    topic = integration.base_topic() + "/#"
+                    print('MQTT Subscribe: %s' % topic)
+                    self.mqtt.subscribe(bytearray(topic))
+                    break
 
         self.mqtt.set_connected_callback(mqtt_connected)
 
@@ -78,6 +82,7 @@ class HomeAssistantMQTT():
             )
 
     def subscribe(self, topic, callback):
+        print('Add callback: %s' % topic)
         self.callbacks[topic] = callback
             
     def connect(self, timeout=30):
