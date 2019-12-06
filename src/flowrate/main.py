@@ -3,7 +3,7 @@ from lib.esp8266.wemos.d1mini import status_led
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.sensor import Sensor
 from lib.home_assistant_mqtt import HomeAssistantMQTT
-from lib.umqtt_robust import MQTTClient
+from lib.mqtt import MQTTClient
 from lib.wifi import WiFi
 from machine import Pin
 from utime import sleep_ms, ticks_ms, ticks_diff
