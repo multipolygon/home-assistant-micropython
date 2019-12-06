@@ -34,17 +34,29 @@ class HomeAssistantMQTT():
 
         self.config_sent = False
 
+        def mqtt_subscribe():
+            n = len(self.callbacks)
+            if n > 0:
+                if n == 1:
+                    topic = self.callbacks.keys()[0]
+                else:
+                    topic = ""
+                    topics = self.callbacks.keys()
+                    for i in range(min([len(s) for s in topics])):
+                        chars = [s[i] for s in topics]
+                        if chars.count(chars[0]) == n:
+                            topic += chars[0]
+                        else:
+                            break
+                    topic += "#"
+                print('MQTT Subscribe: %s' % topic)
+                self.mqtt.subscribe(bytearray(topic))
+
         def mqtt_connected():
             print('MQTT Connected!')
             if not self.config_sent:
                 self.config_sent = self.publish_config()
-            if len(self.callbacks) > 0:
-                ## TODO: Find the common root of all registered callback topics                
-                for name, integration in self.integrations.items():
-                    topic = integration.base_topic() + "/#"
-                    print('MQTT Subscribe: %s' % topic)
-                    self.mqtt.subscribe(bytearray(topic))
-                    break
+            mqtt_subscribe()
 
         self.mqtt.set_connected_callback(mqtt_connected)
 
