@@ -3,7 +3,6 @@ version.py
 bin/*
 !bin/.keep
 wip
-build
 
 *.mpy
 
