@@ -2,13 +2,22 @@
 
 ## Project Details
 
-- [Home Assistant](https://www.home-assistant.io) component library with automatic [MQTT Discovery](https://www.home-assistant.io/docs/mqtt/discovery)
-- MQTT wrapper for fail-safe device behaviour
-- Device code for various IoT sensors and applications
-- Device support: ESP8266 (and maybe ESP32)
-- Useful scripts for automating builds, file transfer to device and MQTT debugging
+This project is under active development.
 
-## Install
+The aim is to create a framework for registering ESP8266 and ESP32 devices (eg sensors and lights) with [Home Assistant](https://www.home-assistant.io) via [MQTT Discovery](https://www.home-assistant.io/docs/mqtt/discovery) protocol.
+
+The MQTT Discovery lib is mostly stable and could be used in any project:
+
+- [lib/home_assistant](./lib/home_assistant)
+
+For example usage see:
+
+- [build/py/light/main.py](./build/py/light/main.py)
+- [build/py/flow_sensor/main.py](./build/py/flow_sensor/main.py)
+
+(Build directories can be copied directly to ESP8266 device.)
+
+## Install Notes
 
 ### Python
 
