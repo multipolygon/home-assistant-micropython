@@ -13,6 +13,7 @@ class HomeAssistantMQTT():
         self.integrations = {}
         self.configs = {}
         self.callbacks = {}
+        self.attributes = {}
 
         self.wifi = WiFi(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
 
@@ -32,25 +33,38 @@ class HomeAssistantMQTT():
 
         self.mqtt.set_callback(mqtt_receive)
 
-        self.config_sent = False
+        self.send_config_on_connect = True
+
+        def mqtt_subscribe():
+            n = len(self.callbacks)
+            if n > 0:
+                if n == 1:
+                    topic = self.callbacks.keys()[0]
+                else:
+                    topic = ""
+                    topics = self.callbacks.keys()
+                    for i in range(min([len(s) for s in topics])):
+                        chars = [s[i] for s in topics]
+                        if chars.count(chars[0]) == n:
+                            topic += chars[0]
+                        else:
+                            break
+                    topic += "#"
+                print('MQTT Subscribe: %s' % topic)
+                self.mqtt.subscribe(bytearray(topic))
 
         def mqtt_connected():
             print('MQTT Connected!')
-            if not self.config_sent:
-                self.config_sent = self.publish_config()
-            if len(self.callbacks) > 0:
-                ## TODO: Find the common root of all registered callback topics                
-                for name, integration in self.integrations.items():
-                    topic = integration.base_topic() + "/#"
-                    print('MQTT Subscribe: %s' % topic)
-                    self.mqtt.subscribe(bytearray(topic))
-                    break
+            if self.send_config_on_connect:
+                self.send_config_on_connect = not(self.publish_config())
+            mqtt_subscribe()
 
         self.mqtt.set_connected_callback(mqtt_connected)
 
     def register(self, name, Integration, config={}):
         self.integrations[name] = Integration(name=name, state=self.state)
         self.configs[name] = config
+        return self.integrations[name]
 
     def set_state(self, name, state):
         self.integrations[name].set_state(state)
@@ -65,15 +79,17 @@ class HomeAssistantMQTT():
                 retain=True
             )
         return success
+
+    def set_attribute(self, key, value):
+        self.attributes[key] = value
         
     def publish_state(self):
         print("MQTT publish state")
-        for name, integration in self.integrations.items():
-            integration.set_attr({
-                "IP": self.wifi.ip(),
-                "MAC": self.wifi.mac(),
-                "RSSI": self.wifi.rssi(),
-            })
+        for integration in self.integrations.values():
+            self.attributes["IP"] = self.wifi.ip()
+            self.attributes["MAC"] = self.wifi.mac()
+            self.attributes["RSSI"] = self.wifi.rssi()
+            integration.set_attr(self.attributes)
             # Optimisation: Return on first item since they all share the same state:
             return self.mqtt.publish_json(
                 integration.state_topic(),
