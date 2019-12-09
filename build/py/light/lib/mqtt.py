@@ -8,7 +8,7 @@ from umqtt.simple import MQTTException
 from utime import sleep
 import ujson
 
-exceptions = (OSError, MQTTException)
+exceptions = (OSError, MQTTException, AttributeError)
 
 class MQTTClient(simple.MQTTClient):
     def set_last_will(self, topic, message, **kwargs):

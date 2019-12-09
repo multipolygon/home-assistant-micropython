@@ -13,6 +13,7 @@ class HomeAssistantMQTT():
         self.integrations = {}
         self.configs = {}
         self.callbacks = {}
+        self.attributes = {}
 
         self.wifi = WiFi(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
 
@@ -32,7 +33,7 @@ class HomeAssistantMQTT():
 
         self.mqtt.set_callback(mqtt_receive)
 
-        self.config_sent = False
+        self.send_config_on_connect = True
 
         def mqtt_subscribe():
             n = len(self.callbacks)
@@ -54,8 +55,8 @@ class HomeAssistantMQTT():
 
         def mqtt_connected():
             print('MQTT Connected!')
-            if not self.config_sent:
-                self.config_sent = self.publish_config()
+            if self.send_config_on_connect:
+                self.send_config_on_connect = not(self.publish_config())
             mqtt_subscribe()
 
         self.mqtt.set_connected_callback(mqtt_connected)
@@ -63,6 +64,7 @@ class HomeAssistantMQTT():
     def register(self, name, Integration, config={}):
         self.integrations[name] = Integration(name=name, state=self.state)
         self.configs[name] = config
+        return self.integrations[name]
 
     def set_state(self, name, state):
         self.integrations[name].set_state(state)
@@ -77,15 +79,17 @@ class HomeAssistantMQTT():
                 retain=True
             )
         return success
+
+    def set_attribute(self, key, value):
+        self.attributes[key] = value
         
     def publish_state(self):
         print("MQTT publish state")
-        for name, integration in self.integrations.items():
-            integration.set_attr({
-                "IP": self.wifi.ip(),
-                "MAC": self.wifi.mac(),
-                "RSSI": self.wifi.rssi(),
-            })
+        for integration in self.integrations.values():
+            self.attributes["IP"] = self.wifi.ip()
+            self.attributes["MAC"] = self.wifi.mac()
+            self.attributes["RSSI"] = self.wifi.rssi()
+            integration.set_attr(self.attributes)
             # Optimisation: Return on first item since they all share the same state:
             return self.mqtt.publish_json(
                 integration.state_topic(),
