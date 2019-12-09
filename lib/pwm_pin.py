@@ -1,5 +1,4 @@
 from machine import Pin, PWM
-from utime import ticks_ms, ticks_diff
 from machine import Timer
 
 class PWMPin():
@@ -11,7 +10,6 @@ class PWMPin():
             self.pwm = PWM(self.pin, freq=1000)
         self.pwm_duty = 1024
         self.state = False
-        self.on_time = ticks_ms()
         self.off_delay = off_delay
         self.off_delay_callback = off_delay_callback
         self.timer = Timer(-1)
@@ -25,7 +23,6 @@ class PWMPin():
             self.pwm.duty(self.pwm_duty)
         else:
             self.pin.on()
-        self.on_time = ticks_ms()
         if self.off_delay:
             self.timer.deinit()
             def callback(_):
