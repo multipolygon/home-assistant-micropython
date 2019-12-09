@@ -39,7 +39,7 @@ class HomeAssistantMQTT():
             n = len(self.callbacks)
             if n > 0:
                 if n == 1:
-                    topic = self.callbacks.keys()[0]
+                    topic = list(self.callbacks.keys())[0]
                 else:
                     topic = ""
                     topics = self.callbacks.keys()

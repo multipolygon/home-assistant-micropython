@@ -22,8 +22,15 @@ class MQTTClient(simple.MQTTClient):
             return self._is_connected
         except AttributeError:
             return False
+
+    def reconnectable(self):
+        try:
+            return self._reconnectable
+        except AttributeError:
+            return False
     
     def connect(self):
+        self._reconnectable = True
         if self.is_connected():
             print('MQTT already connected')
         else:
@@ -42,6 +49,7 @@ class MQTTClient(simple.MQTTClient):
         return self.is_connected()
 
     def disconnect(self):
+        self._reconnectable = False
         super().disconnect()
         return True
 
@@ -53,7 +61,7 @@ class MQTTClient(simple.MQTTClient):
         except exceptions as e:
             print_exception(e)
             self._is_connected = False
-            if reconnect:
+            if reconnect and self.reconnectable():
                 # print('MQTT reconnecting...')
                 if self.connect():
                     return self.publish(topic, message, **kwargs)
