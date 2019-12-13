@@ -6,17 +6,17 @@ class State():
     def set_brightness(self, percent):
         if self.state.brightness != percent:
             self.state.brightness = percent
-            self.state.set_changed()
+            self.state._changed = True
 
     def set_motion(self, detected):
         if self.state.motion != detected:
             self.state.motion = detected
-            self.state.set_changed()
+            self.state._changed = True
         
     def set_automatic(self, mode):
         if self.state.automatic != mode:
             self.state.automatic = mode
-            self.state.set_changed()
+            self.state._changed = True
 
 class Off(State):
     def __enter__(self):
@@ -111,6 +111,3 @@ class StateMachine():
                 schedule(self._on_change, self)
                 
         self._changed = False
-
-    def set_changed(self):
-        self._changed = True
