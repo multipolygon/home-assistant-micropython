@@ -48,7 +48,7 @@ class OnAutoMotionDetected(State):
         self.state.goto('OffAuto')
 
     def automatic_off(self):
-        self.state.goto('OffDisabled')
+        self.state.goto('OffManual')
 
     def motion_clear(self):
         self.state.goto('OnAutoMotionClear')
@@ -73,7 +73,7 @@ class OnAutoMotionClear(State):
         self.state.goto('OffAuto')
 
     def automatic_off(self):
-        self.state.goto('OffDisabled')
+        self.state.goto('OffManual')
 
     def motion_detected(self):
         self.state.goto('OnAutoMotionDetected')
