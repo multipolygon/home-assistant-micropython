@@ -29,7 +29,7 @@ if args.build_only:
 elif system() == "Windows":
     port = "COM1" ## TODO: How to detect active ports on Windows?
 else:
-    port = list(set(os.listdir("/dev")).intersection(['tty.usbserial-144310', 'tty.usbserial-144320', 'tty.usbserial-1420', 'ttyUSB0', 'ttyUSB1']))[0]
+    port = os.path.split(list(glob.iglob("/dev/tty.usbserial-*"))[0])[-1]
 
 def pathfix(path):
     if system() == "Windows":
