@@ -3,14 +3,8 @@ digraph G {
   "OffAuto" -> "OffManual" [label="automatic_off"]
   "OffAuto" -> "OnAutoMotionDetected" [label="motion_detected"]
 
-  "OffManual" -> "OnManual" [label="light_on"]
-  "OffManual" -> "OffAuto" [label="automatic_on"]
-
   "OnAuto" -> "OffAuto" [label="light_off"]
   "OnAuto" -> "OnManual" [label="automatic_off"]
-
-  "OnManual" -> "OffManual" [label="light_off"]
-  "OnManual" -> "OnAuto" [label="automatic_on"]
 
   "OnAutoMotionDetected" -> "OnAuto" [label="light_on"]
   "OnAutoMotionDetected" -> "OffAuto" [label="light_off"]
@@ -21,5 +15,21 @@ digraph G {
   "OnAutoMotionClear" -> "OffAuto" [label="light_off"]
   "OnAutoMotionClear" -> "OffManual" [label="automatic_off"]
   "OnAutoMotionClear" -> "OnAutoMotionDetected" [label="motion_detected"]
-  "OnAutoMotionClear" -> "OffAuto" [label="auto_timeout"]
+  "OnAutoMotionClear" -> "OffAuto" [label="timeout"]
+
+  "OffManual" -> "OnManual" [label="light_on"]
+  "OffManual" -> "OffAuto" [label="automatic_on"]
+  "OffManual" -> "OffManualMotionDetected" [label="motion_detected"]
+
+  "OnManual" -> "OffManual" [label="light_off"]
+  "OnManual" -> "OnAuto" [label="automatic_on"]
+  "OnManual" -> "OnManualMotionDetected" [label="motion_detected"]
+  
+  "OffManualMotionDetected" -> "OnManualMotionDetected" [label="light_on"]
+  "OffManualMotionDetected" -> "OnAutoMotionDetected" [label="automatic_on"]
+  "OffManualMotionDetected" -> "OffManual" [label="motion_clear"]
+  
+  "OnManualMotionDetected" -> "OffManualMotionDetected" [label="light_off"]
+  "OnManualMotionDetected" -> "OnAutoMotionDetected" [label="automatic_on"]
+  "OnManualMotionDetected" -> "OnManual" [label="motion_clear"]
 }

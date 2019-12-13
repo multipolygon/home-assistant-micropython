@@ -19,26 +19,12 @@ class OffAuto(State):
     def motion_detected(self):
         self.state.goto('OnAutoMotionDetected')
 
-class OffManual(State):
-    def light_on(self):
-        self.state.goto('OnManual')
-
-    def automatic_on(self):
-        self.state.goto('OffAuto')
-
 class OnAuto(State):
     def light_off(self):
         self.state.goto('OffAuto')
 
     def automatic_off(self):
         self.state.goto('OnManual')
-        
-class OnManual(State):
-    def light_off(self):
-        self.state.goto('OffManual')
-
-    def automatic_on(self):
-        self.state.goto('OnAuto')
 
 class OnAutoMotionDetected(State):
     def light_on(self):
@@ -56,7 +42,7 @@ class OnAutoMotionDetected(State):
 class OnAutoMotionClear(State):
     def __enter__(self):
         def timeout(*_):
-            self.state.event('auto_timeout')
+            self.state.event('timeout')
         def _timeout(*_):
             schedule(timeout, None)
         self.timer = Timer(-1)
@@ -78,12 +64,52 @@ class OnAutoMotionClear(State):
     def motion_detected(self):
         self.state.goto('OnAutoMotionDetected')
 
-    def auto_timeout(self):
+    def timeout(self):
         self.state.goto('OffAuto')
 
     def __exit__(self):
         self.timer.deinit()
 
+class OffManual(State):
+    def light_on(self):
+        self.state.goto('OnManual')
+
+    def automatic_on(self):
+        self.state.goto('OffAuto')
+
+    def motion_detected(self):
+        self.state.goto('OffManualMotionDetected')
+        
+class OnManual(State):
+    def light_off(self):
+        self.state.goto('OffManual')
+
+    def automatic_on(self):
+        self.state.goto('OnAuto')
+
+    def motion_detected(self):
+        self.state.goto('OnManualMotionDetected')
+
+class OffManualMotionDetected(State):
+    def light_on(self):
+        self.state.goto('OnManualMotionDetected')
+
+    def automatic_on(self):
+        self.state.goto('OnAutoMotionDetected')
+    
+    def motion_clear(self):
+        self.state.goto('OffManual')
+
+class OnManualMotionDetected(State):
+    def light_off(self):
+        self.state.goto('OffManualMotionDetected')
+
+    def automatic_on(self):
+        self.state.goto('OnAutoMotionDetected')
+    
+    def motion_clear(self):
+        self.state.goto('OnManual')
+        
 class StateMachine():
     def __init__(self, initial_state, on_change=None):
         self._state = None
