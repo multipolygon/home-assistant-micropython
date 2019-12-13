@@ -7,6 +7,7 @@ from umqtt import simple
 from umqtt.simple import MQTTException
 from utime import sleep
 import ujson
+import gc
 
 exceptions = (OSError, MQTTException, AttributeError)
 
@@ -32,20 +33,16 @@ class MQTTClient(simple.MQTTClient):
     def connect(self):
         self._reconnectable = True
         if self.is_connected():
-            print('MQTT already connected')
+            pass
         else:
-            print('MQTT connect...')
             try:
                 self._is_connected = (super().connect() == 0)
             except exceptions as e:
                 print_exception(e)
                 self._is_connected = False
             if self.is_connected():
-                print('MQTT connected.')
                 if hasattr(self, 'connected_callback') and self.connected_callback != None:
                     self.connected_callback()
-            else:
-                print('MQTT failed!')
         return self.is_connected()
 
     def disconnect(self):
@@ -54,27 +51,28 @@ class MQTTClient(simple.MQTTClient):
         return True
 
     def publish(self, topic, message, reconnect=False, **kwargs):
-        # print('MQTT publish...')
-        # print("%s => %s" % (topic, message))
         try:
             super().publish(bytearray(topic), bytearray(message), **kwargs)
         except exceptions as e:
             print_exception(e)
             self._is_connected = False
             if reconnect and self.reconnectable():
-                # print('MQTT reconnecting...')
                 if self.connect():
                     return self.publish(topic, message, **kwargs)
         else:
-            # print('MQTT publish sent.')
             self._is_connected = True
             sleep(1)
             return True
-        # print('MQTT publish failed!')
+        message = None
+        gc.collect()
         return False
 
     def publish_json(self, topic, message, **kwargs):
-        return self.publish(topic, ujson.dumps(message), **kwargs)
+        gc.collect()
+        json = ujson.dumps(message)
+        message = None
+        gc.collect()
+        return self.publish(topic, json, **kwargs)
 
     def set_last_will(self, topic, message, **kwargs):
         return super().set_last_will(bytearray(topic), bytearray(message), **kwargs)
@@ -82,10 +80,9 @@ class MQTTClient(simple.MQTTClient):
     def set_last_will_json(self, topic, message, **kwargs):
         return self.set_last_will(topic, ujson.dumps(message), **kwargs)
 
-    def subscribe(self, topic, qos=0):
+    def subscribe(self, topic, **argv):
         try:
-            super().subscribe(topic, qos)
-            sleep(1)
+            super().subscribe(topic, **argv)
             return True
         except exceptions as e:
             print_exception(e)

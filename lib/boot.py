@@ -7,9 +7,9 @@ import gc
 #import webrepl
 #webrepl.start()
 gc.collect()
-import micropython
-micropython.alloc_emergency_exception_buf(100)
+# import micropython
+# micropython.alloc_emergency_exception_buf(100)
 
 if "main.py" not in uos.listdir():
-    print("import main")
+    print("import main.mpy")
     import main # main.mpy

@@ -23,7 +23,6 @@ class WiFi():
         self.sta_if.active(False)
 
     def connect(self, timeout=30, power_save=False):
-        print('WiFi Connecting...')
         self.power_on()
         self.sta_if.connect(self.ssid, self.password)
         for i in range(timeout):
@@ -33,10 +32,8 @@ class WiFi():
                 print(i)
                 sleep(1)
         if self.is_connected():
-            print('WiFi connected.')
             return True
         else:
-            print('WiFi timed out!')
             if power_save:
                 power_off()
             return False

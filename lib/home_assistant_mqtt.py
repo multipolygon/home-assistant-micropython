@@ -4,6 +4,7 @@ from sys import print_exception
 from utime import sleep, ticks_ms, ticks_diff
 import struct
 import urandom
+import gc
 
 class HomeAssistantMQTT():
     def __init__(self, WiFi, MQTTClient, secrets):
@@ -25,7 +26,6 @@ class HomeAssistantMQTT():
         )
 
         def mqtt_receive(in_topic, message):
-            print('MQTT Receive: %s' % in_topic)
             for topic, callback in self.callbacks.items():
                 if bytearray(topic) == in_topic:
                     callback(message)
@@ -50,11 +50,10 @@ class HomeAssistantMQTT():
                         else:
                             break
                     topic += "#"
-                print('MQTT Subscribe: %s' % topic)
+                gc.collect()
                 self.mqtt.subscribe(bytearray(topic))
 
         def mqtt_connected():
-            print('MQTT Connected!')
             if self.send_config_on_connect:
                 self.send_config_on_connect = not(self.publish_config())
             mqtt_subscribe()
@@ -70,22 +69,23 @@ class HomeAssistantMQTT():
         self.integrations[name].set_state(state)
 
     def publish_config(self):
-        print("MQTT publish config")
         success = True
         for name, integration in self.integrations.items():
+            gc.collect()
             success &= self.mqtt.publish_json(
                 integration.config_topic(),
                 integration.config(**self.configs[name]),
                 retain=True
             )
+            gc.collect()
         return success
 
     def set_attribute(self, key, value):
         self.attributes[key] = value
         
-    def publish_state(self):
-        print("MQTT publish state")
+    def publish_state(self, reconnect=False):
         for integration in self.integrations.values():
+            gc.collect()
             self.attributes["IP"] = self.wifi.ip()
             self.attributes["MAC"] = self.wifi.mac()
             self.attributes["RSSI"] = self.wifi.rssi()
@@ -94,11 +94,10 @@ class HomeAssistantMQTT():
             return self.mqtt.publish_json(
                 integration.state_topic(),
                 integration.state(),
-                reconnect=True
+                reconnect=reconnect
             )
 
     def subscribe(self, topic, callback):
-        print('Add callback: %s' % topic)
         self.callbacks[topic] = callback
             
     def connect(self, timeout=30):
@@ -145,7 +144,6 @@ class HomeAssistantMQTT():
                         if connection_attempts > 10:
                             raise Exception('Failed to connect')
                         connection_attempts += 1
-                        print('Sleeping...')
                         sleep(urandom.getrandbits(6))
 
         except Exception as exception:

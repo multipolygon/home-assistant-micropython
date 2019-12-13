@@ -1,5 +1,6 @@
 from machine import Pin
 from machine import Timer
+from micropython import schedule
 
 class Button():
     def __init__(self, gpio, on_callback=None, off_callback=None, timeout_ms=1500, inverted=False):
@@ -10,7 +11,7 @@ class Button():
         def timeout(*_):
             self.enabled = True
             if off_callback:
-                off_callback()
+                schedule(off_callback, None)
 
         def handler(pin):
             self.timer.deinit()
@@ -18,7 +19,7 @@ class Button():
                 if self.enabled:
                     self.enabled = False
                     if on_callback:
-                        on_callback()
+                        schedule(on_callback, None)
             else:
                 self.timer.init(
                     period=timeout_ms,
