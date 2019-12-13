@@ -14,7 +14,7 @@ PIR_INVERTED = True
 PWM_PIN = pinmap.D1 
 
 ## If DIMMABLE, set initial brightness as percentage
-INITIAL_BRIGHTNESS = 50
+INITIAL_BRIGHTNESS = 10
 
 ## Turn off light n-seconds after being turned on, None will disable
 LIGHT_OFF_DELAY = 30 # seconds

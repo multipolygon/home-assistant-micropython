@@ -38,15 +38,14 @@ pwm = PWMPin(config.PWM_PIN, status_led=status_led)
 pwm.set_duty_percent(config.INITIAL_BRIGHTNESS)
 pwm.off()
 
-def on_change(state_machine):
-    state = state_machine.get_state()
+def on_change(state):
+    pwm.set_duty_percent(state.get_attr('brightness', config.INITIAL_BRIGHTNESS))
+    pwm.on() if state.get_attr('light') else pwm.off()
     
-    pwm.on() if state[0:2] == 'On' else pwm.off()
-    
-    light.set_state(state[0:2] == 'On')
-    light.set_brightness_state(pwm.get_duty_percent())
-    motion_sensor.set_state('MotionDetected' in state)
-    automatic_switch.set_state('Auto' in state)
+    light.set_state(state.get_attr('light'))
+    light.set_brightness_state(state.get_attr('brightness', config.INITIAL_BRIGHTNESS))
+    motion_sensor.set_state(state.get_attr('motion', False))
+    automatic_switch.set_state(state.get_attr('auto', True))
 
     schedule(publish_state, None)
 
@@ -60,8 +59,7 @@ def light_command(message):
 ha.subscribe(light.command_topic(), light_command)
 
 def brightness_command(message):
-    pwm.set_duty_percent(int(message))
-    on_change(state_machine)
+    state_machine.set_attr(brightness=int(message))
 
 ha.subscribe(light.brightness_command_topic(), brightness_command)
 
