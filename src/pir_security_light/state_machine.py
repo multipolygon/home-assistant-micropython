@@ -3,19 +3,6 @@ from micropython import schedule
 import config
 
 class State():
-    def __init__(self, state):
-        self.state = state
-        self.__enter__()
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self):
-        pass
-
-    def __light(self, on):
-        pass
-
     def set_brightness(self, percent):
         if self.state.brightness != percent:
             self.state.brightness = percent
@@ -32,6 +19,9 @@ class State():
             self.state.set_changed()
 
 class Off(State):
+    def __enter__(self):
+        self.state.light = False
+        
     def light(self, on):
         if on:
             self.state.goto('On')
@@ -41,11 +31,18 @@ class Off(State):
             self.state.goto('OnAuto')
 
 class On(State):
+    def __enter__(self):
+        self.state.light = True
+    
     def light(self, on):
         if not on:
             self.state.goto('Off')
 
 class OnAuto(State):
+    def __enter__(self):
+        self.state.light = True
+        self.timer = Timer(-1)
+        
     def light(self, on):
         if on:
             self.state.goto('On')
@@ -60,9 +57,6 @@ class OnAuto(State):
 
     def auto_timeout(self):
         self.state.goto('Off')
-
-    def __enter__(self):
-        self.timer = Timer(-1)
 
     def __exit__(self):
         self._clear_timer()
@@ -82,23 +76,26 @@ class OnAuto(State):
         )
 
 class StateMachine():
-    def __init__(self, on_change=None):
-        self._state = Off(self)
+    def __init__(self, initial_state, on_change=None):
+        self._state = None
         self._changed = False
         self._on_change = on_change
-        
+
+        self.light = False
         self.brightness = config.INITIAL_BRIGHTNESS
         self.motion = False
         self.automatic = True
 
-    def get_state(self):
-        return self._state.__class__.__name__
+        self.goto(initial_state)
 
     def goto(self, new_state):
-        if self.get_state() != new_state:
+        if hasattr(self._state, '__exit__'):
             self._state.__exit__()
-            self._state = globals()[new_state](self)
-            self._changed = True
+        self._state = globals()[new_state]()
+        self._state.state = self
+        if hasattr(self._state, '__enter__'):
+            self._state.__enter__()
+        self._changed = True
 
     def event(self, event, *args):
         self._changed = False

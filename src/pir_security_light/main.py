@@ -39,16 +39,16 @@ pwm.off()
 
 def on_change(state_machine):
     pwm.duty_percent(state_machine.brightness)
-    pwm.off() if state_machine.get_state() == 'Off' else pwm.on()
+    pwm.on() if state_machine.light else pwm.off()
     
-    light.set_state(state_machine.get_state() != 'Off')
+    light.set_state(state_machine.light)
     light.set_brightness_state(state_machine.brightness)
     motion_sensor.set_state(state_machine.motion)
     automatic_switch.set_state(state_machine.automatic)
 
     schedule(publish_state, None)
 
-state_machine = StateMachine(on_change)
+state_machine = StateMachine('Off', on_change)
 
 ################################################################################
 
