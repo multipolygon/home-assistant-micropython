@@ -31,7 +31,7 @@ class Light(HomeAssistant):
 
         if brightness:
             c["bri_cmd_t"] = self.brightness_command_topic().replace(self.base_topic(), "~")
-            c["bri_scl"] = 1024
+            c["bri_scl"] = 100
             c["bri_stat_t"] = self.state_topic().replace(self.base_topic(), "~")
             c["bri_val_tpl"] = self.value_template('bri')
 
