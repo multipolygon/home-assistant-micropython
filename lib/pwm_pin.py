@@ -15,11 +15,17 @@ class PWMPin():
         self.timer = Timer(-1)
         self.status_led = status_led
         
-    def duty(self, i):
+    def set_duty(self, i):
         self.pwm_duty = i
 
-    def duty_percent(self, i):
-        self.duty(int(1024 / 100 * i))
+    def get_duty(self):
+        return self.pwm_duty
+
+    def set_duty_percent(self, i):
+        self.set_duty(int(1024 / 100 * i))
+        
+    def get_duty_percent(self):
+        return int(100 / 1024 * self.pwm_duty)
 
     def on(self):
         self.state = True

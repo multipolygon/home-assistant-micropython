@@ -3,139 +3,103 @@ from micropython import schedule
 import config
 import gc
 
-class State():
-    def set_brightness(self, percent):
-        if self.state.brightness != percent:
-            self.state.brightness = percent
-            self.state._changed = True
+class OffAuto():
+    def __init__(self, x):
+        self.edges = {
+            'light_on': 'OnAuto',
+            'automatic_off': 'OffManual',
+            'motion_detected': 'OnAutoMotionDetected',
+        }
 
-class OffAuto(State):
-    def light_on(self):
-        self.state.goto('OnAuto')
+class OnAuto():
+    def __init__(self, x):
+        self.edges = {
+            'light_off': 'OffAuto',
+            'automatic_off': 'OnManual',
+        }
 
-    def automatic_off(self):
-        self.state.goto('OffManual')
-            
-    def motion_detected(self):
-        self.state.goto('OnAutoMotionDetected')
+class OnAutoMotionDetected():
+    def __init__(self, x):
+        self.edges = {
+            'light_on': 'OnAuto',
+            'light_off': 'OffAuto',
+            'automatic_off': 'OffManual',
+            'motion_clear': 'OnAutoMotionClear',
+        }
 
-class OnAuto(State):
-    def light_off(self):
-        self.state.goto('OffAuto')
-
-    def automatic_off(self):
-        self.state.goto('OnManual')
-
-class OnAutoMotionDetected(State):
-    def light_on(self):
-        self.state.goto('OnAuto')
-
-    def light_off(self):
-        self.state.goto('OffAuto')
-
-    def automatic_off(self):
-        self.state.goto('OffManual')
-
-    def motion_clear(self):
-        self.state.goto('OnAutoMotionClear')
-
-class OnAutoMotionClear(State):
-    def __enter__(self):
+class OnAutoMotionClear():
+    def __init__(self, x):
+        self.edges = {
+            'light_on': 'OnAuto',
+            'light_off': 'OffAuto',
+            'automatic_off': 'OffManual',
+            'motion_detected': 'OnAutoMotionDetected',
+            'timeout': 'OffAuto',
+        }
+        
         def timeout(*_):
-            self.state.event('timeout')
+            x.trigger('timeout')
+            
         def _timeout(*_):
             schedule(timeout, None)
+            
         self.timer = Timer(-1)
+        
         self.timer.init(
             period=config.MOTION_LIGHT_OFF_DELAY*1000,
             mode=Timer.ONE_SHOT,
             callback=_timeout
         )
 
-    def light_on(self):
-        self.state.goto('OnAuto')
-
-    def light_off(self):
-        self.state.goto('OffAuto')
-
-    def automatic_off(self):
-        self.state.goto('OffManual')
-
-    def motion_detected(self):
-        self.state.goto('OnAutoMotionDetected')
-
-    def timeout(self):
-        self.state.goto('OffAuto')
-
-    def __exit__(self):
+    def __del__(self):
         self.timer.deinit()
 
-class OffManual(State):
-    def light_on(self):
-        self.state.goto('OnManual')
-
-    def automatic_on(self):
-        self.state.goto('OffAuto')
-
-    def motion_detected(self):
-        self.state.goto('OffManualMotionDetected')
+class OffManual():
+    def __init__(self, x):
+        self.edges = {
+            'light_on': 'OnManual',
+            'automatic_on': 'OffAuto',
+            'motion_detected': 'OffManualMotionDetected',
+        }
         
-class OnManual(State):
-    def light_off(self):
-        self.state.goto('OffManual')
+class OnManual():
+    def __init__(self, x):
+        self.edges = {
+            'light_off': 'OffManual',
+            'automatic_on': 'OnAuto',
+            'motion_detected': 'OnManualMotionDetected',
+        }
 
-    def automatic_on(self):
-        self.state.goto('OnAuto')
+class OffManualMotionDetected():
+    def __init__(self, x):
+        self.edges = {
+            'light_on': 'OnManualMotionDetected',
+            'automatic_on': 'OnAutoMotionDetected',
+            'motion_clear': 'OffManual',
+        }
 
-    def motion_detected(self):
-        self.state.goto('OnManualMotionDetected')
-
-class OffManualMotionDetected(State):
-    def light_on(self):
-        self.state.goto('OnManualMotionDetected')
-
-    def automatic_on(self):
-        self.state.goto('OnAutoMotionDetected')
-    
-    def motion_clear(self):
-        self.state.goto('OffManual')
-
-class OnManualMotionDetected(State):
-    def light_off(self):
-        self.state.goto('OffManualMotionDetected')
-
-    def automatic_on(self):
-        self.state.goto('OnAutoMotionDetected')
-    
-    def motion_clear(self):
-        self.state.goto('OnManual')
+class OnManualMotionDetected():
+    def __init__(self, x):
+        self.edges = {
+            'light_off': 'OffManualMotionDetected',
+            'automatic_on': 'OnAutoMotionDetected',
+            'motion_clear': 'OnManual',
+        }
         
 class StateMachine():
-    def __init__(self, initial_state, on_change=None):
-        self._state = None
-        self._changed = False
-        self._on_change = on_change
-        self.brightness = config.INITIAL_BRIGHTNESS
-        self.goto(initial_state)
+    def __init__(self, on_change=None):
+        self.state = OffAuto(self)
+        self.on_change = on_change
 
-    def goto(self, new_state):
-        if hasattr(self._state, '__exit__'):
-            self._state.__exit__()
-        self._state = globals()[new_state]()
-        gc.collect()
-        self._state.state = self
-        if hasattr(self._state, '__enter__'):
-            self._state.__enter__()
-        self._changed = True
-
-    def event(self, event, *args):
-        self._changed = False
-        if hasattr(self._state, event):
-            getattr(self._state, event)(*args)
-        if self._changed:
-            if self._on_change:
-                schedule(self._on_change, self)
-        self._changed = False
+    def trigger(self, edge, *args):
+        if edge in self.state.edges:
+            new_state = self.state.edges[edge]
+            print('State: %s' % new_state)
+            del self.state
+            gc.collect()
+            self.state = globals()[new_state](self)
+            if self.on_change:
+                schedule(self.on_change, self)
 
     def get_state(self):
-        return self._state.__class__.__name__
+        return self.state.__class__.__name__
