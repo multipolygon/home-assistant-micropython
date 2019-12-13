@@ -38,48 +38,49 @@ pwm = PWMPin(config.PWM_PIN, status_led=status_led)
 pwm.off()
 
 def on_change(state_machine):
-    pwm.duty_percent(state_machine.brightness)
-    pwm.on() if state_machine.light else pwm.off()
+    state = state_machine.get_state()
+    print('on_change: ' + state)
     
-    light.set_state(state_machine.light)
+    pwm.duty_percent(state_machine.brightness)
+    pwm.on() if state[0:2] == 'On' else pwm.off()
+    
+    light.set_state(state[0:2] == 'On')
     light.set_brightness_state(state_machine.brightness)
-    motion_sensor.set_state(state_machine.motion)
-    automatic_switch.set_state(state_machine.automatic)
+    motion_sensor.set_state('MotionDetected' in state)
+    automatic_switch.set_state('Auto' in state)
 
     schedule(publish_state, None)
 
-state_machine = StateMachine('Off', on_change)
+state_machine = StateMachine('OffAuto', on_change)
 
 ################################################################################
 
 def light_command(message):
-    state_machine.event('light', bytearray(light.PAYLOAD_ON) == message)
+    state_machine.event('light_%s' % ('on' if bytearray(light.PAYLOAD_ON) == message else 'off'))
 
 ha.subscribe(light.command_topic(), light_command)
 
 def brightness_command(message):
-    state_machine.event('brightness', int(message))
+    state_machine.event('set_brightness', int(message))
 
 ha.subscribe(light.brightness_command_topic(), brightness_command)
 
 def automatic_switch_command(message):
-    state_machine.event('automatic', bytearray(automatic_switch.PAYLOAD_ON) == message)
+    state_machine.event('automatic_%s' % ('on' if bytearray(automatic_switch.PAYLOAD_ON) == message else 'off'))
 
 ha.subscribe(automatic_switch.command_topic(), automatic_switch_command)
 
 ################################################################################
 
 def pir_on(*_):
-    state_machine.event('motion', True)
+    state_machine.event('motion_detected')
 
 def pir_off(*_):
-    state_machine.event('motion', False)
+    state_machine.event('motion_clear')
 
 Button(config.PIR_SENSOR_PIN, pir_on, pir_off, inverted=config.PIR_INVERTED)
 
 ################################################################################
-
-print('Running...')
 
 def loop():
     ha.wait_msg()
