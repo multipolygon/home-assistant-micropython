@@ -3,7 +3,7 @@ version.py
 bin/*
 !bin/.keep
 wip
-scratch.py
+scratch.*
 
 *~
 .DS_Store

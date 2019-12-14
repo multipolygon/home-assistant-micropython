@@ -11,4 +11,5 @@ home_assistant_mqtt.py
 mqtt.py
 pwm_pin.py
 secrets.py
+state.py
 wifi.py
