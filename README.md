@@ -12,11 +12,9 @@ The MQTT Discovery lib is mostly stable and could be used in any project:
 
 For example usage see:
 
-- [src/light/main.py](./src/light/main.py)
-- [src/flow_sensor/main.py](./src/flow_sensor/main.py)
-- [src/environment_sensor/main.py](./src/environment_sensor/main.py)
-
-See [build](./build) directory for files which can be loaded directly on to ESP8266 device.)
+- [./build/py/pir_security_light/](./build/py/pir_security_light/)
+- [./build/py/counter_sensor/](./build/py/counter_sensor/)
+- [./build/py/light/](./build/py/light/)
 
 ## Install Notes
 
