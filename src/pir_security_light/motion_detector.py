@@ -1,6 +1,7 @@
 from lib.button import Button
 from machine import Timer
 from micropython import schedule
+import battery
 import config
 
 class MotionDetector():
@@ -16,7 +17,7 @@ class MotionDetector():
         
         def pir_on(*_):
             timer.deinit()
-            if state.automatic_mode and not(state.manual_override) and (config.LOW_BATTERY_DISABLE == None or state.battery_percent > config.LOW_BATTERY_DISABLE):
+            if state.automatic_mode and not(state.manual_override) and (config.LOW_BATTERY_DISABLE == None or battery.percent() > config.LOW_BATTERY_DISABLE):
                 state.set(motion = True, light = True)
             else:
                 state.set(motion = True)

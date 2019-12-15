@@ -9,7 +9,6 @@ home_assistant/sensor.py
 home_assistant/sensors/battery.py
 home_assistant/switch.py
 home_assistant_mqtt.py
-mqtt.py
 pwm_pin.py
 random.py
 secrets.py

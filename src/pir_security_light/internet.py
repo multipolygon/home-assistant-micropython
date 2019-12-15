@@ -6,6 +6,7 @@ from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.sensors.battery import BatterySensor
 from lib.home_assistant.switch import Switch
 from lib.home_assistant_mqtt import HomeAssistantMQTT
+import battery
 import wifi
 
 wifi.disable_access_point()
@@ -50,7 +51,7 @@ class Internet():
             light.set_brightness_state(state.brightness)
             motion_sensor.set_state(state.motion)
             auto_mode.set_state(state.automatic_mode)
-            battery_sensor.set_state(state.battery_percent)
+            battery_sensor.set_state(battery.percent())
             ha.publish_state(reconnect=False)
 
         state.set_callback(publish_state, on=['light', 'motion', 'battery_level'])
