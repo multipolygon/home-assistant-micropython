@@ -11,7 +11,8 @@ PIR_INVERTED = True
 #### Light ####
 
 ## Relay shield is D1 by default
-PWM_PIN = pinmap.D1 
+# TODO: Use D8 (pull down)
+PWM_PIN = pinmap.D1
 
 ## If DIMMABLE, set initial brightness as percentage
 INITIAL_BRIGHTNESS = 10
@@ -21,3 +22,7 @@ LIGHT_OFF_DELAY = 30 # seconds
 
 ## Turn off light n-seconds after motion detected
 MOTION_LIGHT_OFF_DELAY = 30 # seconds
+
+#### Battery ####
+
+LOW_BATTERY_DISABLE = 50 # percent or None

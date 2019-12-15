@@ -63,7 +63,7 @@ def build(source_dir, source_file):
         target_file = target_file.replace('.py', '.mpy')
     print(' --> ' + target_file)
     target_file_relative = pathfix(target_file.replace(build_dir, "."))
-    if not os.path.isfile(target_file) or not args.modified_only or os.path.getmtime(source_file) > os.path.getmtime(target_file) or target_file_relative == './main.py':
+    if not os.path.isfile(target_file) or not args.modified_only or os.path.getmtime(source_file) > os.path.getmtime(target_file) or target_file_relative == './main.py' or target_file_relative == './main.mpy':
         if args.cross_compile:
             mpy_cross.run("-o", target_file, source_file)
         else:
