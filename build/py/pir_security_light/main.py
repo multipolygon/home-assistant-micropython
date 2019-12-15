@@ -13,5 +13,7 @@ state = State(
 )
 
 Light(state)
+
 MotionDetector(state)
-Internet(state).run()
+
+Internet(state).wait_for_messages()

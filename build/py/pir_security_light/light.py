@@ -8,7 +8,7 @@ class Light():
         pwm.off()
 
         def update_light(state):
-            print('update_light()')
+            print('Light.update_light()')
             pwm.set_duty_percent(state.brightness)
             pwm.on() if state.light else pwm.off()
 

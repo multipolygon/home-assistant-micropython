@@ -1,5 +1,3 @@
-from micropython import schedule
-
 class StateAttributeError(AttributeError):
     pass
 
@@ -23,7 +21,7 @@ class State():
             for cb, on in self.callbacks:
                 for key in changed:
                     if key in on:
-                        schedule(cb, self)
+                        cb(self)
                         break
                 
     def set_callback(self, cb, on=[]):
