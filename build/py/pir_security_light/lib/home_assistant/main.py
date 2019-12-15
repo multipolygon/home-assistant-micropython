@@ -6,6 +6,7 @@
 
 from machine import unique_id
 from ubinascii import hexlify
+from uos import uname
 
 try:
     from lib.version import build_date
@@ -15,7 +16,7 @@ except:
 class HomeAssistant():
     NAME = None
     MANUFACTURER = "Echidna"
-    MODEL = "ESP8266"
+    MODEL = uname().sysname.upper()
     UID = hexlify(unique_id()).decode("utf-8").upper()
     BUILD_DATE = build_date
     DISCOVERY_PREFIX = "homeassistant"
@@ -70,9 +71,12 @@ class HomeAssistant():
 
     def component_config(self, **args):
         return None
+
+    def device_name(self):
+        return " ".join((self.NAME or self.MANUFACTURER, self.MODEL, self.UID))
     
     def full_name(self):
-        return " ".join((self.MANUFACTURER, self.MODEL, self.UID, self.name()))
+        return " ".join((self.device_name(), self.name()))
 
     def topic_prefix(self):
         return self.TOPIC_PREFIX and (self.TOPIC_PREFIX + "/") or ""
@@ -100,7 +104,7 @@ class HomeAssistant():
     
     def device(self):
         return {
-            "name": (self.NAME and (self.NAME + " ") or "") + self.UID,
+            "name": self.device_name(),
             "mf": self.MANUFACTURER,
             "mdl": self.MODEL,
             "ids": self.UID,

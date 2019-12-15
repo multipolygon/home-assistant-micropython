@@ -1,5 +1,7 @@
 from lib.esp8266.wemos.d1mini import pinmap
 
+NAME = "Security Floodlight"
+
 #### PIR Sensor ####
 
 ## PIR shields are D3 by default

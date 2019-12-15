@@ -7,6 +7,7 @@ from lib.home_assistant.sensors.battery import BatterySensor
 from lib.home_assistant.switch import Switch
 from lib.home_assistant_mqtt import HomeAssistantMQTT
 import battery
+import config
 import wifi
 
 wifi.disable_access_point()
@@ -16,7 +17,7 @@ class Internet():
     def __init__(self, state):
         print(HomeAssistant.UID)
 
-        HomeAssistant.NAME = "Security Light"
+        HomeAssistant.NAME = config.NAME
         HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
         ha = HomeAssistantMQTT()
@@ -54,7 +55,7 @@ class Internet():
             battery_sensor.set_state(battery.percent())
             ha.publish_state(reconnect=False)
 
-        state.set_callback(publish_state, on=['light', 'motion', 'battery_level'])
+        state.set_callback(publish_state, on=['light', 'motion'])
         
     def wait_for_messages(self):
         self.ha.wait_for_messages(status_led=status_led)
