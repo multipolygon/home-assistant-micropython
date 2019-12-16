@@ -15,7 +15,7 @@ class HomeAssistantMQTT():
         self.configs = {}
         self.callbacks = {}
         self.attributes = {}
-        self.send_config_on_connect = True
+        self.publish_config_on_connect = True
 
     def mqtt_connect(self):
         self.mqtt = MQTTClient(
@@ -38,8 +38,8 @@ class HomeAssistantMQTT():
 
         sleep(1)
         
-        if self.send_config_on_connect:
-            self.send_config_on_connect = not(self.publish_config())
+        if self.publish_config_on_connect:
+            self.publish_config_on_connect = not(self.publish_config())
 
     def mqtt_subscribe(self):
         n = len(self.callbacks)
