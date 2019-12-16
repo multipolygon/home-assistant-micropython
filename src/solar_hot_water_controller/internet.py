@@ -9,7 +9,7 @@ import config
 import wifi
 
 wifi.disable_access_point()
-wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
+wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD, timeout=10)
 
 class Internet():
     def __init__(self, state):
@@ -42,7 +42,7 @@ class Internet():
             solar_temperature_sensor.set_state(state.solar_temperature)
             tank_temperature_sensor.set_state(state.tank_temperature)
             pump_switch.set_state(state.pump == config.PUMP_ON)
-            ha.publish_state(reconnect=False)
+            state.set(telemetry = ha.publish_state())
 
         self.publish_state = publish_state
 

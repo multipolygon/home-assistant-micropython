@@ -104,7 +104,7 @@ class HomeAssistantMQTT():
     def set_attribute(self, key, value):
         self.attributes[key] = value
         
-    def publish_state(self, reconnect=False):
+    def publish_state(self):
         if self.mqtt:
             for integration in self.integrations.values():
                 gc.collect()
@@ -122,7 +122,8 @@ class HomeAssistantMQTT():
 
                 self.mqtt.publish(bytearray(integration.state_topic()), state)
 
-                break # Optimisation: Return on first item since they all share the same state
+                return True # Optimisation: Return on first item since they all share the same state
+        return False
 
     def subscribe(self, topic, callback):
         self.callbacks[topic] = callback
