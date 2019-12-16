@@ -75,7 +75,11 @@ class HomeAssistantMQTT():
         for name, integration in self.integrations.items():
             config = json(integration.config(**self.configs[name]))
             gc.collect()
-            self.mqtt.publish(integration.config_topic(), config, retain=True)
+            self.mqtt.publish(
+                bytearray(integration.config_topic()),
+                bytearray(config),
+                retain=True
+            )
             gc.collect()
             sleep(1)
 
@@ -93,11 +97,11 @@ class HomeAssistantMQTT():
 
             gc.collect()
             
-            state = json(integration.state())
+            state = bytearray(json(integration.state()))
             
             gc.collect()
             
-            self.mqtt.publish(integration.state_topic(), state)
+            self.mqtt.publish(bytearray(integration.state_topic()), state)
             
             break # Optimisation: Return on first item since they all share the same state
 
