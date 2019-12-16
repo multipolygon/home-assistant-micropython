@@ -25,7 +25,7 @@ class Internet():
 
         light = ha.register('Light', Light, { 'brightness': True })
         motion_sensor = ha.register('Motion', MotionBinarySensor)
-        auto_mode = ha.register('Automatic', Switch)
+        auto_switch = ha.register('Automatic', Switch)
         battery_sensor = ha.register('Battery', BatterySensor)
 
         def light_command(message):
@@ -38,10 +38,10 @@ class Internet():
 
         ha.subscribe(light.brightness_command_topic(), brightness_command)
 
-        def auto_mode_command(message):
-            state.set(automatic_mode = bytearray(auto_mode.PAYLOAD_ON) == message)
+        def auto_switch_command(message):
+            state.set(automatic = bytearray(auto_switch.PAYLOAD_ON) == message)
 
-        ha.subscribe(auto_mode.command_topic(), auto_mode_command)
+        ha.subscribe(auto_switch.command_topic(), auto_switch_command)
 
         ha.mqtt_connect()
 
@@ -52,7 +52,7 @@ class Internet():
             light.set_state(state.light)
             light.set_brightness_state(state.brightness)
             motion_sensor.set_state(state.motion)
-            auto_mode.set_state(state.automatic_mode)
+            auto_switch.set_state(state.automatic)
             battery_sensor.set_state(battery.percent())
             ha.publish_state(reconnect=False)
 

@@ -9,7 +9,7 @@ state = State(
     light = False,
     brightness = config.INITIAL_BRIGHTNESS,
     motion = False,
-    automatic_mode = True,
+    automatic = True,
 )
 
 state.observer(Light)
