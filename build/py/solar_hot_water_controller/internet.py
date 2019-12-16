@@ -35,15 +35,13 @@ class Internet():
 
         ha.subscribe(auto_switch.command_topic(), auto_switch_command)
 
-        ha.mqtt_connect()
-
         self.publish_scheduled = False
 
         def publish_state(_):
             self.publish_scheduled = False
             solar_temperature_sensor.set_state(state.solar_temperature)
             tank_temperature_sensor.set_state(state.tank_temperature)
-            pump_switch.set_state(state.pump)
+            pump_switch.set_state(state.pump == config.PUMP_ON)
             ha.publish_state(reconnect=False)
 
         self.publish_state = publish_state
@@ -54,4 +52,7 @@ class Internet():
             schedule(self.publish_state, None)
 
     def wait_for_messages(self):
-        self.ha.wait_for_messages(status_led=status_led)
+        self.ha.wait_for_messages(
+            status_led=status_led,
+            connection_required=False
+        )

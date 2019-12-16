@@ -8,6 +8,9 @@ import gc
 import machine
 import wifi
 
+class MQTTCallbackException(Exception):
+    pass
+
 class HomeAssistantMQTT():
     def __init__(self):
         self.state = {}
@@ -16,8 +19,11 @@ class HomeAssistantMQTT():
         self.callbacks = {}
         self.attributes = {}
         self.publish_config_on_connect = True
+        self.mqtt = None
 
     def mqtt_connect(self):
+        self.mqtt_disconnect()
+        
         self.mqtt = MQTTClient(
             wifi.mac(),
             secrets.MQTT_SERVER,
@@ -40,6 +46,14 @@ class HomeAssistantMQTT():
         
         if self.publish_config_on_connect:
             self.publish_config_on_connect = not(self.publish_config())
+            
+    def mqtt_disconnect(self):
+        if self.mqtt:
+            try:
+                self.mqtt.disconnect()
+            except:
+                pass
+            self.mqtt = None
 
     def mqtt_subscribe(self):
         n = len(self.callbacks)
@@ -60,10 +74,14 @@ class HomeAssistantMQTT():
             self.mqtt.subscribe(bytearray(topic))
 
     def mqtt_receive(self, in_topic, message):
-        for topic, callback in self.callbacks.items():
-            if bytearray(topic) == in_topic:
-                callback(message)
-                break
+        try:
+            for topic, callback in self.callbacks.items():
+                if bytearray(topic) == in_topic:
+                    callback(message)
+                    break
+        except Exception as exception:
+            print_exception(exception)
+            raise MQTTCallbackException()
 
     def register(self, name, Integration, config={}):
         self.integrations[name] = Integration(name=name, state=self.state)
@@ -87,38 +105,57 @@ class HomeAssistantMQTT():
         self.attributes[key] = value
         
     def publish_state(self, reconnect=False):
-        for integration in self.integrations.values():
-            gc.collect()
-            
-            self.attributes["IP"] = wifi.ip()
-            self.attributes["MAC"] = wifi.mac()
-            self.attributes["RSSI"] = wifi.rssi()
-            integration.set_attr(self.attributes)
+        if self.mqtt:
+            for integration in self.integrations.values():
+                gc.collect()
 
-            gc.collect()
-            
-            state = bytearray(json(integration.state()))
-            
-            gc.collect()
-            
-            self.mqtt.publish(bytearray(integration.state_topic()), state)
-            
-            break # Optimisation: Return on first item since they all share the same state
+                self.attributes["IP"] = wifi.ip()
+                self.attributes["MAC"] = wifi.mac()
+                self.attributes["RSSI"] = wifi.rssi()
+                integration.set_attr(self.attributes)
+
+                gc.collect()
+
+                state = bytearray(json(integration.state()))
+
+                gc.collect()
+
+                self.mqtt.publish(bytearray(integration.state_topic()), state)
+
+                break # Optimisation: Return on first item since they all share the same state
 
     def subscribe(self, topic, callback):
         self.callbacks[topic] = callback
 
-    def wait_for_messages(self, status_led=None):
-        try:
+    def wait_for_messages(self, status_led=None, connection_required=True):
+        if connection_required:
+            try:
+                while True:
+                    gc.collect()
+                    self.mqtt.wait_msg()
+
+            except Exception as exception:
+                print_exception(exception)
+                if status_led:
+                    status_led.fast_blink()
+                sleep(random_int(6))
+                if status_led:
+                    status_led.off()
+                machine.reset()
+                
+        else:
             while True:
-                gc.collect()
-                self.mqtt.wait_msg()
-            
-        except Exception as exception:
-            print_exception(exception)
-            if status_led:
-                status_led.fast_blink()
-            sleep(random_int(6))
-            if status_led:
-                status_led.off()
-            machine.reset()
+                try:
+                    if wifi.is_connected():
+                        ha.mqtt_connect()
+                        while True:
+                            gc.collect()
+                            try:
+                                self.ha.mqtt.wait_msg()
+                            except MQTTCallbackException:
+                                pass
+                except Exception as exception:
+                    self.mqtt.disconnect()
+                    print_exception(exception)
+                print('No connection!')
+                sleep(random_int(8))
