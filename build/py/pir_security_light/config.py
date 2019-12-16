@@ -5,10 +5,10 @@ NAME = "Security Floodlight"
 #### PIR Sensor ####
 
 ## PIR shields are D3 by default
-PIR_SENSOR_PIN = pinmap.D2
+PIR_SENSOR_PIN = pinmap.D3
 
-## If True, a button press will toggle the output pin. Set to False to always turn ON and never OFF. False is useful for PIR sensors.
-PIR_INVERTED = True
+## Set to False for Wemos PIR Shield
+PIR_INVERTED = False
 
 #### Light ####
 
@@ -20,11 +20,11 @@ PWM_PIN = pinmap.D1
 INITIAL_BRIGHTNESS = 10
 
 ## Turn off light n-seconds after being turned on, None will disable
-LIGHT_OFF_DELAY = 30 # seconds
+LIGHT_OFF_DELAY = 10 # seconds
 
 ## Turn off light n-seconds after motion detected
 MOTION_LIGHT_OFF_DELAY = 30 # seconds
 
 #### Battery ####
 
-LOW_BATTERY_DISABLE = 50 # percent or None
+LOW_BATTERY_DISABLE = None # 50 # percent or None

@@ -6,6 +6,7 @@ from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.sensors.battery import BatterySensor
 from lib.home_assistant.switch import Switch
 from lib.home_assistant_mqtt import HomeAssistantMQTT
+from micropython import schedule
 import battery
 import config
 import wifi
@@ -20,8 +21,7 @@ class Internet():
         HomeAssistant.NAME = config.NAME
         HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
-        ha = HomeAssistantMQTT()
-        self.ha = ha
+        self.ha = ha = HomeAssistantMQTT()
 
         light = ha.register('Light', Light, { 'brightness': True })
         motion_sensor = ha.register('Motion', MotionBinarySensor)
@@ -29,8 +29,7 @@ class Internet():
         battery_sensor = ha.register('Battery', BatterySensor)
 
         def light_command(message):
-            x = bytearray(light.PAYLOAD_ON) == message
-            state.set(light = x, manual_override = x)
+            state.set(light = bytearray(light.PAYLOAD_ON) == message)
 
         ha.subscribe(light.command_topic(), light_command)
 
@@ -46,8 +45,10 @@ class Internet():
 
         ha.mqtt_connect()
 
-        def publish_state(state):
-            print('Internet.publish_state()')
+        self.publish_scheduled = False
+
+        def publish_state(_):
+            self.publish_scheduled = False
             light.set_state(state.light)
             light.set_brightness_state(state.brightness)
             motion_sensor.set_state(state.motion)
@@ -55,7 +56,13 @@ class Internet():
             battery_sensor.set_state(battery.percent())
             ha.publish_state(reconnect=False)
 
-        state.set_callback(publish_state, on=['light', 'motion'])
-        
+        self.publish_state = publish_state
+
+    def on_state_change(self, state, changed):
+        if 'light' in changed or 'motion' in changed:
+            if not self.publish_scheduled:
+                self.publish_scheduled = True
+                schedule(self.publish_state, None)
+
     def wait_for_messages(self):
         self.ha.wait_for_messages(status_led=status_led)

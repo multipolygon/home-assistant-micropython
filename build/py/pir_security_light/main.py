@@ -1,3 +1,4 @@
+from automation import Automation
 from internet import Internet
 from lib.state import State
 from light import Light
@@ -9,11 +10,12 @@ state = State(
     brightness = config.INITIAL_BRIGHTNESS,
     motion = False,
     automatic_mode = True,
-    manual_override = False,
 )
 
-Light(state)
+state.observer(Light)
 
-MotionDetector(state)
+state.observer(MotionDetector)
 
-Internet(state).wait_for_messages()
+state.observer(Automation)
+
+state.observer(Internet).wait_for_messages()
