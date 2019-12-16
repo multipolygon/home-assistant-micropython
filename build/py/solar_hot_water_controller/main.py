@@ -11,6 +11,7 @@ state = State(
     pump = False,
     automatic = True,
     mode = None,
+    telemetry = False,
 )
 
 state.observer(Pump)

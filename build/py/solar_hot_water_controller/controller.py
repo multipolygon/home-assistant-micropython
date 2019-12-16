@@ -41,6 +41,7 @@ class Controller():
                     )
 
             elif self.mode == BOOST:
+                ## TODO: Timer off
                 new_state = pump_boost(state)
                 if new_state != None:
                     state.set(
