@@ -10,11 +10,12 @@ state = State(
     tank_temperature = None,
     pump = False,
     automatic = True,
+    mode = None,
 )
 
-state.observer(Display)
 state.observer(Pump)
 state.observer(Controller)
+state.observer(Display)
 
 temperature = state.observer(Temperature)
 internet = state.observer(Internet)

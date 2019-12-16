@@ -31,9 +31,7 @@ class State():
             
         if len(changed) != 0 and len(self.observers) != 0:
             for obj in self.observers:
-                self.trigger(obj, "on_state_change", changed)
                 for key in changed:
+                    self.trigger(obj, "on_%s_%s" % (key, 'on' if getattr(self, key) else 'off'))
                     self.trigger(obj, "on_%s_change" % key)
-                    val = getattr(self, key)
-                    if type(val) == type(True):
-                        self.trigger(obj, "on_%s_%s" % (key, 'on' if val else 'off'))
+                self.trigger(obj, "on_state_change", changed)
