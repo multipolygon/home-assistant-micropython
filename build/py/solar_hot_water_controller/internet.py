@@ -1,4 +1,3 @@
-from lib import secrets
 from lib.esp8266.wemos.d1mini import status_led
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.sensors.temperature import TemperatureSensor
@@ -6,10 +5,11 @@ from lib.home_assistant.switch import Switch
 from lib.home_assistant_mqtt import HomeAssistantMQTT
 from micropython import schedule
 import config
+import secrets
 import wifi
 
 wifi.disable_access_point()
-wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD, timeout=10)
+wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
 
 class Internet():
     def __init__(self, state):
@@ -18,7 +18,7 @@ class Internet():
         HomeAssistant.NAME = config.NAME
         HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
-        self.ha = ha = HomeAssistantMQTT()
+        self.ha = ha = HomeAssistantMQTT(secrets)
 
         solar_temperature_sensor = ha.register('Solar', TemperatureSensor)
         tank_temperature_sensor = ha.register('Tank', TemperatureSensor)
@@ -53,6 +53,6 @@ class Internet():
 
     def wait_for_messages(self):
         self.ha.wait_for_messages(
-            status_led=status_led,
-            connection_required=False
+            status_led = status_led,
+            connection_required = False
         )

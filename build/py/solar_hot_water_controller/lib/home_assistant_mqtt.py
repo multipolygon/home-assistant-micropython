@@ -1,4 +1,3 @@
-from lib import secrets
 from lib.random import random_int
 from sys import print_exception
 from ujson import dumps as json
@@ -12,7 +11,8 @@ class MQTTCallbackException(Exception):
     pass
 
 class HomeAssistantMQTT():
-    def __init__(self):
+    def __init__(self, secrets):
+        self.secrets = secrets
         self.state = {}
         self.integrations = {}
         self.configs = {}
@@ -26,9 +26,9 @@ class HomeAssistantMQTT():
         
         self.mqtt = MQTTClient(
             wifi.mac(),
-            secrets.MQTT_SERVER,
-            user=bytearray(secrets.MQTT_USER),
-            password=bytearray(secrets.MQTT_PASSWORD)
+            self.secrets.MQTT_SERVER,
+            user=bytearray(self.secrets.MQTT_USER),
+            password=bytearray(self.secrets.MQTT_PASSWORD)
         )
 
         def _mqtt_receive(*args):
@@ -48,7 +48,7 @@ class HomeAssistantMQTT():
             self.publish_config_on_connect = not(self.publish_config())
             
     def mqtt_disconnect(self):
-        if self.mqtt:
+        if self.mqtt != None:
             try:
                 self.mqtt.disconnect()
             except:
@@ -89,6 +89,7 @@ class HomeAssistantMQTT():
         return self.integrations[name]
 
     def publish_config(self):
+        print('HA publish config.')
         gc.collect()
         for name, integration in self.integrations.items():
             config = json(integration.config(**self.configs[name]))
@@ -148,15 +149,17 @@ class HomeAssistantMQTT():
             while True:
                 try:
                     if wifi.is_connected():
-                        ha.mqtt_connect()
+                        print('WiFi connected.')
+                        self.mqtt_connect()
                         while True:
                             gc.collect()
                             try:
-                                self.ha.mqtt.wait_msg()
+                                self.mqtt.wait_msg()
                             except MQTTCallbackException:
                                 pass
+                    else:
+                        print('No WiFi!')
                 except Exception as exception:
-                    self.mqtt.disconnect()
                     print_exception(exception)
-                print('No connection!')
+                    self.mqtt_disconnect()
                 sleep(random_int(8))

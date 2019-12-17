@@ -26,3 +26,4 @@ try:
     internet.wait_for_messages()
 except KeyboardInterrupt:
     temperature.stop()
+    print('Stop.')
