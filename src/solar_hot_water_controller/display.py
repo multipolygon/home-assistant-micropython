@@ -10,6 +10,6 @@ class Display():
             "+" if wifi.is_connected() else "-",
             "+" if state.telemetry else "-",
         ), False)
-        oled.write('SOLR %3d' % state.solar_temperature, False)
-        oled.write('TANK %3d' % state.tank_temperature, False)
-        oled.write('PUMP %3s' % ('ON' if state.pump else 'OFF'))
+        oled.write('SOLR:%3d' % state.solar_temperature, False)
+        oled.write('TANK:%3d' % state.tank_temperature, False)
+        oled.write('PUMP:%3s' % ('ON' if state.pump else 'OFF'))
