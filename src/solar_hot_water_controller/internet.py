@@ -9,7 +9,7 @@ import secrets
 import wifi
 
 wifi.disable_access_point()
-wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD, timeout=10)
+wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
 
 class Internet():
     def __init__(self, state):
@@ -53,6 +53,6 @@ class Internet():
 
     def wait_for_messages(self):
         self.ha.wait_for_messages(
-            status_led=status_led,
-            connection_required=False
+            status_led = status_led,
+            connection_required = False
         )

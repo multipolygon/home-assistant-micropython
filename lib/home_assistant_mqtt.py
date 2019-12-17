@@ -89,6 +89,7 @@ class HomeAssistantMQTT():
         return self.integrations[name]
 
     def publish_config(self):
+        print('HA publish config.')
         gc.collect()
         for name, integration in self.integrations.items():
             config = json(integration.config(**self.configs[name]))
@@ -156,8 +157,9 @@ class HomeAssistantMQTT():
                                 self.mqtt.wait_msg()
                             except MQTTCallbackException:
                                 pass
+                    else:
+                        print('No WiFi!')
                 except Exception as exception:
                     print_exception(exception)
                     self.mqtt_disconnect()
-                print('No connection!')
                 sleep(random_int(8))
