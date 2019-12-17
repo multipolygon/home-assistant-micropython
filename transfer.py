@@ -47,8 +47,10 @@ try:
 except FileExistsError:
     pass
 
-copyfile(os.path.join(lib_dir, 'boot.py'), os.path.join(build_dir, 'boot.py'))
+copyfile(os.path.join(lib_dir, 'secrets.py'), os.path.join(build_dir, 'secrets.py'))
+commands.append("put ./secrets.py")
 
+copyfile(os.path.join(lib_dir, 'boot.py'), os.path.join(build_dir, 'boot.py'))
 commands.append("put ./boot.py")
 
 def build(source_dir, source_file):

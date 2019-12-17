@@ -1,4 +1,4 @@
-from config import PUMP_ON, PUMP_OFF, pump_logic
+from config import PUMP_ON, PUMP_OFF, pump_logic, pump_boost
 
 OFF='OFF'
 WAIT='WAIT'
@@ -40,7 +40,7 @@ class Controller():
                         pump = new_state
                     )
 
-            elif self.mode == BOOST:
+            elif state.mode == BOOST:
                 ## TODO: Timer off
                 new_state = pump_boost(state)
                 if new_state != None:

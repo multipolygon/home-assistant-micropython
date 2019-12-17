@@ -9,6 +9,5 @@ home_assistant/switch.py
 home_assistant_mqtt.py
 pwm_pin.py
 random.py
-secrets.py
 state.py
 wifi.py
