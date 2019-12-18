@@ -12,8 +12,10 @@ class Sensor(HomeAssistant):
     def component_config(self, expire_after=None, force_update=True, icon=None, unit=None):
         return {
             "dev_cla": self.DEVICE_CLASS,
-            "ic": icon if icon != None else self.ICON,
-            "unit_of_meas": unit if unit != None else self.UNIT_OF_MEASUREMENT,
-            "frc_upd": force_update,
             "exp_aft": expire_after, ## seconds
+            "frc_upd": force_update,
+            "ic": icon if icon != None else self.ICON,
+            "stat_t": self.state_topic(),
+            "unit_of_meas": unit if unit != None else self.UNIT_OF_MEASUREMENT,
+            "val_tpl": self.value_template(),
         }

@@ -1,50 +1,33 @@
 from config import PUMP_ON, PUMP_OFF, pump_logic, pump_boost
+from lib.home_assistant.climate import MODE_OFF, MODE_AUTO
 
-NOOP='NO-OP'
-WAIT='WAIT'
-AUTO='AUTO'
-BOOST='BOOST'
+OBSERVE = (
+    'mode',
+    'solar_temperature',
+    'tank_temperature',
+    'tank_target_temperature',
+)
+
 
 class Controller():
-    def __init__(self, state):
-        state.set(mode = WAIT)
-
-    def on_pump_on(self, state):
-        if state.mode == WAIT:
-            state.set(mode = BOOST)
-
-    def on_pump_off(self, state):
-        if state.mode != NOOP:
-            state.set(mode = WAIT)
-                
-    def on_automatic_on(self, state):
-        if state.mode == NOOP:
-            state.set(mode = WAIT)
-
-    def on_automatic_off(self, state):
-        state.set(
-            mode = NOOP,
-            pump = PUMP_OFF
-        )
-
     def on_state_change(self, state, changed):
-        if 'solar_temperature' in changed or 'tank_temperature' in changed:
-            if state.mode == NOOP:
-                state.set(pump = PUMP_OFF)
+        for i in OBSERVE:
+            if i in changed:
+                if state.mode == MODE_OFF:
+                    state.set(pump = PUMP_OFF)
 
-            elif state.mode == WAIT or state.mode == AUTO:
-                new_state = pump_logic(state)
-                if new_state != None:
-                    state.set(
-                        mode = AUTO if new_state == PUMP_ON else WAIT,
-                        pump = new_state
-                    )
+                elif state.mode == MODE_AUTO:
+                    new_state = pump_logic(state)
+                    if new_state != None:
+                        state.set(pump = new_state)
 
-            elif state.mode == BOOST:
-                ## TODO: Timer off
-                new_state = pump_boost(state)
-                if new_state != None:
-                    state.set(
-                        mode = BOOST if new_state == PUMP_ON else WAIT,
-                        pump = new_state
-                    )
+                elif state.mode == MODE_BOOST:
+                    ## TODO: Timer off
+                    new_state = pump_boost(state)
+                    if new_state != None:
+                        state.set(
+                            pump = new_state,
+                            mode = MODE_BOOST if new_state == PUMP_ON else MODE_AUTO
+                        )
+                        
+                break
