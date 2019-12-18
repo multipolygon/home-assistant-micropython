@@ -23,7 +23,7 @@ class HomeAssistantMQTT():
 
     def mqtt_connect(self):
         self.mqtt_disconnect()
-        
+
         self.mqtt = MQTTClient(
             wifi.mac(),
             self.secrets.MQTT_SERVER,
@@ -35,11 +35,11 @@ class HomeAssistantMQTT():
             self.mqtt_receive(*args)
         
         self.mqtt.set_callback(_mqtt_receive)
-        
+
         self.mqtt.connect()
 
         sleep(1)
-
+        
         self.mqtt_subscribe()
 
         sleep(1)
@@ -54,8 +54,10 @@ class HomeAssistantMQTT():
             except:
                 pass
             self.mqtt = None
+        gc.collect()
 
     def mqtt_subscribe(self):
+        gc.collect()
         n = len(self.callbacks)
         if n > 0:
             if n == 1:
@@ -63,7 +65,7 @@ class HomeAssistantMQTT():
             else:
                 topic = ""
                 topics = self.callbacks.keys()
-                for i in range(min([len(s) for s in topics])):
+                for i in range(min((len(s) for s in topics))):
                     chars = [s[i] for s in topics]
                     if chars.count(chars[0]) == n:
                         topic += chars[0]
@@ -71,9 +73,12 @@ class HomeAssistantMQTT():
                         break
                 topic += "#"
             gc.collect()
-            self.mqtt.subscribe(bytearray(topic))
+            t = bytearray(topic)
+            gc.collect()
+            self.mqtt.subscribe(t)
 
     def mqtt_receive(self, in_topic, message):
+        gc.collect()
         try:
             for topic, callback in self.callbacks.items():
                 if bytearray(topic) == in_topic:
@@ -83,7 +88,7 @@ class HomeAssistantMQTT():
             print_exception(exception)
             raise MQTTCallbackException()
 
-    def register(self, name, Integration, config={}):
+    def register(self, name, Integration, **config):
         self.integrations[name] = Integration(name=name, state=self.state)
         self.configs[name] = config
         return self.integrations[name]
@@ -92,13 +97,16 @@ class HomeAssistantMQTT():
         print('HA publish config.')
         gc.collect()
         for name, integration in self.integrations.items():
-            config = json(integration.config(**self.configs[name]))
+            print(name)
+            config = integration.config(**self.configs[name])
             gc.collect()
-            self.mqtt.publish(
-                bytearray(integration.config_topic()),
-                bytearray(config),
-                retain=True
-            )
+            config = json(config)
+            gc.collect()
+            config = bytearray(config)
+            gc.collect()
+            topic = bytearray(integration.config_topic())
+            gc.collect()
+            self.mqtt.publish(topic, config, retain=True)
             gc.collect()
             sleep(1)
 

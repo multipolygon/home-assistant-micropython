@@ -11,6 +11,8 @@ class Switch(HomeAssistant):
     def component_config(self, optimistic=True, retain=True):
         return {
             "cmd_t": self.command_topic().replace(self.base_topic(), "~"),
+            "stat_t": self.state_topic(),
+            "val_tpl": self.value_template(),
             "opt": optimistic,
             "ret": retain,
         }

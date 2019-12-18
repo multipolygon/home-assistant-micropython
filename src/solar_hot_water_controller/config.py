@@ -11,20 +11,24 @@ PUMP_ON = 1
 PUMP_OFF = 0
 
 MAXIMUM_SOLAR_TEMPERATURE = 110
-MAXIMUM_TANK_TEMPERATURE = 65
+TANK_TARGET_TEMPERATURE = 65
 
 def pump_logic(state):
     if state.solar_temperature >= MAXIMUM_SOLAR_TEMPERATURE:
+        ## solar is too hot, do not want water to vaporise
         return PUMP_OFF
         
-    elif state.tank_temperature >= MAXIMUM_TANK_TEMPERATURE:
+    elif state.tank_temperature >= state.tank_target_temperature:
+        ## tank is hot enough
         return PUMP_OFF
-        
-    elif state.solar_temperature <= state.tank_temperature + 6:
-        return PUMP_OFF
-        
-    elif state.solar_temperature >= state.tank_temperature + 12:
+
+    elif state.solar_temperature >= 12 + state.tank_temperature:
+        ## solar is more than 12 deg hotter than the tank
         return PUMP_ON
+        
+    elif state.solar_temperature <= 6 + state.tank_temperature:
+        ## solar is less than 6 deg hotter than the tank
+        return PUMP_OFF
 
 def pump_boost(state):
     if state.tank_temperature >= MAXIMUM_TANK_TEMPERATURE + 10:

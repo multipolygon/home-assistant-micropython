@@ -1,5 +1,5 @@
 ## https://www.home-assistant.io/docs/mqtt/discovery/
-## https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/mqtt/abbreviations.py
+## https://github.com/home-assistant/home-assistant/blob/master/homeassistant/components/mqtt/abbreviations.py
 ## https://www.home-assistant.io/components/sensor/#device-class
 ## https://www.home-assistant.io/components/binary_sensor/#device-class
 ## Note to self, do not put any proceedural code or logic in this module!
@@ -37,13 +37,13 @@ class HomeAssistant():
     def state(self):
         return self._state
     
-    def set_state(self, val, attr="_"):
+    def set_state(self, val, prop="_"):
         ns = self.JSON_NAMESPACE or self.COMPONENT
         if ns not in self._state:
             self._state[ns] = {}
         if self.slug() not in self._state[ns]:
             self._state[ns][self.slug()] = {}
-        self._state[ns][self.slug()][attr] = val
+        self._state[ns][self.slug()][prop] = val
         return self._state
 
     def set_attr(self, val):
@@ -54,20 +54,26 @@ class HomeAssistant():
         object_id = "_".join((self.MANUFACTURER, self.MODEL, self.UID))
         return self.topic_prefix() + "/".join((self.DISCOVERY_PREFIX, self.COMPONENT, object_id, self.name(), "config")).lower().replace(' ', '_')
 
-    def config(self, **args):
-        return self.merge_config(
-            {
-                "~": self.base_topic(),
-                "name": self.full_name(),
-                "stat_t": self.state_topic().replace(self.base_topic(), "~"),
-                "val_tpl": self.value_template(),
-                "json_attr_t": self.attributes_topic().replace(self.base_topic(), "~"),
-                "json_attr_tpl": self.attributes_template(),
-                "uniq_id": self.full_name(),
-                "dev": self.device(),
-            },
-            self.component_config(**args)
+    def config(self, *args, **argv):
+        return self.shorten_config(
+            self.merge_config(
+                {
+                    "name": self.full_name(),
+                    "json_attr_t": self.attributes_topic(),
+                    "json_attr_tpl": self.attributes_template(),
+                    "uniq_id": self.full_name(),
+                    "dev": self.device(),
+                },
+                self.component_config(*args, **argv)
+            )
         )
+
+    def shorten_config(self, config):
+        for key, val in config.items():
+            if hasattr(val, 'replace'):
+                config[key] = val.replace(self.base_topic(), "~")
+        config["~"] = self.base_topic()
+        return config
 
     def component_config(self, **args):
         return None
@@ -90,8 +96,12 @@ class HomeAssistant():
     def state_topic(self):
         return self.base_topic()
     
-    def value_template(self, attr='_'):
-        return "{{value_json.%s.%s.%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug(), attr)
+    def value_template(self, prop="_"):
+        if prop != None and prop != "":
+            prop = ".%s" % prop
+        else:
+            prop = ""
+        return "{{value_json.%s.%s%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug(), prop)
 
     def attributes_topic(self):
         return self.base_topic()
@@ -113,7 +123,7 @@ class HomeAssistant():
 
     def merge_config(self, target, source):
         if target and source:
-            for key in source.keys():
-                if source[key] != None:
-                    target[key] = source[key]
+            for key, val in source.items():
+                if val != None:
+                    target[key] = val
         return target

@@ -16,4 +16,6 @@ class BinarySensor(HomeAssistant):
         return {
             "dev_cla": self.DEVICE_CLASS,
             "off_dly": off_delay, ## seconds
+            "stat_t": self.state_topic(),
+            "val_tpl": self.value_template(),
         }
