@@ -38,14 +38,16 @@ class HomeAssistantMQTT():
 
         self.mqtt.connect()
 
-        sleep(1)
-        
-        self.mqtt_subscribe()
-
-        sleep(1)
+        sleep(0.5)
         
         if self.publish_config_on_connect:
             self.publish_config_on_connect = not(self.publish_config())
+            
+            sleep(0.5)
+            
+        self.mqtt_subscribe()
+
+        sleep(0.5)
             
     def mqtt_disconnect(self):
         if self.mqtt != None:
@@ -108,7 +110,7 @@ class HomeAssistantMQTT():
             gc.collect()
             self.mqtt.publish(topic, config, retain=True)
             gc.collect()
-            sleep(1)
+            sleep(0.5)
 
     def set_attribute(self, key, value):
         self.attributes[key] = value

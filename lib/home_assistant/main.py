@@ -68,10 +68,13 @@ class HomeAssistant():
             )
         )
 
+    def shorten_topic(self, topic):
+        return topic.replace(self.base_topic(), "~")
+
     def shorten_config(self, config):
         for key, val in config.items():
             if hasattr(val, 'replace'):
-                config[key] = val.replace(self.base_topic(), "~")
+                config[key] = self.shorten_topic(val)
         config["~"] = self.base_topic()
         return config
 
