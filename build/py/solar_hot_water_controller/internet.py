@@ -1,7 +1,7 @@
 from lib.esp8266.wemos.d1mini import status_led
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.sensors.temperature import TemperatureSensor
-from lib.home_assistant.climate import Climate, MODE_AUTO, MODE_OFF
+from lib.home_assistant.climate import Climate, MODE_OFF
 from lib.home_assistant_mqtt import HomeAssistantMQTT
 from micropython import schedule
 import config
@@ -20,15 +20,9 @@ class Internet():
 
         self.ha = ha = HomeAssistantMQTT(secrets)
 
+        controller = ha.register('Controller', Climate, max = 90)
         solar_temperature_sensor = ha.register('Solar', TemperatureSensor)
         tank_temperature_sensor = ha.register('Tank', TemperatureSensor)
-        
-        controller = ha.register(
-            'Controller',
-            Climate,
-            initial = config.TANK_TARGET_TEMPERATURE,
-            max = 90
-        )
         
         def controller_mode_command(message):
             state.set(mode = message.decode('utf-8'))
@@ -45,11 +39,6 @@ class Internet():
 
         ## Prevent publishing config in the future because it will fail with out-of-memory error:
         ha.publish_config_on_connect = False
-
-        state.set(
-            mode = MODE_AUTO,
-            tank_target_temperature = config.TANK_TARGET_TEMPERATURE,
-        )
         
         self.publish_scheduled = False
 
@@ -58,6 +47,7 @@ class Internet():
             solar_temperature_sensor.set_state(state.solar_temperature)
             tank_temperature_sensor.set_state(state.tank_temperature)
             controller.set_mode(state.mode)
+            controller.set_temperature(state.tank_target_temperature)
             controller.set_current_temperature(state.tank_temperature)
             controller.set_action("off" if state.mode == MODE_OFF else ("heating" if state.pump else "idle"))
             state.set(

@@ -1,23 +1,28 @@
-from controller import Controller
-from display import Display
-from internet import Internet
+import config
 from lib.state import State
-from pump import Pump
-from temperature import Temperature
 
 state = State(
     solar_temperature = None,
     tank_temperature = None,
-    tank_target_temperature = None,
+    tank_target_temperature = config.TANK_TARGET_TEMPERATURE,
     pump = False,
-    mode = None,
+    mode = 'auto',
     telemetry = False,
 )
 
+from internet import Internet
 internet = state.observer(Internet)
-state.observer(Display)
-state.observer(Pump)
+
+from controller import Controller
 state.observer(Controller)
+
+from display import Display
+state.observer(Display)
+
+from pump import Pump
+state.observer(Pump)
+
+from temperature import Temperature
 temperature = state.observer(Temperature)
 
 try:
