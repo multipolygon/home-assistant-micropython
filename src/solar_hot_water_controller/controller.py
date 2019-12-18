@@ -1,5 +1,5 @@
 from config import PUMP_ON, PUMP_OFF, pump_logic, pump_boost
-from lib.home_assistant.climate import MODE_OFF, MODE_AUTO
+from lib.home_assistant.climate import MODE_OFF, MODE_AUTO, MODE_HEAT
 
 OBSERVE = (
     'mode',
@@ -21,13 +21,7 @@ class Controller():
                     if new_state != None:
                         state.set(pump = new_state)
 
-                elif state.mode == MODE_BOOST:
-                    ## TODO: Timer off
-                    new_state = pump_boost(state)
-                    if new_state != None:
-                        state.set(
-                            pump = new_state,
-                            mode = MODE_BOOST if new_state == PUMP_ON else MODE_AUTO
-                        )
+                elif state.mode == MODE_HEAT:
+                    state.set(pump = PUMP_ON)
                         
                 break

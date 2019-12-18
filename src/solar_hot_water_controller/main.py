@@ -14,7 +14,6 @@ state = State(
     telemetry = False,
 )
 
-
 internet = state.observer(Internet)
 state.observer(Display)
 state.observer(Pump)

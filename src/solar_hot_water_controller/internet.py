@@ -57,6 +57,7 @@ class Internet():
             self.publish_scheduled = False
             solar_temperature_sensor.set_state(state.solar_temperature)
             tank_temperature_sensor.set_state(state.tank_temperature)
+            controller.set_mode(state.mode)
             controller.set_current_temperature(state.tank_temperature)
             controller.set_action("off" if state.mode == MODE_OFF else ("heating" if state.pump else "idle"))
             state.set(
