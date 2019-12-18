@@ -61,12 +61,12 @@ def build(source_dir, source_file):
     target_dir = source_file_dir.replace(source_dir, build_dir)
     os.makedirs(target_dir, exist_ok=True)
     target_file = os.path.join(target_dir, source_file_name)
-    if args.cross_compile:
+    if args.cross_compile and not(target_file.endswith('config.py')):
         target_file = target_file.replace('.py', '.mpy')
     print(' --> ' + target_file)
     target_file_relative = pathfix(target_file.replace(build_dir, "."))
     if not os.path.isfile(target_file) or not args.modified_only or os.path.getmtime(source_file) > os.path.getmtime(target_file) or target_file_relative == './main.py' or target_file_relative == './main.mpy':
-        if args.cross_compile:
+        if target_file.endswith('.mpy'):
             mpy_cross.run("-o", target_file, source_file)
         else:
             copyfile(source_file, target_file)
