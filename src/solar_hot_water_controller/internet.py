@@ -8,21 +8,22 @@ import config
 import secrets
 import wifi
 
-wifi.disable_access_point()
-wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-
 class Internet():
     def __init__(self, state):
         print(HomeAssistant.UID)
+
+        status_led.fast_blink()
+        wifi.disable_access_point()
+        wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
+        status_led.slow_blink()
 
         HomeAssistant.NAME = config.NAME
         HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
 
         self.ha = ha = HomeAssistantMQTT(secrets)
 
-        controller = ha.register('Controller', Climate, max = 90)
+        controller = ha.register('Controller', Climate, max = config.TANK_MAXIMUM_TEMPERATURE)
         solar_temperature_sensor = ha.register('Solar', TemperatureSensor)
-        tank_temperature_sensor = ha.register('Tank', TemperatureSensor)
         
         def controller_mode_command(message):
             state.set(mode = message.decode('utf-8'))
@@ -36,6 +37,8 @@ class Internet():
 
         if wifi.is_connected():
             ha.mqtt_connect()
+            
+        status_led.off()
 
         ## Prevent publishing config in the future because it will fail with out-of-memory error:
         ha.publish_config_on_connect = False
@@ -44,12 +47,11 @@ class Internet():
 
         def publish_state(_):
             self.publish_scheduled = False
-            solar_temperature_sensor.set_state(state.solar_temperature)
-            tank_temperature_sensor.set_state(state.tank_temperature)
             controller.set_mode(state.mode)
             controller.set_temperature(state.tank_target_temperature)
             controller.set_current_temperature(state.tank_temperature)
             controller.set_action("off" if state.mode == MODE_OFF else ("heating" if state.pump else "idle"))
+            solar_temperature_sensor.set_state(state.solar_temperature)
             state.set(
                 telemetry = ha.publish_state()
             )
