@@ -7,10 +7,10 @@ class Display():
         self.show_telemetry(status)
         
     def show_telemetry(self, status):
-        oled.write('WiFi:', False)
-        oled.write(('%8d' % wifi.rssi()) if wifi.is_connected() else "      No", False)
+        oled.write('WIFI:', False)
+        oled.write(('%8d' % wifi.rssi()) if wifi.is_connected() else ('%8s' % '--'), False)
         oled.write('MQTT:', False)
-        oled.write('%8s' % ('Ok' if status.telemetry else 'No'))
+        oled.write('%8s' % ('OK' if status.telemetry else '--'))
         sleep(2)
     
     def on_state_change(self, state, changed):
@@ -19,5 +19,5 @@ class Display():
         else:
             oled.write('SOLR:%3d' % state.solar_temperature, False)
             oled.write('TANK:%3d' % state.tank_temperature, False)
-            oled.write('TRGT:%3d' % state.tank_target_temperature, False)
-            oled.write('%-5s%3s' % (state.mode.upper() + ':', 'ON' if state.pump else 'OFF'))
+            oled.write('TARG:%3d' % state.tank_target_temperature, False)
+            oled.write('%-5s%3s' % (state.mode.upper(), 'ON' if state.pump else 'OFF'))
