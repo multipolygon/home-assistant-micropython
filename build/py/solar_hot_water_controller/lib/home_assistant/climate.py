@@ -4,6 +4,8 @@ MODE_AUTO = "auto"
 MODE_OFF = "off"
 MODE_HEAT = "heat"
 
+ALL_MODES = [MODE_AUTO, MODE_OFF, MODE_HEAT]
+
 class Climate(HomeAssistant):
     COMPONENT = "climate"
 
@@ -38,7 +40,7 @@ class Climate(HomeAssistant):
             "mode_cmd_t": self.shorten_topic(self.mode_command_topic()),
             "mode_stat_t": state_topic,
             "mode_stat_tpl": self.value_template(key = "mode"),
-            "modes": [MODE_AUTO, MODE_OFF, MODE_HEAT],
+            "modes": ALL_MODES,
             "precision": 1.0,
             "ret": retain,
             "temp_cmd_t": self.shorten_topic(self.temperature_command_topic()),

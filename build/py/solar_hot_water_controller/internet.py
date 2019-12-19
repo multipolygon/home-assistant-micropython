@@ -1,7 +1,7 @@
 from lib.esp8266.wemos.d1mini import status_led
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.sensors.temperature import TemperatureSensor
-from lib.home_assistant.climate import Climate, MODE_OFF
+from lib.home_assistant.climate import Climate, MODE_OFF, ALL_MODES
 from lib.home_assistant.mqtt import HomeAssistantMQTT
 from micropython import schedule
 import config
@@ -26,7 +26,9 @@ class Internet():
         solar_temperature_sensor = ha.register('Solar', TemperatureSensor)
         
         def controller_mode_command(message):
-            state.set(mode = message.decode('utf-8'))
+            mode = message.decode('utf-8')
+            if mode in ALL_MODES:
+                state.set(mode = mode)
 
         ha.subscribe(controller.mode_command_topic(), controller_mode_command)
 
