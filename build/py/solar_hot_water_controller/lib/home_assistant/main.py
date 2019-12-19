@@ -36,19 +36,26 @@ class HomeAssistant():
 
     def state(self):
         return self._state
+
+    def reset_state(self):
+        for key in self._state.keys():
+            del self._state[key]
     
-    def set_state(self, val, prop="_"):
+    def set_state(self, val, key=None):
         ns = self.JSON_NAMESPACE or self.COMPONENT
         if ns not in self._state:
             self._state[ns] = {}
-        if self.slug() not in self._state[ns]:
-            self._state[ns][self.slug()] = {}
-        self._state[ns][self.slug()][prop] = val
-        return self._state
+        if key == None:
+            self._state[ns][self.slug()] = val
+        else:
+            if self.slug() not in self._state[ns]:
+                self._state[ns][self.slug()] = {}
+            self._state[ns][self.slug()][key] = val
 
-    def set_attr(self, val):
-        self._state['attr'] = val
-        return self._state
+    def set_attr(self, key, val):
+        if 'attr' not in self._state:
+            self._state['attr'] = {}
+        self._state['attr'][key] = val
 
     def config_topic(self):
         object_id = "_".join((self.MANUFACTURER, self.MODEL, self.UID))
@@ -99,12 +106,9 @@ class HomeAssistant():
     def state_topic(self):
         return self.base_topic()
     
-    def value_template(self, prop="_"):
-        if prop != None and prop != "":
-            prop = ".%s" % prop
-        else:
-            prop = ""
-        return "{{value_json.%s.%s%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug(), prop)
+    def value_template(self, key=None):
+        key = (".%s" % key) if key != None else ""
+        return "{{value_json.%s.%s%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug(), key)
 
     def attributes_topic(self):
         return self.base_topic()

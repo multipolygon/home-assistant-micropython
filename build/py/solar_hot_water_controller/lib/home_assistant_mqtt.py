@@ -17,7 +17,6 @@ class HomeAssistantMQTT():
         self.integrations = {}
         self.configs = {}
         self.callbacks = {}
-        self.attributes = {}
         self.publish_config_on_connect = True
         self.mqtt = None
 
@@ -78,6 +77,7 @@ class HomeAssistantMQTT():
             t = bytearray(topic)
             gc.collect()
             self.mqtt.subscribe(t)
+            sleep(0.5)
 
     def mqtt_receive(self, in_topic, message):
         gc.collect()
@@ -109,30 +109,30 @@ class HomeAssistantMQTT():
             topic = bytearray(integration.config_topic())
             gc.collect()
             self.mqtt.publish(topic, config, retain=True)
-            gc.collect()
             sleep(0.5)
+            gc.collect()
 
-    def set_attribute(self, key, value):
-        self.attributes[key] = value
-        
+    def set_attr(self, key, val):
+        for integration in self.integrations.values():
+            integrations.set_attr(key, val)
+            
     def publish_state(self):
         if self.mqtt:
             for integration in self.integrations.values():
                 gc.collect()
-
-                self.attributes["IP"] = wifi.ip()
-                self.attributes["MAC"] = wifi.mac()
-                self.attributes["RSSI"] = wifi.rssi()
-                integration.set_attr(self.attributes)
-
+                integration.set_attr("IP", wifi.ip())
+                integration.set_attr("MAC", wifi.mac())
+                integration.set_attr("RSSI", wifi.rssi())
                 gc.collect()
-
-                state = bytearray(json(integration.state()))
-
+                state = json(integration.state())
+                integration.reset_state()
                 gc.collect()
-
-                self.mqtt.publish(bytearray(integration.state_topic()), state)
-
+                state = bytearray(state)
+                gc.collect()
+                topic = bytearray(integration.state_topic())
+                gc.collect()
+                self.mqtt.publish(topic, state)
+                sleep(0.5)
                 return True # Optimisation: Return on first item since they all share the same state
         return False
 

@@ -22,6 +22,10 @@ class Controller():
                         state.set(pump = new_state)
 
                 elif state.mode == MODE_HEAT:
-                    state.set(pump = PUMP_ON)
+                    new_state = pump_boost(state)
+                    state.set(
+                        pump = new_state,
+                        mode = MODE_HEAT if new_state == PUMP_ON else MODE_AUTO,
+                    )
                         
                 break
