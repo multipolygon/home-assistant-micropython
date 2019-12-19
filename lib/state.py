@@ -7,9 +7,12 @@ class State():
         for key, val in kwargs.items():
             setattr(self, key, val)
                             
-    def observer(self, cls):
+    def observer(self, cls, priority=False):
         obj = cls(self)
-        self.observers.append(obj)
+        if priority:
+            self.observers.insert(0, obj)
+        else:
+            self.observers.append(obj)
         return obj
 
     def trigger(self, obj, fn, *args):
@@ -35,3 +38,8 @@ class State():
                     self.trigger(obj, "on_%s_%s" % (key, 'on' if getattr(self, key) else 'off'))
                     self.trigger(obj, "on_%s_change" % key)
                 self.trigger(obj, "on_state_change", changed)
+
+    def deinit(self):
+        for obj in self.observers:
+            if hasattr(obj, 'deinit'):
+                obj.deinit()

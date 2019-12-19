@@ -15,6 +15,7 @@ class Temperature():
         self.tank_probe_pin.off()
         self.timer = Timer(-1)
         self.update()
+        self.poll()
 
     def update(self):
         self.state.set(
@@ -54,6 +55,5 @@ class Temperature():
         
         self.timer.init(period=config.UPDATE_INTERVAL * 1000, callback=schedule_update)
 
-    def stop(self):
+    def deinit(self):
         self.timer.deinit()
-        

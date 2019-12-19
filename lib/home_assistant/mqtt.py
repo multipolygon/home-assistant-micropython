@@ -104,9 +104,9 @@ class HomeAssistantMQTT():
                 gc.collect()
                 topic = integration.state_topic().encode('utf-8')
                 gc.collect()
-                integration.set_attr("IP", wifi.ip())
-                integration.set_attr("MAC", wifi.mac())
-                integration.set_attr("RSSI", wifi.rssi())
+                integration.set_attr("ip", wifi.ip())
+                integration.set_attr("mac", wifi.mac())
+                integration.set_attr("rssi", wifi.rssi())
                 gc.collect()
                 with BytesIO() as state:
                     ujson.dump(integration.state(), state)
@@ -137,43 +137,30 @@ class HomeAssistantMQTT():
                     topic += chr(char)
             topic += b'#'
         self.subscribe_topic = topic
-        print('subscribe_topic = %s' % self.subscribe_topic)
         gc.collect()
 
     def wait_for_messages(self, status_led=None, connection_required=True):
-        if connection_required:
+        while True:
             try:
-                while True:
-                    gc.collect()
-                    self.mqtt.wait_msg()
-                    
-            except MQTTCallbackException:
-                pass
-                    
+                if wifi.is_connected():
+                    self.mqtt_connect()
+                    while True:
+                        gc.collect()
+                        try:
+                            self.mqtt.wait_msg()
+                        except MQTTCallbackException:
+                            pass
+                else:
+                    print('No WiFi!')
             except Exception as exception:
+                print('MQTT Exception:')
                 print_exception(exception)
+                self.mqtt_disconnect()
+            if connection_required:
                 if status_led:
-                    status_led.fast_blink()
-                sleep(random_int(6))
+                    status_led.slow_blink()
+                sleep(random_int(5))
                 if status_led:
                     status_led.off()
-                machine.reset()
-                
-        else:
-            while True:
-                try:
-                    if wifi.is_connected():
-                        self.mqtt_connect()
-                        while True:
-                            gc.collect()
-                            try:
-                                self.mqtt.wait_msg()
-                            except MQTTCallbackException:
-                                pass
-                    else:
-                        print('No WiFi!')
-                except Exception as exception:
-                    print('MQTT Exception:')
-                    print_exception(exception)
-                    self.mqtt_disconnect()
+            else:
                 sleep(random_int(8))

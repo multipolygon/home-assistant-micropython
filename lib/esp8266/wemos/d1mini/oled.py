@@ -1,67 +1,47 @@
+from lib.esp8266.wemos.d1mini import pinmap
 from machine import I2C, Pin
-import utime
-import framebuf
 from ssd1306 import SSD1306_I2C
 
-from lib.esp8266.wemos.d1mini import pinmap
+class OLED():
+    def __init__(self):
+        self.width = w = 64
+        self.height = h = 48
+        self.line_height = lh = h // 4
 
-error = False
-
-w = 64
-h = 48
-lh = h // 4 # line height
-
-local_offset = 10 ## TODO
-
-i2c = I2C(-1, Pin(pinmap.SCL), Pin(pinmap.SDA))
-
-try:
-    display = SSD1306_I2C(w, h, i2c)
-    display.poweron()
-    display.contrast(255)
-    display.fill(0)
-    display.show()
-except:
-    display = None
-    error = True
-
-charbuffer = framebuf.FrameBuffer1(memoryview(bytearray(8)), 8, 8)
-
-def is_available():
-    return not error
-
-def clear():
-    display.fill(0)
-    display.show()
-
-def write(line, show=True):
-    if not error:
-        display.scroll(0, -1 * lh)
-        display.fill_rect(0, h - lh, w, lh, 0)
-        display.text(line[0:w//8], 0, h - lh)
-        if show:
+        try:
+            i2c = I2C(-1, Pin(pinmap.SCL), Pin(pinmap.SDA))
+            self.display = display = SSD1306_I2C(w, h, i2c)
+            display.poweron()
+            display.contrast(255)
+            display.fill(0)
             display.show()
-    return line
+        except:
+            self.display = None
 
-def bigchar(char):
-    if not error:
-        display.fill(0)
-        charbuffer.fill(0)
-        charbuffer.text(char, 0, 0, 1)
-        for x in range(0,8):
-            for y in range(0,8):
-                display.fill_rect(8 + x * 6, y * 6, 6, 6, charbuffer.pixel(x,y))
-        display.show()
+    def is_available(self):
+        return self.display != None
 
-def timestamp():
-    localtime = utime.localtime(utime.time() + local_offset * 60 * 60)
-    bw, bh = 42, 9
-    display.fill_rect(w - bw - 1, 0, bw + 1, bh + 1, 0)
-    display.fill_rect(w - bw, 0, bw, bh, 1)
-    display.text("%2d:%02d" % (localtime[3], localtime[4]), w - bw + 1, 1, 0)
-    display.show()
+    def clear(self):
+        if self.display:
+            self.display.fill(0)
+            self.display.show()
 
-def power_off():
-    if not error:
-        display.poweroff()
+    def write(self, line, show=True):
+        if self.display:
+            w, h, lh = self.width, self.height, self.line_height
+            self.display.scroll(0, -1 * lh)
+            self.display.fill_rect(0, h - lh, w, lh, 0)
+            self.display.text(line[0:w//8], 0, h - lh)
+            if show:
+                self.display.show()
+        return line
 
+    def write_lines(self, *lines):
+        if self.display:
+            for line in lines:
+                self.write(line, False)
+            self.display.show()
+
+    def power_off(self):
+        if self.display:
+            self.display.poweroff()
