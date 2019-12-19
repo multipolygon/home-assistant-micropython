@@ -17,7 +17,7 @@ def on_message(client, userdata, message):
 
 client.on_message = on_message
 
-client.connect(secrets.MQTT_SERVER, port=secrets.MQTT_PORT)
+client.connect(secrets.MQTT_SERVER)
 
 print('SERVER: %s' % secrets.MQTT_SERVER)
 print('USER: %s' % secrets.MQTT_USER)
