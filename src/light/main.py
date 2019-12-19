@@ -1,21 +1,36 @@
-from automation import Automation
-from internet import Internet
-from lib.state import State
-from light import Light
-from motion_detector import MotionDetector
 import config
+from lib.state import State
 
 state = State(
     light = False,
     brightness = config.INITIAL_BRIGHTNESS,
     motion = False,
     automatic = True,
+    battery = 100,
 )
 
-state.observer(Light)
+from internet import Internet
+internet = state.observer(Internet)
 
-state.observer(MotionDetector)
+from light import Light
+state.observer(Light, priority=True)
 
-state.observer(Automation)
+if config.BUTTON_ENABLED:
+    from button import Button
+    state.observer(Button)
 
-state.observer(Internet).wait_for_messages()
+if config.MOTION_SENSOR_ENABLED:
+    from motion_detector import MotionDetector
+    state.observer(MotionDetector)
+
+    from automation import Automation
+    state.observer(Automation, priority=True)
+
+if config.BATTERY_ENABLED:
+    from battery import Battery
+    state.observer(Battery)
+
+try:
+    internet.wait_for_messages()
+except KeyboardInterrupt:
+    state.deinit()

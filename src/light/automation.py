@@ -50,3 +50,6 @@ class Automation():
                 mode=Timer.ONE_SHOT,
                 callback=self.timeout
             )
+
+    def deinit(self):
+        self.timer.deinit()

@@ -1,13 +1,14 @@
-from lib.button import Button
+from machine import Pin
 import config
 
 class MotionDetector():
     def __init__(self, state):
-        def pir_on(*_):
-            state.set(motion = True)
+        self.pin = Pin(config.MOTION_SENSOR_GPIO, mode=Pin.IN)
 
-        def pir_off(*_):
-            state.set(motion = False)
+        def handler(pin):
+            state.set(motion = pin.value() == config.MOTION_DETECTED_VALUE)
 
-        Button(config.PIR_SENSOR_PIN, pir_on, pir_off, inverted=config.PIR_INVERTED)
+        self.pin.irq(handler=handler, trigger=Pin.IRQ_RISING|Pin.IRQ_FALLING)
 
+    def deinit(self):
+        self.pin.irq(trigger=0)
