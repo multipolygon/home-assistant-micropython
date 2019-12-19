@@ -22,12 +22,14 @@ client.connect(secrets.MQTT_SERVER)
 print('SERVER: %s' % secrets.MQTT_SERVER)
 print('USER: %s' % secrets.MQTT_USER)
 
-topic = input("\nTopic? ").replace('\n', ' ').replace('\r', '').strip()
+device = input("DEVICE: ").replace('\n', ' ').replace('\r', '').strip().lower()
 
-if topic == "":
-    raise Exception("No topic provided")
+if device == "":
+    raise Exception("No device provided")
 
-client.subscribe(topic)
+client.subscribe("%s/homeassistant/+/echidna_esp8266_%s/+/config" % (secrets.MQTT_USER, device))
+
+client.subscribe("%s/echidna/esp8266/%s/#" % (secrets.MQTT_USER, device))
 
 print('Running...')
 
