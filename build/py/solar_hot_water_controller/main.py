@@ -13,21 +13,19 @@ state = State(
 from internet import Internet
 internet = state.observer(Internet)
 
+from pump import Pump
+state.observer(Pump, priority=True)
+
 from controller import Controller
-state.observer(Controller)
+state.observer(Controller, priority=True)
 
 from display import Display
-state.observer(Display)
-
-from pump import Pump
-state.observer(Pump)
+state.observer(Display, priority=True)
 
 from temperature import Temperature
-temperature = state.observer(Temperature)
+state.observer(Temperature)
 
 try:
-    temperature.poll()
     internet.wait_for_messages()
 except KeyboardInterrupt:
-    temperature.stop()
-    print('Stop.')
+    state.deinit()

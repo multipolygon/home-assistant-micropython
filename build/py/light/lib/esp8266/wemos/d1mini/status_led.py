@@ -13,6 +13,10 @@ def off():
     pwm.deinit()
     led.on()
 
+def invert():
+    pwm.deinit()
+    led.value(not led.value())
+
 def set(state):
     if state:
         on()

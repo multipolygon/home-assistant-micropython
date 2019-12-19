@@ -12,10 +12,10 @@ class Internet():
     def __init__(self, state):
         print(HomeAssistant.UID)
 
-        status_led.fast_blink()
+        status_led.slow_blink()
         wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-        status_led.slow_blink()
+        status_led.fast_blink()
 
         HomeAssistant.NAME = config.NAME
         HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
@@ -73,3 +73,6 @@ class Internet():
             status_led = status_led,
             connection_required = False
         )
+
+    def deinit(self):
+        self.ha.mqtt_disconnect()

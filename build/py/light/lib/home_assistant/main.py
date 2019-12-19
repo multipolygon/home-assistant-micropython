@@ -1,11 +1,12 @@
 ## https://www.home-assistant.io/docs/mqtt/discovery/
-## https://github.com/home-assistant/home-assistant/blob/dev/homeassistant/components/mqtt/abbreviations.py
+## https://github.com/home-assistant/home-assistant/blob/master/homeassistant/components/mqtt/abbreviations.py
 ## https://www.home-assistant.io/components/sensor/#device-class
 ## https://www.home-assistant.io/components/binary_sensor/#device-class
 ## Note to self, do not put any proceedural code or logic in this module!
 
 from machine import unique_id
 from ubinascii import hexlify
+from uos import uname
 
 try:
     from lib.version import build_date
@@ -15,7 +16,7 @@ except:
 class HomeAssistant():
     NAME = None
     MANUFACTURER = "Echidna"
-    MODEL = "ESP8266"
+    MODEL = uname().sysname.upper()
     UID = hexlify(unique_id()).decode("utf-8").upper()
     BUILD_DATE = build_date
     DISCOVERY_PREFIX = "homeassistant"
@@ -35,44 +36,63 @@ class HomeAssistant():
 
     def state(self):
         return self._state
+
+    def reset_state(self):
+        for key in self._state.keys():
+            del self._state[key]
     
-    def set_state(self, val, attr="_"):
+    def set_state(self, val, key=None):
         ns = self.JSON_NAMESPACE or self.COMPONENT
         if ns not in self._state:
             self._state[ns] = {}
-        if self.slug() not in self._state[ns]:
-            self._state[ns][self.slug()] = {}
-        self._state[ns][self.slug()][attr] = val
-        return self._state
+        if key == None:
+            self._state[ns][self.slug()] = val
+        else:
+            if self.slug() not in self._state[ns]:
+                self._state[ns][self.slug()] = {}
+            self._state[ns][self.slug()][key] = val
 
-    def set_attr(self, val):
-        self._state['attr'] = val
-        return self._state
+    def set_attr(self, key, val):
+        if 'attr' not in self._state:
+            self._state['attr'] = {}
+        self._state['attr'][key] = val
 
     def config_topic(self):
         object_id = "_".join((self.MANUFACTURER, self.MODEL, self.UID))
         return self.topic_prefix() + "/".join((self.DISCOVERY_PREFIX, self.COMPONENT, object_id, self.name(), "config")).lower().replace(' ', '_')
 
-    def config(self, **args):
-        return self.merge_config(
-            {
-                "~": self.base_topic(),
-                "name": self.full_name(),
-                "stat_t": self.state_topic().replace(self.base_topic(), "~"),
-                "val_tpl": self.value_template(),
-                "json_attr_t": self.attributes_topic().replace(self.base_topic(), "~"),
-                "json_attr_tpl": self.attributes_template(),
-                "uniq_id": self.full_name(),
-                "dev": self.device(),
-            },
-            self.component_config(**args)
+    def config(self, *args, **argv):
+        return self.shorten_config(
+            self.merge_config(
+                {
+                    "name": self.full_name(),
+                    "json_attr_t": self.attributes_topic(),
+                    "json_attr_tpl": self.attributes_template(),
+                    "uniq_id": self.full_name(),
+                    "dev": self.device(),
+                },
+                self.component_config(*args, **argv)
+            )
         )
+
+    def shorten_topic(self, topic):
+        return topic.replace(self.base_topic(), "~")
+
+    def shorten_config(self, config):
+        for key, val in config.items():
+            if hasattr(val, 'replace'):
+                config[key] = self.shorten_topic(val)
+        config["~"] = self.base_topic()
+        return config
 
     def component_config(self, **args):
         return None
+
+    def device_name(self):
+        return " ".join((self.MODEL, self.UID, self.NAME or self.MANUFACTURER))
     
     def full_name(self):
-        return " ".join((self.MANUFACTURER, self.MODEL, self.UID, self.name()))
+        return " ".join((self.device_name(), self.name()))
 
     def topic_prefix(self):
         return self.TOPIC_PREFIX and (self.TOPIC_PREFIX + "/") or ""
@@ -86,8 +106,9 @@ class HomeAssistant():
     def state_topic(self):
         return self.base_topic()
     
-    def value_template(self, attr='_'):
-        return "{{value_json.%s.%s.%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug(), attr)
+    def value_template(self, key=None):
+        key = (".%s" % key) if key != None else ""
+        return "{{value_json.%s.%s%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug(), key)
 
     def attributes_topic(self):
         return self.base_topic()
@@ -100,7 +121,7 @@ class HomeAssistant():
     
     def device(self):
         return {
-            "name": (self.NAME and (self.NAME + " ") or "") + self.UID,
+            "name": self.device_name(),
             "mf": self.MANUFACTURER,
             "mdl": self.MODEL,
             "ids": self.UID,
@@ -109,7 +130,7 @@ class HomeAssistant():
 
     def merge_config(self, target, source):
         if target and source:
-            for key in source.keys():
-                if source[key] != None:
-                    target[key] = source[key]
+            for key, val in source.items():
+                if val != None:
+                    target[key] = val
         return target
