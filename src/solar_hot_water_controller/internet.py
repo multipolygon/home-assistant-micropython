@@ -2,7 +2,7 @@ from lib.esp8266.wemos.d1mini import status_led
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.sensors.temperature import TemperatureSensor
 from lib.home_assistant.climate import Climate, MODE_OFF
-from lib.home_assistant_mqtt import HomeAssistantMQTT
+from lib.home_assistant.mqtt import HomeAssistantMQTT
 from micropython import schedule
 import config
 import secrets
@@ -36,8 +36,11 @@ class Internet():
         ha.subscribe(controller.temperature_command_topic(), controller_temperature_command)
 
         if wifi.is_connected():
-            ha.mqtt_connect()
-            
+            try:
+                state.telemetry = ha.mqtt_connect()
+            except:
+                pass
+                
         status_led.off()
 
         ## Prevent publishing config in the future because it will fail with out-of-memory error:
@@ -48,7 +51,7 @@ class Internet():
         def publish_state(_):
             self.publish_scheduled = False
             controller.set_mode(state.mode)
-            controller.set_temperature(state.tank_target_temperature)
+            controller.set_target_temperature(state.tank_target_temperature)
             controller.set_current_temperature(state.tank_temperature)
             controller.set_action("off" if state.mode == MODE_OFF else ("heating" if state.pump else "idle"))
             solar_temperature_sensor.set_state(state.solar_temperature)

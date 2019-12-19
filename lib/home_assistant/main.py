@@ -89,7 +89,7 @@ class HomeAssistant():
         return None
 
     def device_name(self):
-        return " ".join((self.NAME or self.MANUFACTURER, self.MODEL, self.UID))
+        return " ".join((self.MODEL, self.UID, self.NAME or self.MANUFACTURER))
     
     def full_name(self):
         return " ".join((self.device_name(), self.name()))

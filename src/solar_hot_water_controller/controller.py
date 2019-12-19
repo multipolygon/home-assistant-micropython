@@ -8,7 +8,6 @@ OBSERVE = (
     'tank_target_temperature',
 )
 
-
 class Controller():
     def on_state_change(self, state, changed):
         for i in OBSERVE:

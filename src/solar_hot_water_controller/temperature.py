@@ -52,7 +52,7 @@ class Temperature():
                 self.update_scheduled = True
                 schedule(update, None)
         
-        self.timer.init(period=5000, callback=schedule_update)
+        self.timer.init(period=config.UPDATE_INTERVAL * 1000, callback=schedule_update)
 
     def stop(self):
         self.timer.deinit()

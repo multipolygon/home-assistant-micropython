@@ -1,10 +1,11 @@
 from lib.random import random_int
 from sys import print_exception
-from ujson import dumps as json
+from uio import BytesIO
 from umqtt.simple import MQTTClient
 from utime import sleep
 import gc
 import machine
+import ujson
 import wifi
 
 class MQTTCallbackException(Exception):
@@ -19,6 +20,7 @@ class HomeAssistantMQTT():
         self.callbacks = {}
         self.publish_config_on_connect = True
         self.mqtt = None
+        self.subscribe_topic = None
 
     def mqtt_connect(self):
         self.mqtt_disconnect()
@@ -26,8 +28,8 @@ class HomeAssistantMQTT():
         self.mqtt = MQTTClient(
             wifi.mac(),
             self.secrets.MQTT_SERVER,
-            user=bytearray(self.secrets.MQTT_USER),
-            password=bytearray(self.secrets.MQTT_PASSWORD)
+            user=self.secrets.MQTT_USER.encode('utf-8'),
+            password=self.secrets.MQTT_PASSWORD.encode('utf-8')
         )
 
         def _mqtt_receive(*args):
@@ -58,32 +60,15 @@ class HomeAssistantMQTT():
         gc.collect()
 
     def mqtt_subscribe(self):
-        gc.collect()
-        n = len(self.callbacks)
-        if n > 0:
-            if n == 1:
-                topic = list(self.callbacks.keys())[0]
-            else:
-                topic = ""
-                topics = self.callbacks.keys()
-                for i in range(min((len(s) for s in topics))):
-                    chars = [s[i] for s in topics]
-                    if chars.count(chars[0]) == n:
-                        topic += chars[0]
-                    else:
-                        break
-                topic += "#"
-            gc.collect()
-            t = bytearray(topic)
-            gc.collect()
-            self.mqtt.subscribe(t)
+        if self.subscribe_topic != None:
+            self.mqtt.subscribe(self.subscribe_topic)
             sleep(0.5)
 
     def mqtt_receive(self, in_topic, message):
         gc.collect()
         try:
             for topic, callback in self.callbacks.items():
-                if bytearray(topic) == in_topic:
+                if topic == in_topic:
                     callback(message)
                     break
         except Exception as exception:
@@ -97,19 +82,16 @@ class HomeAssistantMQTT():
 
     def publish_config(self):
         print('HA publish config.')
-        gc.collect()
         for name, integration in self.integrations.items():
             print(name)
-            config = integration.config(**self.configs[name])
             gc.collect()
-            config = json(config)
+            topic = integration.config_topic().encode('utf-8')
             gc.collect()
-            config = bytearray(config)
-            gc.collect()
-            topic = bytearray(integration.config_topic())
-            gc.collect()
-            self.mqtt.publish(topic, config, retain=True)
-            sleep(0.5)
+            with BytesIO() as config:
+                ujson.dump(integration.config(**self.configs[name]), config)
+                gc.collect()
+                self.mqtt.publish(topic, config.getvalue(), retain=True)
+                sleep(0.5)
             gc.collect()
 
     def set_attr(self, key, val):
@@ -120,24 +102,43 @@ class HomeAssistantMQTT():
         if self.mqtt:
             for integration in self.integrations.values():
                 gc.collect()
+                topic = integration.state_topic().encode('utf-8')
+                gc.collect()
                 integration.set_attr("IP", wifi.ip())
                 integration.set_attr("MAC", wifi.mac())
                 integration.set_attr("RSSI", wifi.rssi())
                 gc.collect()
-                state = json(integration.state())
-                integration.reset_state()
-                gc.collect()
-                state = bytearray(state)
-                gc.collect()
-                topic = bytearray(integration.state_topic())
-                gc.collect()
-                self.mqtt.publish(topic, state)
-                sleep(0.5)
-                return True # Optimisation: Return on first item since they all share the same state
+                with BytesIO() as state:
+                    ujson.dump(integration.state(), state)
+                    integration.reset_state()
+                    gc.collect()
+                    self.mqtt.publish(topic, state.getvalue())
+                    sleep(0.5)
+                gc.collect()                
+                return True # Return on first item since they all share the same state
         return False
 
     def subscribe(self, topic, callback):
-        self.callbacks[topic] = callback
+        gc.collect()
+        self.callbacks[topic.encode('utf-8')] = callback
+        first = next(iter(self.callbacks))
+        if len(self.callbacks) == 1:
+            topic = first
+        else:
+            topic = b''
+            for i, char in enumerate(first):
+                for t in self.callbacks.keys():
+                    if t[i] != char:
+                        char = None
+                        break
+                if char == None:
+                    break
+                else:
+                    topic += chr(char)
+            topic += b'#'
+        self.subscribe_topic = topic
+        print('subscribe_topic = %s' % self.subscribe_topic)
+        gc.collect()
 
     def wait_for_messages(self, status_led=None, connection_required=True):
         if connection_required:
@@ -145,7 +146,10 @@ class HomeAssistantMQTT():
                 while True:
                     gc.collect()
                     self.mqtt.wait_msg()
-
+                    
+            except MQTTCallbackException:
+                pass
+                    
             except Exception as exception:
                 print_exception(exception)
                 if status_led:
@@ -159,7 +163,6 @@ class HomeAssistantMQTT():
             while True:
                 try:
                     if wifi.is_connected():
-                        print('WiFi connected.')
                         self.mqtt_connect()
                         while True:
                             gc.collect()
@@ -170,6 +173,7 @@ class HomeAssistantMQTT():
                     else:
                         print('No WiFi!')
                 except Exception as exception:
+                    print('MQTT Exception:')
                     print_exception(exception)
                     self.mqtt_disconnect()
                 sleep(random_int(8))
