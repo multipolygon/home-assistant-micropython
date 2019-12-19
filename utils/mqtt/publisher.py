@@ -4,7 +4,7 @@ import secrets
 
 client = mqtt.Client("mqtt_publisher")
 client.username_pw_set(secrets.MQTT_USER, password = secrets.MQTT_PASSWORD)
-client.connect(secrets.MQTT_SERVER, port=secrets.MQTT_PORT)
+client.connect(secrets.MQTT_SERVER)
 
 topic = ""
 payload = ""
