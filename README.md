@@ -14,6 +14,7 @@ For example usage see:
 
 - [./build/py/light/](./build/py/light/)
 - [./build/py/solar_hot_water_controller/](./build/py/solar_hot_water_controller/)
+- [./build/py/counter/](./build/py/counter/)
 
 ## Install Notes
 
