@@ -12,6 +12,8 @@ INTERVAL = 60 # seconds
 
 UNIT_OF_MEASUREMENT = 'count/min'
 
+LED = pinmap.LED
+
 #### Battery ####
 
 BATTERY_ENABLED = False

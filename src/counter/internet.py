@@ -2,13 +2,10 @@ from lib.esp8266.wemos.d1mini import status_led
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.mqtt import HomeAssistantMQTT
 from lib.home_assistant.sensor import Sensor
-from lib.home_assistant.sensors.battery import BatterySensor
 from micropython import schedule
 import config
 import secrets
 import wifi
-
-AUTO_PUBLISH = ['count', 'battery']
 
 class Internet():
     def __init__(self, state):
@@ -25,14 +22,11 @@ class Internet():
         self.ha = ha = HomeAssistantMQTT(secrets)
 
         counter = ha.register(
-            'GPIO%s' % config.GPIO,
+            'Counter',
             Sensor,
             unit = config.UNIT_OF_MEASUREMENT,
             icon = 'mdi:counter',
         )
-
-        if config.BATTERY_ENABLED:
-            battery_sensor = ha.register('Battery', BatterySensor)
 
         if wifi.is_connected():
             try:
@@ -48,25 +42,29 @@ class Internet():
         self.publish_scheduled = False
 
         def publish_state(_):
+            status_led.on()
             self.publish_scheduled = False
             counter.set_state(state.count)
             if config.BATTERY_ENABLED:
                 counter.set_attr('battery', '%d%%' % state.battery)
-                battery_sensor.set_state(state.battery)
             state.set(
                 telemetry = ha.publish_state()
             )
+            status_led.off()
 
         self.publish_state = publish_state
 
-    def on_state_change(self, state, changed):
-        for item in AUTO_PUBLISH:
-            if item in changed:
-                if not self.publish_scheduled:
-                    self.publish_scheduled = True
-                    schedule(self.publish_state, None)
-                break
+    def schedule_publish_state(self):
+        if not self.publish_scheduled:
+            self.publish_scheduled = True
+            schedule(self.publish_state, None)
 
+    def on_count_change(self, state):
+        self.schedule_publish_state()
+
+    def on_battery_change(self, state):
+        self.schedule_publish_state()
+            
     def wait_for_messages(self):
         self.ha.wait_for_messages(status_led = status_led)
 

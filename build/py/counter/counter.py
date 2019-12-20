@@ -8,12 +8,15 @@ class Counter():
         self.state = state
         self.count = 0
         self.pin = Pin(config.GPIO, mode=Pin.IN)
+        self.led = Pin(config.LED, Pin.OUT) if config.LED else None
         self.timer = Timer(-1)
 
         self.state.set(count = 0)
 
         def increment(pin):
             self.count += 1
+            if self.led:
+                self.led.value(self.count % 2 == 0)
 
         self.pin.irq(
             trigger = Pin.IRQ_RISING if config.GPIO_VALUE == 1 else Pin.IRQ_FALLING,

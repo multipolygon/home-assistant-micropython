@@ -8,6 +8,8 @@ from machine import unique_id
 from ubinascii import hexlify
 from uos import uname
 
+UTF8 = 'utf-8'
+
 try:
     from lib.version import build_date
 except:
@@ -17,16 +19,17 @@ class HomeAssistant():
     NAME = None
     MANUFACTURER = "Echidna"
     MODEL = uname().sysname.upper()
-    UID = hexlify(unique_id()).decode("utf-8").upper()
+    UID = hexlify(unique_id()).decode(UTF8).upper()
     BUILD_DATE = build_date
     DISCOVERY_PREFIX = "homeassistant"
     COMPONENT = "generic"
     JSON_NAMESPACE = None
     TOPIC_PREFIX = None
     
-    def __init__(self, name=None, state={}):
+    def __init__(self, name=None, state={}, key = None):
         self._name = name
         self._state = state
+        self._key = key if key else self.slug()
 
     def name(self):
         return self._name or self.COMPONENT
@@ -46,11 +49,11 @@ class HomeAssistant():
         if ns not in self._state:
             self._state[ns] = {}
         if key == None:
-            self._state[ns][self.slug()] = val
+            self._state[ns][self._key] = val
         else:
-            if self.slug() not in self._state[ns]:
-                self._state[ns][self.slug()] = {}
-            self._state[ns][self.slug()][key] = val
+            if self._key not in self._state[ns]:
+                self._state[ns][self._key] = {}
+            self._state[ns][self._key][key] = val
 
     def set_attr(self, key, val):
         if 'attr' not in self._state:

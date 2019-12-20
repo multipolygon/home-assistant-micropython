@@ -1,19 +1,19 @@
-import config
+from battery import Battery
+from counter import Counter
+from internet import Internet
 from lib.state import State
+import config
 
 state = State(
     count = -1,
     battery = 100,
 )
 
-from internet import Internet
 internet = state.observer(Internet)
 
-from counter import Counter
 state.observer(Counter)
 
 if config.BATTERY_ENABLED:
-    from battery import Battery
     state.observer(Battery)
 
 try:

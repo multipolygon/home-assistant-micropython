@@ -1,4 +1,5 @@
-import gc
+from gc import collect as gc_collect
+from gc import mem_free, mem_alloc
 
 class StateAttributeError(AttributeError):
     pass
@@ -8,21 +9,23 @@ class State():
         self.observers = []
         for key, val in kwargs.items():
             setattr(self, key, val)
+        self.mem_info('State')
                             
     def observer(self, cls, priority=False):
+        gc_collect()
         obj = cls(self)
         if priority:
             self.observers.insert(0, obj)
         else:
             self.observers.append(obj)
-        gc.collect()
+        self.mem_info(cls.__name__)
         return obj
 
     def trigger(self, obj, fn, *args):
         if hasattr(obj, fn):
             print(" --> %s.%s()" % (obj.__class__.__name__, fn))
             getattr(obj, fn)(self, *args)
-            gc.collect()
+            gc_collect()
 
     def set(self, **kwargs):
         changed = []
@@ -48,4 +51,8 @@ class State():
             if hasattr(obj, 'deinit'):
                 obj.deinit()
         del self.observers
-        gc.collect()
+        gc_collect()
+
+    def mem_info(self, s=''):
+        gc_collect()
+        print("Mem: %d%% [%s]" % (round(mem_alloc() / (mem_alloc() + mem_free()) * 100 ), s))
