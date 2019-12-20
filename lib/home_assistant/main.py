@@ -8,6 +8,8 @@ from machine import unique_id
 from ubinascii import hexlify
 from uos import uname
 
+UTF8 = 'utf-8'
+
 try:
     from lib.version import build_date
 except:
@@ -17,7 +19,7 @@ class HomeAssistant():
     NAME = None
     MANUFACTURER = "Echidna"
     MODEL = uname().sysname.upper()
-    UID = hexlify(unique_id()).decode("utf-8").upper()
+    UID = hexlify(unique_id()).decode(UTF8).upper()
     BUILD_DATE = build_date
     DISCOVERY_PREFIX = "homeassistant"
     COMPONENT = "generic"

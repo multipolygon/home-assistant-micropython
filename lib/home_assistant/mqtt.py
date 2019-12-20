@@ -7,6 +7,8 @@ from umqtt.simple import MQTTClient
 from utime import sleep
 import wifi
 
+UTF8 = 'utf-8'
+
 class MQTTCallbackException(Exception):
     pass
 
@@ -28,8 +30,8 @@ class HomeAssistantMQTT():
         self.mqtt = MQTTClient(
             self.mac,
             self.secrets.MQTT_SERVER,
-            user=self.secrets.MQTT_USER.encode('utf-8'),
-            password=self.secrets.MQTT_PASSWORD.encode('utf-8')
+            user=self.secrets.MQTT_USER.encode(UTF8),
+            password=self.secrets.MQTT_PASSWORD.encode(UTF8)
         )
 
         def _mqtt_receive(*args):
@@ -86,7 +88,7 @@ class HomeAssistantMQTT():
         for name, integration in self.integrations.items():
             print('Config: %s' % name)
             gc_collect()
-            topic = integration.config_topic().encode('utf-8')
+            topic = integration.config_topic().encode(UTF8)
             gc_collect()
             with BytesIO() as config:
                 json(integration.config(**self.configs[name]), config)
@@ -109,7 +111,7 @@ class HomeAssistantMQTT():
         if self.mqtt:
             for integration in self.integrations.values():
                 gc_collect()
-                topic = integration.state_topic().encode('utf-8')
+                topic = integration.state_topic().encode(UTF8)
                 gc_collect()
                 with BytesIO() as state:
                     print(integration.state())
@@ -123,7 +125,7 @@ class HomeAssistantMQTT():
 
     def subscribe(self, topic, callback):
         gc_collect()
-        self.callbacks[topic.encode('utf-8')] = callback
+        self.callbacks[topic.encode(UTF8)] = callback
         first = next(iter(self.callbacks))
         if len(self.callbacks) == 1:
             topic = first
@@ -156,7 +158,7 @@ class HomeAssistantMQTT():
                 else:
                     print('No WiFi!')
             except Exception as exception:
-                print('MQTT Exception:')
+                print('MQTT:')
                 print_exception(exception)
                 self.mqtt_disconnect()
             if connection_required:
