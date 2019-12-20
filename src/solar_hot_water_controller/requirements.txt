@@ -7,7 +7,6 @@ home_assistant/main.py
 home_assistant/mqtt.py
 home_assistant/sensor.py
 home_assistant/sensors/temperature.py
-mem_info.py
 pwm_pin.py
 random.py
 state.py
