@@ -1,8 +1,9 @@
 esp8266/wemos/d1mini/pinmap.py
 esp8266/wemos/d1mini/status_led.py
 home_assistant/main.py
+home_assistant/mqtt.py
 home_assistant/sensor.py
-home_assistant_mqtt.py
-mqtt.py
-secrets.py
+home_assistant/sensors/battery.py
+random.py
+state.py
 wifi.py

@@ -1,7 +1,21 @@
 from lib.esp8266.wemos.d1mini import pinmap
 
-INPUT_PIN = pinmap.D3
+NAME = "Counter"
 
-INPUT_INVERTED = True
+## Wemos 1-button shield is D3 by default
+GPIO = pinmap.D3
 
-SAMPLE_INTERVAL = 60 # seconds
+## Set to 0 for Wemos 1-button shield
+GPIO_VALUE = 0
+
+INTERVAL = 60 # seconds
+
+UNIT_OF_MEASUREMENT = 'count/min'
+
+#### Battery ####
+
+BATTERY_ENABLED = False
+
+BATTERY_ADC = pinmap.A0
+
+BATTERY_UPDATE_INTERVAL = 60 * 60 # seconds
