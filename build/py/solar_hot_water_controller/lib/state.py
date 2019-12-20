@@ -1,3 +1,6 @@
+from gc import collect as gc_collect
+from lib.mem_info import mem_info
+
 class StateAttributeError(AttributeError):
     pass
 
@@ -6,19 +9,23 @@ class State():
         self.observers = []
         for key, val in kwargs.items():
             setattr(self, key, val)
+        mem_info('State')
                             
     def observer(self, cls, priority=False):
+        gc_collect()
         obj = cls(self)
         if priority:
             self.observers.insert(0, obj)
         else:
             self.observers.append(obj)
+        mem_info(cls.__name__)
         return obj
 
     def trigger(self, obj, fn, *args):
         if hasattr(obj, fn):
             print(" --> %s.%s()" % (obj.__class__.__name__, fn))
             getattr(obj, fn)(self, *args)
+            gc_collect()
 
     def set(self, **kwargs):
         changed = []
@@ -43,3 +50,5 @@ class State():
         for obj in self.observers:
             if hasattr(obj, 'deinit'):
                 obj.deinit()
+        del self.observers
+        gc_collect()

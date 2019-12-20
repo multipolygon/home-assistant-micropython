@@ -22,8 +22,8 @@ class Internet():
 
         self.ha = ha = HomeAssistantMQTT(secrets)
 
-        controller = ha.register('Controller', Climate, max = config.TANK_MAXIMUM_TEMPERATURE)
-        solar_temperature_sensor = ha.register('Solar', TemperatureSensor)
+        controller = ha.register('Controller', Climate, key = 'ctl', max = config.TANK_MAXIMUM_TEMPERATURE)
+        solar_temperature_sensor = ha.register('Solar', TemperatureSensor, key = 'sol')
         
         def controller_mode_command(message):
             mode = message.decode('utf-8')

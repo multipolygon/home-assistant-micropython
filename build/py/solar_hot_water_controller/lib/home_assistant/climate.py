@@ -8,6 +8,7 @@ ALL_MODES = [MODE_AUTO, MODE_OFF, MODE_HEAT]
 
 class Climate(HomeAssistant):
     COMPONENT = "climate"
+    JSON_NAMESPACE = "cli"
 
     def set_mode(self, val):
         return super().set_state(val, key = "mode")

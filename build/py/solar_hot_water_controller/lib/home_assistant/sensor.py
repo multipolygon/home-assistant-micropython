@@ -2,6 +2,7 @@ from lib.home_assistant.main import HomeAssistant
 
 class Sensor(HomeAssistant):
     COMPONENT = "sensor"
+    JSON_NAMESPACE = "sen"
     DEVICE_CLASS = None
     UNIT_OF_MEASUREMENT = None
     ICON = None
