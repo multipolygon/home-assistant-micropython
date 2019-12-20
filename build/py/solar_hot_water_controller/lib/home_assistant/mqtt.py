@@ -1,5 +1,4 @@
 from gc import collect as gc_collect
-from lib.mem_info import mem_info
 from lib.random import random_int
 from sys import print_exception
 from uio import BytesIO
@@ -151,7 +150,6 @@ class HomeAssistantMQTT():
                     while True:
                         gc_collect()
                         try:
-                            mem_info('MQTT wait')
                             self.mqtt.wait_msg()
                         except MQTTCallbackException:
                             pass
