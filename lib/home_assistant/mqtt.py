@@ -84,9 +84,8 @@ class HomeAssistantMQTT():
         return self.integrations[name]
 
     def publish_config(self):
-        print('HA publish config.')
         for name, integration in self.integrations.items():
-            print(name)
+            print('Config: %s' % name)
             gc_collect()
             topic = integration.config_topic().encode('utf-8')
             gc_collect()

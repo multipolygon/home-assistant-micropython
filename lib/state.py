@@ -12,6 +12,7 @@ class State():
         mem_info('State')
                             
     def observer(self, cls, priority=False):
+        gc_collect()
         obj = cls(self)
         if priority:
             self.observers.insert(0, obj)

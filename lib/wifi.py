@@ -25,11 +25,12 @@ def connect(ssid, password, timeout=30, power_save=False):
         if is_connected():
             break
         else:
-            print('WiFi... %d' % i)
+            print('WiFi:%d' % i)
             sleep(1)
     if is_connected():
-        print('WiFi connected')
+        print('Ok')
         return True
+    print('Fail')
     if power_save:
         deactivate()
     return False

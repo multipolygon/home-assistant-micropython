@@ -26,20 +26,12 @@ class OLED():
             self.display.fill(0)
             self.display.show()
 
-    def write(self, line, show=True):
-        if self.display:
-            w, h, lh = self.width, self.height, self.line_height
-            self.display.scroll(0, -1 * lh)
-            self.display.fill_rect(0, h - lh, w, lh, 0)
-            self.display.text(line[0:w//8], 0, h - lh)
-            if show:
-                self.display.show()
-        return line
-
     def write_lines(self, *lines):
         if self.display:
-            for line in lines:
-                self.write(line, False)
+            self.display.fill(0)
+            w, h, lh = self.width, self.height, self.line_height
+            for row, line in enumerate(lines[0:4]):
+                self.display.text(line[0:w//8], 0, lh * row)
             self.display.show()
 
     def power_off(self):

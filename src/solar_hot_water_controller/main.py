@@ -1,5 +1,10 @@
-import config
+from controller import Controller
+from display import Display
+from internet import Internet
 from lib.state import State
+from pump import Pump
+from temperature import Temperature
+import config
 
 state = State(
     solar_temperature = None,
@@ -10,19 +15,14 @@ state = State(
     telemetry = False,
 )
 
-from internet import Internet
 internet = state.observer(Internet)
 
-from pump import Pump
 state.observer(Pump, priority=True)
 
-from controller import Controller
 state.observer(Controller, priority=True)
 
-from display import Display
 state.observer(Display, priority=True)
 
-from temperature import Temperature
 state.observer(Temperature)
 
 try:

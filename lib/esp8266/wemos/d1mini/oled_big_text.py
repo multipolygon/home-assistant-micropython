@@ -2,7 +2,7 @@ from lib.esp8266.wemos.d1mini.oled import OLED
 import framebuf
 import utime
 
-class BigOLED(OLED):
+class OLEDBigText(OLED):
     def bigchar(self, char):
         if self.display:            
             self.display.fill(0)
