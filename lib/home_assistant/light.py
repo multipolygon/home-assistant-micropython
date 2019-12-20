@@ -2,11 +2,12 @@ from lib.home_assistant.main import HomeAssistant
 
 class Light(HomeAssistant):
     COMPONENT = "light"
+    JSON_NAMESPACE = "lit"
     PAYLOAD_ON = STATE_ON = "ON"
     PAYLOAD_OFF = STATE_OFF = "OFF"
 
     def set_state(self, val):
-        return super().set_state(self.STATE_ON if val else self.STATE_OFF, key = "_")
+        return super().set_state(self.STATE_ON if val else self.STATE_OFF, key = "sw")
 
     def set_brightness_state(self, val):
         return super().set_state(val, key = "bri")
@@ -20,7 +21,7 @@ class Light(HomeAssistant):
             "opt": optimistic,
             "ret": retain,
             "stat_t": self.state_topic(),
-            "stat_val_tpl": self.value_template(key = "_"),
+            "stat_val_tpl": self.value_template(key = "sw"),
         }
 
         if brightness:
