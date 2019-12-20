@@ -10,8 +10,6 @@ import config
 import secrets
 import wifi
 
-AUTO_PUBLISH = ['light', 'motion', 'battery']
-
 class Internet():
     def __init__(self, state):
         print(HomeAssistant.UID)
@@ -26,27 +24,32 @@ class Internet():
 
         self.ha = ha = HomeAssistantMQTT(secrets)
 
-        light = ha.register('GPIO%s' % config.LIGHT_GPIO, Light, brightness = config.LIGHT_DIMMABLE)
+        self.publish_if_changed = []
 
-        def light_command(message):
-            state.set(light = message.decode('utf-8') == light.PAYLOAD_ON)
+        if config.LIGHT_ENABLED:
+            light = ha.register('GPIO%s' % config.LIGHT_GPIO, Light, brightness = config.LIGHT_DIMMABLE)
 
-        ha.subscribe(light.command_topic(), light_command)
+            def light_command(message):
+                state.set(light = message.decode('utf-8') == light.PAYLOAD_ON)
 
-        if config.LIGHT_DIMMABLE:
-            def brightness_command(message):
-                state.set(brightness = round(float(message)))
+            ha.subscribe(light.command_topic(), light_command)
 
-            ha.subscribe(light.brightness_command_topic(), brightness_command)
+            if config.LIGHT_DIMMABLE:
+                def brightness_command(message):
+                    state.set(brightness = round(float(message)))
+
+                ha.subscribe(light.brightness_command_topic(), brightness_command)
 
         if config.MOTION_SENSOR_ENABLED:
-            motion_sensor = ha.register('Motion', MotionBinarySensor)
-            auto_switch = ha.register('Automatic', Switch)
+            motion_sensor = ha.register('GPIO%s' % config.MOTION_SENSOR_GPIO, MotionBinarySensor)
 
-            def auto_switch_command(message):
-                state.set(automatic = message.decode('utf-8') == auto_switch.PAYLOAD_ON)
+            if config.LIGHT_ENABLED:
+                auto_switch = ha.register('Automatic', Switch)
 
-            ha.subscribe(auto_switch.command_topic(), auto_switch_command)
+                def auto_switch_command(message):
+                    state.set(automatic = message.decode('utf-8') == auto_switch.PAYLOAD_ON)
+
+                ha.subscribe(auto_switch.command_topic(), auto_switch_command)
             
         if config.BATTERY_ENABLED:
             battery_sensor = ha.register('Battery', BatterySensor)
@@ -66,28 +69,35 @@ class Internet():
 
         def publish_state(_):
             self.publish_scheduled = False
-            light.set_state(state.light)
-            if config.LIGHT_DIMMABLE:
-                light.set_brightness_state(state.brightness)
+            print('HA publish state.')
+            if config.LIGHT_ENABLED:
+                light.set_state(state.light)
+                if config.LIGHT_DIMMABLE:
+                    light.set_brightness_state(state.brightness)
             if config.MOTION_SENSOR_ENABLED:
                 motion_sensor.set_state(state.motion)
-                auto_switch.set_state(state.automatic)
+                if config.LIGHT_ENABLED:
+                    auto_switch.set_state(state.automatic)
             if config.BATTERY_ENABLED:
-                light.set_attr('battery', '%d%%' % state.battery)
+                ha.set_attr('battery', '%d%%' % state.battery)
                 battery_sensor.set_state(state.battery)
             state.set(
                 telemetry = ha.publish_state()
             )
 
-        self.publish_state = publish_state
+        def schedule_publish_state(_):
+            if not self.publish_scheduled:
+                self.publish_scheduled = True
+                schedule(publish_state, None)
 
-    def on_state_change(self, state, changed):
-        for item in AUTO_PUBLISH:
-            if item in changed:
-                if not self.publish_scheduled:
-                    self.publish_scheduled = True
-                    schedule(self.publish_state, None)
-                break
+        if config.LIGHT_ENABLED:
+            self.on_light_change = schedule_publish_state
+
+        if config.MOTION_SENSOR_ENABLED:
+            self.on_motion_change = schedule_publish_state
+
+        if config.BATTERY_ENABLED:
+            self.on_battery_change = schedule_publish_state
 
     def wait_for_messages(self):
         self.ha.wait_for_messages(status_led = status_led)

@@ -4,6 +4,8 @@ NAME = "Light"
 
 #### Light ####
 
+LIGHT_ENABLED = True
+
 ## Relay shield is D1 by default
 LIGHT_GPIO = pinmap.D1
 
@@ -13,7 +15,7 @@ INITIAL_BRIGHTNESS = 100 # percent
 
 #### Button ####
 
-BUTTON_ENABLED = True
+BUTTON_ENABLED = False
 
 ## Wemos 1-button shield is D3 by default
 BUTTON_GPIO = pinmap.D3
@@ -40,6 +42,6 @@ BATTERY_ENABLED = False
 
 BATTERY_ADC = pinmap.A0
 
-BATTERY_UPDATE_INTERVAL = 60 # seconds
+BATTERY_UPDATE_INTERVAL = 60 * 60 # seconds
 
 BATTERY_LOW_DISABLE = None # percent or None

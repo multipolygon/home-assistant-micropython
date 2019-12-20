@@ -4,6 +4,8 @@ NAME = "Security Floodlight"
 
 #### Light ####
 
+LIGHT_ENABLED = True
+
 ## Relay shield is D1 by default
 LIGHT_GPIO = pinmap.D1
 
