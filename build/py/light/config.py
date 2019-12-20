@@ -13,7 +13,7 @@ INITIAL_BRIGHTNESS = 100 # percent
 
 #### Button ####
 
-BUTTON_ENABLED = False
+BUTTON_ENABLED = True
 
 ## Wemos 1-button shield is D3 by default
 BUTTON_GPIO = pinmap.D3
@@ -23,7 +23,7 @@ BUTTON_DOWN_VALUE = 0
 
 #### Motion Sensor ####
 
-MOTION_SENSOR_ENABLED = True
+MOTION_SENSOR_ENABLED = False
 
 ## Wemos PIR shield is D3 by default
 MOTION_SENSOR_GPIO = pinmap.D3

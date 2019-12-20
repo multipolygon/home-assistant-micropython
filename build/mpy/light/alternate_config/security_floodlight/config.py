@@ -1,19 +1,19 @@
 from lib.esp8266.wemos.d1mini import pinmap
 
-NAME = "Light"
+NAME = "Security Floodlight"
 
 #### Light ####
 
 ## Relay shield is D1 by default
 LIGHT_GPIO = pinmap.D1
 
-LIGHT_DIMMABLE = False
+LIGHT_DIMMABLE = True
 
-INITIAL_BRIGHTNESS = 100 # percent
+INITIAL_BRIGHTNESS = 10 # percent
 
 #### Button ####
 
-BUTTON_ENABLED = True
+BUTTON_ENABLED = False
 
 ## Wemos 1-button shield is D3 by default
 BUTTON_GPIO = pinmap.D3
@@ -23,23 +23,23 @@ BUTTON_DOWN_VALUE = 0
 
 #### Motion Sensor ####
 
-MOTION_SENSOR_ENABLED = False
+MOTION_SENSOR_ENABLED = True
 
 ## Wemos PIR shield is D3 by default
-MOTION_SENSOR_GPIO = pinmap.D3
+MOTION_SENSOR_GPIO = pinmap.D2
 
 ## Set to 1 for Wemos PIR Shield
-MOTION_DETECTED_VALUE = 1
+MOTION_DETECTED_VALUE = 0
 
 ## Turn off light n-seconds after being turned on
 MOTION_LIGHT_OFF_DELAY = 10 # seconds
 
 #### Battery ####
 
-BATTERY_ENABLED = False
+BATTERY_ENABLED = True
 
 BATTERY_ADC = pinmap.A0
 
-BATTERY_UPDATE_INTERVAL = 60 # seconds
+BATTERY_UPDATE_INTERVAL = 60 * 60 # seconds
 
-BATTERY_LOW_DISABLE = None # percent or None
+BATTERY_LOW_DISABLE = 50 # percent or None

@@ -12,6 +12,8 @@ class PWMPin():
         
     def set_duty(self, i):
         self.pwm_duty = i
+        if self.is_on():
+            self.on()
 
     def get_duty(self):
         return self.pwm_duty
@@ -27,7 +29,14 @@ class PWMPin():
         if self.status_led:
             self.status_led.on()
         if self.pwm_enabled:
-            self.pwm.duty(self.pwm_duty)
+            if self.pwm_duty == 1024:
+                self.pwm.deinit()
+                self.pin.on()
+            elif self.pwm_duty == 0:
+                self.pwm.deinit()
+                self.pin.off()
+            else:
+                self.pwm.duty(self.pwm_duty)
         else:
             self.pin.on()
 

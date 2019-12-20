@@ -4,7 +4,11 @@ import config
 
 class Light():
     def __init__(self, state):
-        self.pwm = PWMPin(config.LIGHT_GPIO, status_led=status_led)
+        self.pwm = PWMPin(
+            config.LIGHT_GPIO,
+            pwm_enabled = config.LIGHT_DIMMABLE,
+            status_led = status_led
+        )
         self.pwm.off()
 
     def on_light_on(self, state):
