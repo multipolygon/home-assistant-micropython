@@ -2,6 +2,7 @@ from lib.home_assistant.main import HomeAssistant
 
 class Switch(HomeAssistant):
     COMPONENT = "switch"
+    JSON_NAMESPACE = "sw"
     PAYLOAD_ON = STATE_ON = "ON"
     PAYLOAD_OFF = STATE_OFF = "OFF"
 

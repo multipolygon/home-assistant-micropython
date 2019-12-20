@@ -3,7 +3,6 @@ from lib.home_assistant.binary_sensors.motion import MotionBinarySensor
 from lib.home_assistant.light import Light
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.mqtt import HomeAssistantMQTT
-from lib.home_assistant.sensors.battery import BatterySensor
 from lib.home_assistant.switch import Switch
 from micropython import schedule
 import config
@@ -24,10 +23,8 @@ class Internet():
 
         self.ha = ha = HomeAssistantMQTT(secrets)
 
-        self.publish_if_changed = []
-
         if config.LIGHT_ENABLED:
-            light = ha.register('GPIO%s' % config.LIGHT_GPIO, Light, brightness = config.LIGHT_DIMMABLE)
+            light = ha.register('Light', Light, brightness = config.LIGHT_DIMMABLE)
 
             def light_command(message):
                 state.set(light = message.decode('utf-8') == light.PAYLOAD_ON)
@@ -41,25 +38,22 @@ class Internet():
                 ha.subscribe(light.brightness_command_topic(), brightness_command)
 
         if config.MOTION_SENSOR_ENABLED:
-            motion_sensor = ha.register('GPIO%s' % config.MOTION_SENSOR_GPIO, MotionBinarySensor)
+            motion_sensor = ha.register('Motion', MotionBinarySensor)
 
             if config.LIGHT_ENABLED:
-                auto_switch = ha.register('Automatic', Switch)
+                auto_switch = ha.register('Auto', Switch)
 
                 def auto_switch_command(message):
                     state.set(automatic = message.decode('utf-8') == auto_switch.PAYLOAD_ON)
 
                 ha.subscribe(auto_switch.command_topic(), auto_switch_command)
-            
-        if config.BATTERY_ENABLED:
-            battery_sensor = ha.register('Battery', BatterySensor)
 
         if wifi.is_connected():
             try:
                 state.telemetry = ha.mqtt_connect()
             except:
                 pass
-                
+
         status_led.off()
 
         ## Prevent publishing config in the future because it will fail with out-of-memory error:
@@ -80,24 +74,26 @@ class Internet():
                     auto_switch.set_state(state.automatic)
             if config.BATTERY_ENABLED:
                 ha.set_attr('battery', '%d%%' % state.battery)
-                battery_sensor.set_state(state.battery)
             state.set(
                 telemetry = ha.publish_state()
             )
 
-        def schedule_publish_state(_):
-            if not self.publish_scheduled:
-                self.publish_scheduled = True
-                schedule(publish_state, None)
+        self.publish_state = publish_state
 
+    def schedule_publish_state(self):
+        if not self.publish_scheduled:
+            self.publish_scheduled = True
+            schedule(self.publish_state, None)
+
+    def on_light_change(self, state):
         if config.LIGHT_ENABLED:
-            self.on_light_change = schedule_publish_state
+            self.schedule_publish_state()
 
-        if config.MOTION_SENSOR_ENABLED:
-            self.on_motion_change = schedule_publish_state
+    def on_motion_change(self, state):
+        self.schedule_publish_state()
 
-        if config.BATTERY_ENABLED:
-            self.on_battery_change = schedule_publish_state
+    def on_battery_change(self, state):
+        self.schedule_publish_state()
 
     def wait_for_messages(self):
         self.ha.wait_for_messages(status_led = status_led)

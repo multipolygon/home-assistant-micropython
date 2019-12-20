@@ -1,11 +1,11 @@
+from gc import collect as gc_collect
+from lib.mem_info import mem_info
 from lib.random import random_int
 from sys import print_exception
 from uio import BytesIO
+from ujson import dump as json
 from umqtt.simple import MQTTClient
 from utime import sleep
-import gc
-import machine
-import ujson
 import wifi
 
 class MQTTCallbackException(Exception):
@@ -21,12 +21,13 @@ class HomeAssistantMQTT():
         self.publish_config_on_connect = True
         self.mqtt = None
         self.subscribe_topic = None
+        self.mac = wifi.mac()
 
     def mqtt_connect(self):
         self.mqtt_disconnect()
 
         self.mqtt = MQTTClient(
-            wifi.mac(),
+            self.mac,
             self.secrets.MQTT_SERVER,
             user=self.secrets.MQTT_USER.encode('utf-8'),
             password=self.secrets.MQTT_PASSWORD.encode('utf-8')
@@ -38,17 +39,15 @@ class HomeAssistantMQTT():
         self.mqtt.set_callback(_mqtt_receive)
 
         self.mqtt.connect()
-
         sleep(0.5)
         
         if self.publish_config_on_connect:
             self.publish_config_on_connect = not(self.publish_config())
-            
             sleep(0.5)
             
         self.mqtt_subscribe()
-
         sleep(0.5)
+        gc_collect()
             
     def mqtt_disconnect(self):
         if self.mqtt != None:
@@ -57,7 +56,7 @@ class HomeAssistantMQTT():
             except:
                 pass
             self.mqtt = None
-        gc.collect()
+        gc_collect()
 
     def mqtt_subscribe(self):
         if self.subscribe_topic != None:
@@ -65,7 +64,7 @@ class HomeAssistantMQTT():
             sleep(0.5)
 
     def mqtt_receive(self, in_topic, message):
-        gc.collect()
+        gc_collect()
         try:
             for topic, callback in self.callbacks.items():
                 if topic == in_topic:
@@ -75,8 +74,12 @@ class HomeAssistantMQTT():
             print_exception(exception)
             raise MQTTCallbackException()
 
-    def register(self, name, Integration, **config):
-        self.integrations[name] = Integration(name=name, state=self.state)
+    def register(self, name, Integration, key = None, **config):
+        self.integrations[name] = Integration(
+            name = name,
+            state = self.state,
+            key = key,
+        )
         self.configs[name] = config
         return self.integrations[name]
 
@@ -84,43 +87,44 @@ class HomeAssistantMQTT():
         print('HA publish config.')
         for name, integration in self.integrations.items():
             print(name)
-            gc.collect()
+            gc_collect()
             topic = integration.config_topic().encode('utf-8')
-            gc.collect()
+            gc_collect()
             with BytesIO() as config:
-                ujson.dump(integration.config(**self.configs[name]), config)
-                gc.collect()
+                json(integration.config(**self.configs[name]), config)
+                gc_collect()
                 self.mqtt.publish(topic, config.getvalue(), retain=True)
                 sleep(0.5)
-            gc.collect()
+            gc_collect()
 
     def set_attr(self, key, val):
         for integration in self.integrations.values():
-            integrations.set_attr(key, val)
+            integration.set_attr(key, val)
             break ## All integrations share the same attributes
+
+    def set_connection_attr(self):
+        self.set_attr("ip", wifi.ip())
+        self.set_attr("mac", self.mac)
+        self.set_attr("rssi", wifi.rssi())
             
     def publish_state(self):
         if self.mqtt:
             for integration in self.integrations.values():
-                gc.collect()
+                gc_collect()
                 topic = integration.state_topic().encode('utf-8')
-                gc.collect()
-                integration.set_attr("ip", wifi.ip())
-                integration.set_attr("mac", wifi.mac())
-                integration.set_attr("rssi", wifi.rssi())
-                gc.collect()
+                gc_collect()
                 with BytesIO() as state:
-                    ujson.dump(integration.state(), state)
-                    integration.reset_state()
-                    gc.collect()
+                    print(integration.state())
+                    json(integration.state(), state)
+                    gc_collect()
                     self.mqtt.publish(topic, state.getvalue())
                     sleep(0.5)
-                gc.collect()                
+                gc_collect()
                 return True # Return on first item since they all share the same state
         return False
 
     def subscribe(self, topic, callback):
-        gc.collect()
+        gc_collect()
         self.callbacks[topic.encode('utf-8')] = callback
         first = next(iter(self.callbacks))
         if len(self.callbacks) == 1:
@@ -138,7 +142,7 @@ class HomeAssistantMQTT():
                     topic += chr(char)
             topic += b'#'
         self.subscribe_topic = topic
-        gc.collect()
+        gc_collect()
 
     def wait_for_messages(self, status_led=None, connection_required=True):
         while True:
@@ -146,8 +150,9 @@ class HomeAssistantMQTT():
                 if wifi.is_connected():
                     self.mqtt_connect()
                     while True:
-                        gc.collect()
+                        gc_collect()
                         try:
+                            mem_info('MQTT wait')
                             self.mqtt.wait_msg()
                         except MQTTCallbackException:
                             pass
