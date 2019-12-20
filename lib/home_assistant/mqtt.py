@@ -97,6 +97,7 @@ class HomeAssistantMQTT():
     def set_attr(self, key, val):
         for integration in self.integrations.values():
             integrations.set_attr(key, val)
+            break ## All integrations share the same attributes
             
     def publish_state(self):
         if self.mqtt:

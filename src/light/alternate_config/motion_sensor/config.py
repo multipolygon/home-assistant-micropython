@@ -1,10 +1,10 @@
 from lib.esp8266.wemos.d1mini import pinmap
 
-NAME = "Light"
+NAME = "Motion Sensor"
 
 #### Light ####
 
-LIGHT_ENABLED = True
+LIGHT_ENABLED = False
 
 ## Relay shield is D1 by default
 LIGHT_GPIO = pinmap.D1
@@ -25,7 +25,7 @@ BUTTON_DOWN_VALUE = 0
 
 #### Motion Sensor ####
 
-MOTION_SENSOR_ENABLED = False
+MOTION_SENSOR_ENABLED = True
 
 ## Wemos PIR shield is D3 by default
 MOTION_SENSOR_GPIO = pinmap.D3
