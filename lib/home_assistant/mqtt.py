@@ -109,14 +109,13 @@ class HomeAssistantMQTT():
                 return True
             except Exception as e:
                 print_exception(e)
-        ## Prevent publishing config in the future because it will fail with out-of-memory error:
         self.publish_config_on_connect = False
         return False
 
     def set_attr(self, key, val):
         for integration in self.integrations.values():
             integration.set_attr(key, val)
-            break ## All integrations share the same attributes
+            break
 
     def set_connection_attr(self):
         self.set_attr("ip", wifi.ip())
@@ -136,7 +135,7 @@ class HomeAssistantMQTT():
                     self.mqtt.publish(topic, state.getvalue())
                     sleep(0.5)
                 gc_collect()
-                return True # Return on first item since they all share the same state
+                return True
         return False
 
     def subscribe(self, topic, callback):

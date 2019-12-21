@@ -14,7 +14,7 @@ class Internet():
         status_led.slow_blink()
         wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-        status_led.fast_blink()
+        status_led.off()
 
         HomeAssistant.NAME = config.NAME
         HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
@@ -28,16 +28,9 @@ class Internet():
             icon = 'mdi:counter',
         )
 
-        if wifi.is_connected():
-            try:
-                state.telemetry = ha.mqtt_connect()
-            except:
-                pass
-                
+        status_led.fast_blink()
+        state.telemetry = ha.mqtt_connect_and_publish_config_fail_safe()
         status_led.off()
-
-        ## Prevent publishing config in the future because it will fail with out-of-memory error:
-        ha.publish_config_on_connect = False
 
         self.publish_scheduled = False
 

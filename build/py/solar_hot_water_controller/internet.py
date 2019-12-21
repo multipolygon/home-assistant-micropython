@@ -1,8 +1,8 @@
+from lib.home_assistant.mqtt import HomeAssistantMQTT
 from lib.esp8266.wemos.d1mini import status_led
 from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.sensors.temperature import TemperatureSensor
 from lib.home_assistant.climate import Climate, MODE_OFF, ALL_MODES
-from lib.home_assistant.mqtt import HomeAssistantMQTT
 from micropython import schedule
 import config
 import secrets
@@ -15,7 +15,7 @@ class Internet():
         status_led.slow_blink()
         wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-        status_led.fast_blink()
+        status_led.off()
 
         HomeAssistant.NAME = config.NAME
         HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
@@ -37,12 +37,8 @@ class Internet():
 
         ha.subscribe(controller.temperature_command_topic(), controller_temperature_command)
 
-        if wifi.is_connected():
-            try:
-                state.telemetry = ha.mqtt_connect()
-            except:
-                pass
-                
+        status_led.fast_blink()
+        state.telemetry = ha.mqtt_connect_and_publish_config_fail_safe()
         status_led.off()
 
         ## Prevent publishing config in the future because it will fail with out-of-memory error:

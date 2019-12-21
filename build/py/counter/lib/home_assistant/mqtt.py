@@ -99,11 +99,23 @@ class HomeAssistantMQTT():
                 self.mqtt.publish(topic, config.getvalue(), retain=True)
                 sleep(0.5)
             gc_collect()
+        return True
+
+    def mqtt_connect_and_publish_config_fail_safe(self):
+        if wifi.is_connected():
+            try:
+                self.publish_config_on_connect = True
+                self.mqtt_connect()
+                return True
+            except Exception as e:
+                print_exception(e)
+        self.publish_config_on_connect = False
+        return False
 
     def set_attr(self, key, val):
         for integration in self.integrations.values():
             integration.set_attr(key, val)
-            break ## All integrations share the same attributes
+            break
 
     def set_connection_attr(self):
         self.set_attr("ip", wifi.ip())
@@ -123,7 +135,7 @@ class HomeAssistantMQTT():
                     self.mqtt.publish(topic, state.getvalue())
                     sleep(0.5)
                 gc_collect()
-                return True # Return on first item since they all share the same state
+                return True
         return False
 
     def subscribe(self, topic, callback):
