@@ -11,4 +11,3 @@ pwm_pin.py
 random.py
 state.py
 wifi.py
-mem_info.py
