@@ -99,6 +99,19 @@ class HomeAssistantMQTT():
                 self.mqtt.publish(topic, config.getvalue(), retain=True)
                 sleep(0.5)
             gc_collect()
+        return True
+
+    def mqtt_connect_and_publish_config_fail_safe(self):
+        if wifi.is_connected():
+            try:
+                self.publish_config_on_connect = True
+                self.mqtt_connect()
+                return True
+            except Exception as e:
+                print_exception(e)
+        ## Prevent publishing config in the future because it will fail with out-of-memory error:
+        self.publish_config_on_connect = False
+        return False
 
     def set_attr(self, key, val):
         for integration in self.integrations.values():

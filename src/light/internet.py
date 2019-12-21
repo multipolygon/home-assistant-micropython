@@ -5,7 +5,6 @@ from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.mqtt import HomeAssistantMQTT
 from lib.home_assistant.switch import Switch
 from micropython import schedule
-from sys import print_exception
 import config
 import secrets
 import wifi
@@ -17,7 +16,7 @@ class Internet():
         status_led.slow_blink()
         wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-        status_led.fast_blink()
+        status_led.off()
 
         HomeAssistant.NAME = config.NAME
         HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
@@ -49,16 +48,9 @@ class Internet():
 
                 ha.subscribe(auto_switch.command_topic(), auto_switch_command)
 
-        if wifi.is_connected():
-            try:
-                state.telemetry = ha.mqtt_connect()
-            except Exception as e:
-                print_exception(e)
-
+        status_led.fast_blink()
+        state.telemetry = ha.mqtt_connect_and_publish_config_fail_safe()
         status_led.off()
-
-        ## Prevent publishing config in the future because it will fail with out-of-memory error:
-        ha.publish_config_on_connect = False
 
         self.publish_scheduled = False
 
