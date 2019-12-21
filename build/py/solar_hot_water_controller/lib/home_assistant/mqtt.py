@@ -91,7 +91,10 @@ class HomeAssistantMQTT():
             topic = integration.config_topic().encode(UTF8)
             gc_collect()
             with BytesIO() as config:
-                json(integration.config(**self.configs[name]), config)
+                obj = integration.config(**self.configs[name])
+                print(obj)
+                json(obj, config)
+                del obj
                 gc_collect()
                 self.mqtt.publish(topic, config.getvalue(), retain=True)
                 sleep(0.5)

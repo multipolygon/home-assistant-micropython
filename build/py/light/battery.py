@@ -8,7 +8,7 @@ class Battery():
         self.state = state
         self.adc = ADC(config.BATTERY_ADC)
         self.timer = Timer(-1)
-        self.update()
+        state.battery = self.percent()
         self.poll()
 
     def percent(self):

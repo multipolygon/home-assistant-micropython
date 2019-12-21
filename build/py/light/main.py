@@ -2,11 +2,10 @@ import config
 from lib.state import State
 
 state = State(
-    light = False,
-    brightness = config.INITIAL_BRIGHTNESS,
-    motion = False,
     automatic = True,
-    battery = 100,
+    brightness = config.INITIAL_BRIGHTNESS,
+    light = False,
+    motion = False,
 )
 
 from internet import Internet

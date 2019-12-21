@@ -8,6 +8,8 @@ from machine import unique_id
 from ubinascii import hexlify
 from uos import uname
 
+UTF8 = 'utf-8'
+
 try:
     from lib.version import build_date
 except:
@@ -17,7 +19,7 @@ class HomeAssistant():
     NAME = None
     MANUFACTURER = "Echidna"
     MODEL = uname().sysname.upper()
-    UID = hexlify(unique_id()).decode("utf-8").upper()
+    UID = hexlify(unique_id()).decode(UTF8).upper()
     BUILD_DATE = build_date
     DISCOVERY_PREFIX = "homeassistant"
     COMPONENT = "generic"
@@ -27,6 +29,7 @@ class HomeAssistant():
     def __init__(self, name=None, state={}, key = None):
         self._name = name
         self._state = state
+        self.set_attr()
         self._key = key if key else self.slug()
 
     def name(self):
@@ -53,10 +56,14 @@ class HomeAssistant():
                 self._state[ns][self._key] = {}
             self._state[ns][self._key][key] = val
 
-    def set_attr(self, key, val):
+    def set_attr(self, key=None, val=None):
         if 'attr' not in self._state:
             self._state['attr'] = {}
-        self._state['attr'][key] = val
+        if key != None:
+            if val != None:
+                self._state['attr'][key] = val
+            else:
+                del self._state['attr'][key]
 
     def config_topic(self):
         object_id = "_".join((self.MANUFACTURER, self.MODEL, self.UID))
@@ -102,14 +109,14 @@ class HomeAssistant():
         return self.topic_prefix() + "/".join((self.MANUFACTURER, self.MODEL, self.UID)).lower().replace(' ', '_')
 
     def component_base_topic(self):
-        return self.base_topic() + "/".join(("", self.JSON_NAMESPACE or self.COMPONENT, self.slug()))
+        return self.base_topic() + "/".join(("", self.JSON_NAMESPACE or self.COMPONENT, self._key))
     
     def state_topic(self):
         return self.base_topic()
     
     def value_template(self, key=None):
         key = (".%s" % key) if key != None else ""
-        return "{{value_json.%s.%s%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self.slug(), key)
+        return "{{value_json.%s.%s%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self._key, key)
 
     def attributes_topic(self):
         return self.base_topic()

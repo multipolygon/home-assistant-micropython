@@ -5,6 +5,7 @@ from lib.home_assistant.main import HomeAssistant
 from lib.home_assistant.mqtt import HomeAssistantMQTT
 from lib.home_assistant.switch import Switch
 from micropython import schedule
+from sys import print_exception
 import config
 import secrets
 import wifi
@@ -51,8 +52,8 @@ class Internet():
         if wifi.is_connected():
             try:
                 state.telemetry = ha.mqtt_connect()
-            except:
-                pass
+            except Exception as e:
+                print_exception(e)
 
         status_led.off()
 
@@ -85,14 +86,17 @@ class Internet():
             self.publish_scheduled = True
             schedule(self.publish_state, None)
 
+    def on_automatic_change(self, state):
+        self.schedule_publish_state()
+
+    def on_battery_change(self, state):
+        self.schedule_publish_state()
+
     def on_light_change(self, state):
         if config.LIGHT_ENABLED:
             self.schedule_publish_state()
 
     def on_motion_change(self, state):
-        self.schedule_publish_state()
-
-    def on_battery_change(self, state):
         self.schedule_publish_state()
 
     def wait_for_messages(self):

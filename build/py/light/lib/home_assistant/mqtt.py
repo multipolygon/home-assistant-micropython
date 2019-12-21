@@ -1,5 +1,4 @@
 from gc import collect as gc_collect
-from lib.mem_info import mem_info
 from lib.random import random_int
 from sys import print_exception
 from uio import BytesIO
@@ -7,6 +6,8 @@ from ujson import dump as json
 from umqtt.simple import MQTTClient
 from utime import sleep
 import wifi
+
+UTF8 = 'utf-8'
 
 class MQTTCallbackException(Exception):
     pass
@@ -29,8 +30,8 @@ class HomeAssistantMQTT():
         self.mqtt = MQTTClient(
             self.mac,
             self.secrets.MQTT_SERVER,
-            user=self.secrets.MQTT_USER.encode('utf-8'),
-            password=self.secrets.MQTT_PASSWORD.encode('utf-8')
+            user=self.secrets.MQTT_USER.encode(UTF8),
+            password=self.secrets.MQTT_PASSWORD.encode(UTF8)
         )
 
         def _mqtt_receive(*args):
@@ -84,14 +85,16 @@ class HomeAssistantMQTT():
         return self.integrations[name]
 
     def publish_config(self):
-        print('HA publish config.')
         for name, integration in self.integrations.items():
-            print(name)
+            print('Config: %s' % name)
             gc_collect()
-            topic = integration.config_topic().encode('utf-8')
+            topic = integration.config_topic().encode(UTF8)
             gc_collect()
             with BytesIO() as config:
-                json(integration.config(**self.configs[name]), config)
+                obj = integration.config(**self.configs[name])
+                print(obj)
+                json(obj, config)
+                del obj
                 gc_collect()
                 self.mqtt.publish(topic, config.getvalue(), retain=True)
                 sleep(0.5)
@@ -111,7 +114,7 @@ class HomeAssistantMQTT():
         if self.mqtt:
             for integration in self.integrations.values():
                 gc_collect()
-                topic = integration.state_topic().encode('utf-8')
+                topic = integration.state_topic().encode(UTF8)
                 gc_collect()
                 with BytesIO() as state:
                     print(integration.state())
@@ -125,7 +128,7 @@ class HomeAssistantMQTT():
 
     def subscribe(self, topic, callback):
         gc_collect()
-        self.callbacks[topic.encode('utf-8')] = callback
+        self.callbacks[topic.encode(UTF8)] = callback
         first = next(iter(self.callbacks))
         if len(self.callbacks) == 1:
             topic = first
@@ -152,14 +155,13 @@ class HomeAssistantMQTT():
                     while True:
                         gc_collect()
                         try:
-                            mem_info('MQTT wait')
                             self.mqtt.wait_msg()
                         except MQTTCallbackException:
                             pass
                 else:
                     print('No WiFi!')
             except Exception as exception:
-                print('MQTT Exception:')
+                print('MQTT:')
                 print_exception(exception)
                 self.mqtt_disconnect()
             if connection_required:
