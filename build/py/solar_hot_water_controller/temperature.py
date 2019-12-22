@@ -14,31 +14,39 @@ class Temperature():
         self.tank_probe_pin = Pin(config.TANK_PROBE_GPIO, mode=Pin.OUT)
         self.tank_probe_pin.off()
         self.timer = Timer(-1)
+        self.counter = 0
+        self.solar_temperature = [self.read_solar_temperature()] * config.AVERAGE
+        self.tank_temperature = [self.read_tank_temperature()] * config.AVERAGE
         self.update()
         self.poll()
 
     def update(self):
+        self.counter = (self.counter + 1) % config.AVERAGE
+        self.solar_temperature[self.counter] = self.read_solar_temperature()
+        self.tank_temperature[self.counter] = self.read_tank_temperature()
         self.state.set(
-            solar_temperature = self.read_solar_temperature(),
-            tank_temperature = self.read_tank_temperature(),
+            solar_temperature = round(sum(self.solar_temperature) / config.AVERAGE),
+            tank_temperature = round(sum(self.tank_temperature) / config.AVERAGE),
         )
 
     def read_solar_temperature(self):
         self.solar_probe_pin.on()
-        return round(config.solar_adc_to_temperature(self.read_adc()))
+        return config.solar_adc_to_temperature(self.read_adc())
 
     def read_tank_temperature(self):
         self.tank_probe_pin.on()
-        return round(config.tank_adc_to_temperature(self.read_adc()))
+        return config.tank_adc_to_temperature(self.read_adc())
 
     def read_adc(self):
         status_led.invert()
-        sleep_ms(100)
-        val = self.adc.read()
+        val = 0
+        for i in range(10):
+            sleep_ms(100)
+            val += self.adc.read()
         self.solar_probe_pin.off()
         self.tank_probe_pin.off()
         status_led.invert()
-        return val
+        return val / 10
 
     def poll(self):
         self.update_scheduled = False

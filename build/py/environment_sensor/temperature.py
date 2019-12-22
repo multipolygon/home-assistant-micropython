@@ -7,7 +7,7 @@ class Temperature():
         
         if sht30.is_present():
             t, rh = sht30.measure()
-            state.set(
-                temperature = t,
-                humidity = rh,
-            )
+            state['temperature'] = t
+            state['humidity'] = rh
+
+        del sht30

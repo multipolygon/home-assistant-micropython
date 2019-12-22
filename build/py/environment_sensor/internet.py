@@ -7,6 +7,8 @@ from lib.home_assistant.sensors.humidity import HumiditySensor
 from lib.home_assistant.sensors.illuminance import IlluminanceSensor
 from lib.home_assistant.sensors.temperature import TemperatureSensor
 from micropython import schedule
+from machine import reset_cause, DEEPSLEEP_RESET
+from utime import sleep
 import config
 import secrets
 import wifi
@@ -15,7 +17,8 @@ class Internet():
     def __init__(self, state):
         print(HomeAssistant.UID)
 
-        status_led.slow_blink()
+        if reset_cause() != DEEPSLEEP_RESET:
+            status_led.slow_blink()
         wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
         status_led.off()
@@ -29,29 +32,30 @@ class Internet():
 
         opt = { 'expire_after': config.INTERVAL * 2.5 }
 
-        if state.temperature:
-            ha.register('Temp', TemperatureSensor, **opt).set_state(state.temperature)
+        if 'temperature' in state:
+            ha.register('Temp', TemperatureSensor, **opt).set_state(state['temperature'])
 
-        if state.humidity:
-            ha.register('Humid', HumiditySensor, **opt).set_state(state.humidity)
+        if 'humidity' in state:
+            ha.register('Humid', HumiditySensor, **opt).set_state(state['humidity'])
 
-        if state.illuminance:
-            ha.register('Lux', IlluminanceSensor, **opt).set_state(state.illuminance)
+        if 'illuminance' in state:
+            ha.register('Lux', IlluminanceSensor, **opt).set_state(state['illuminance'])
 
-        if state.analog:
-            ha.register('Analog', Sensor, unit = "%", icon = "mdi:gauge", **opt).set_state(state.analog)
+        if 'analog' in state:
+            ha.register('Analog', Sensor, unit = "%", icon = "mdi:gauge", **opt).set_state(state['analog'])
 
-        if state.battery:
-            ha.set_attr('battery', '%d%%' % state.battery)
+        if 'battery' in state:
+            ha.set_attr('battery', '%d%%' % state['battery'])
             if config.BATTERY_SENSOR:
-                ha.register('Battery', BatterySensor, key = 'bat', **opt).set_state(state.battery)
+                ha.register('Battery', BatterySensor, key = 'bat', **opt).set_state(state['battery'])
 
         if wifi.is_connected():
-            status_led.fast_blink()
+            if reset_cause() != DEEPSLEEP_RESET:
+                status_led.fast_blink()
+            else:
+                ha.publish_config_on_connect = False
             ha.mqtt_connect()
-            status_led.on()
             ha.publish_state()
             status_led.off()
-
-    def deinit(self):
-        self.ha.mqtt_disconnect()
+            sleep(5)
+            self.ha.mqtt_disconnect()

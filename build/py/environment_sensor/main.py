@@ -1,38 +1,35 @@
-from lib.state import State
+from gc import collect as gc_collect
+from gc import mem_free, mem_alloc
 import config
 
-state = State(
-    analog = None,
-    battery = None,
-    humidity = None,
-    illuminance = None,
-    temperature = None,
-)
+print('Run...')
+
+state = {}
+
+def run(cls):
+    print(cls.__name__)
+    cls(state)
+    gc_collect()
+    print("Mem: %d%%" % round(mem_alloc() / (mem_alloc() + mem_free()) * 100 ))
 
 if config.ANALOG_ENABLED:
     from analog import Analog
-    state.observer(Analog)
+    run(Analog)
 
 if config.BATTERY_ENABLED:
     from battery import Battery
-    state.observer(Battery)
+    run(Battery)
 
 from temperature import Temperature
-state.observer(Temperature)
+run(Temperature)
 
 from illuminance import Illuminance
-state.observer(Illuminance)
+run(Illuminance)
 
 from internet import Internet
-state.observer(Internet)
-from internet import Internet
+run(Internet)
 
-from utime import sleep
-sleep(10)
-
-state.deinit()
-    
-print('Sleep for %s sec.' % config.INTERVAL)
+print('Sleep: %s sec' % config.INTERVAL)
 
 ## https://docs.micropython.org/en/latest/library/esp.html#esp.deepsleep
 ## Note, GPIO pin 16 (or D0 on the Wemos D1 Mini) must be wired to the Reset pin. See README
