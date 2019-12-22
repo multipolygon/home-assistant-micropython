@@ -12,9 +12,11 @@ The MQTT Discovery lib is mostly stable and could be used in any project:
 
 For example usage see:
 
-- [./build/py/light/](./build/py/light/)
-- [./build/py/solar_hot_water_controller/](./build/py/solar_hot_water_controller/)
-- [./build/py/counter/](./build/py/counter/)
+- [./build/py/counter/](./build/py/counter/) ← basic
+- [./build/py/environment_sensor/](./build/py/environment_sensor/) ← medium
+- [./build/py/light/](./build/py/light/) ← basic
+- [./build/py/solar_hot_water_controller/](./build/py/solar_hot_water_controller/) ← complex
+- [./build/py/valve/](./build/py/valve/) ← medium
 
 ## Install Notes
 
