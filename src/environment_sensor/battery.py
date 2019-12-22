@@ -1,10 +1,6 @@
-from machine import ADC
+from analog import Analog
 import config
 
-class Battery():
+class Battery(Analog):
     def __init__(self, state):
-        self.adc = ADC(config.BATTERY_ADC)
-        state.set(battery = self.percent())
-
-    def percent(self):
-        return round(self.adc.read() / 1024 * 100)
+        state['battery'] = self.percent(config.BATTERY_ADC)
