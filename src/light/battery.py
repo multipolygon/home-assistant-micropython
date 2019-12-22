@@ -2,6 +2,7 @@ from machine import ADC
 from machine import Timer
 from micropython import schedule
 import config
+from utime import sleep_ms
 
 class Battery():
     def __init__(self, state):
@@ -9,13 +10,28 @@ class Battery():
         self.adc = ADC(config.BATTERY_ADC)
         self.timer = Timer(-1)
         state.battery = self.percent()
+        state.battery_level = self.level(state.battery)
         self.poll()
 
+    def adc_read(self):
+        val = 0
+        for i in range(10):
+            sleep_ms(100)
+            val += self.adc.read()
+        return val / 10
+
     def percent(self):
-        return round(self.adc.read() / 1024 * 100)
+        return round(self.adc_read() / 1024 * 100)
+
+    def level(self, percent):
+        return round(percent / 20)
 
     def update(self):
-        self.state.set(battery = self.percent())
+        val = self.percent()
+        self.state.set(
+            battery = val,
+            battery_level = self.level(val),
+        )
 
     def poll(self):
         self.update_scheduled = False

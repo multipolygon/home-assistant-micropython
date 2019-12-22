@@ -2,11 +2,12 @@ from lib.esp8266.wemos.d1mini import pinmap
 
 NAME = "Light"
 
-#### Light ####
+#### Light / Switch ####
 
-LIGHT_ENABLED = True
+## Change the component for Home Assistant:
+COMPONENT = 'light' # options: 'light', 'switch', None
 
-## Relay shield is D1 by default
+## Relay shield is D1 by default:
 LIGHT_GPIO = pinmap.D1
 
 LIGHT_DIMMABLE = False
@@ -17,23 +18,23 @@ INITIAL_BRIGHTNESS = 100 # percent
 
 BUTTON_ENABLED = False
 
-## Wemos 1-button shield is D3 by default
+## Wemos 1-button shield is D3 by default:
 BUTTON_GPIO = pinmap.D3
 
-## Set to 0 for Wemos 1-button shield
+## Set to 0 for Wemos 1-button shield:
 BUTTON_DOWN_VALUE = 0
 
 #### Motion Sensor ####
 
 MOTION_SENSOR_ENABLED = False
 
-## Wemos PIR shield is D3 by default
+## Wemos PIR shield is D3 by default:
 MOTION_SENSOR_GPIO = pinmap.D3
 
-## Set to 1 for Wemos PIR Shield
+## Set to 1 for Wemos PIR Shield:
 MOTION_DETECTED_VALUE = 1
 
-## Turn off light n-seconds after being turned on
+## Turn off light n-seconds after being turned on:
 MOTION_LIGHT_OFF_DELAY = 10 # seconds
 
 #### Battery ####

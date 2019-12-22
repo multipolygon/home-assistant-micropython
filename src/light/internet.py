@@ -23,24 +23,28 @@ class Internet():
 
         self.ha = ha = HomeAssistantMQTT(secrets)
 
-        if config.LIGHT_ENABLED:
-            light = ha.register('Light', Light, brightness = config.LIGHT_DIMMABLE)
+        if config.COMPONENT != None:
+            if config.COMPONENT == 'light':
+                light = ha.register('Light', Light, brightness = config.LIGHT_DIMMABLE)
+                
+                if config.LIGHT_DIMMABLE:
+                    def brightness_command(message):
+                        state.set(brightness = round(float(message)))
+
+                    ha.subscribe(light.brightness_command_topic(), brightness_command)
+                
+            elif config.COMPONENT == 'switch':
+                light = ha.register('Switch', Switch)
 
             def light_command(message):
                 state.set(light = message.decode('utf-8') == light.PAYLOAD_ON)
 
             ha.subscribe(light.command_topic(), light_command)
 
-            if config.LIGHT_DIMMABLE:
-                def brightness_command(message):
-                    state.set(brightness = round(float(message)))
-
-                ha.subscribe(light.brightness_command_topic(), brightness_command)
-
         if config.MOTION_SENSOR_ENABLED:
             motion_sensor = ha.register('Motion', MotionBinarySensor)
 
-            if config.LIGHT_ENABLED:
+            if config.COMPONENT != None:
                 auto_switch = ha.register('Auto', Switch)
 
                 def auto_switch_command(message):
@@ -57,13 +61,13 @@ class Internet():
         def publish_state(_):
             self.publish_scheduled = False
             print('HA publish state.')
-            if config.LIGHT_ENABLED:
+            if config.COMPONENT != None:
                 light.set_state(state.light)
-                if config.LIGHT_DIMMABLE:
+                if config.COMPONENT == 'light' and config.LIGHT_DIMMABLE:
                     light.set_brightness_state(state.brightness)
             if config.MOTION_SENSOR_ENABLED:
                 motion_sensor.set_state(state.motion)
-                if config.LIGHT_ENABLED:
+                if config.COMPONENT != None:
                     auto_switch.set_state(state.automatic)
             if config.BATTERY_ENABLED:
                 ha.set_attr('battery', '%d%%' % state.battery)
@@ -81,11 +85,11 @@ class Internet():
     def on_automatic_change(self, state):
         self.schedule_publish_state()
 
-    def on_battery_change(self, state):
+    def on_battery_level_change(self, state):
         self.schedule_publish_state()
 
     def on_light_change(self, state):
-        if config.LIGHT_ENABLED:
+        if config.COMPONENT != None:
             self.schedule_publish_state()
 
     def on_motion_change(self, state):

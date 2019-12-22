@@ -12,7 +12,7 @@ class Light():
         self.pwm.off()
 
     def on_light_on(self, state):
-        if config.BATTERY_LOW_DISABLE == None or state.battery > config.BATTERY_LOW_DISABLE:
+        if config.BATTERY_ENABLED == False or config.BATTERY_LOW_DISABLE == None or state.battery > config.BATTERY_LOW_DISABLE:
             self.pwm.on()
 
     def on_light_off(self, state):
