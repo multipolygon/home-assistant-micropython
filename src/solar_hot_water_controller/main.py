@@ -1,9 +1,5 @@
-from controller import Controller
-from display import Display
 from internet import Internet
 from lib.state import State
-from pump import Pump
-from temperature import Temperature
 import config
 
 state = State(
@@ -17,13 +13,17 @@ state = State(
 
 internet = state.observer(Internet)
 
-state.observer(Pump, priority=True)
+from temperature import Temperature
+state.observer(Temperature)
 
-state.observer(Controller, priority=True)
-
+from display import Display
 state.observer(Display, priority=True)
 
-state.observer(Temperature)
+from controller import Controller
+state.observer(Controller, priority=True)
+
+from pump import Pump
+state.observer(Pump, priority=True)
 
 try:
     internet.wait_for_messages()
