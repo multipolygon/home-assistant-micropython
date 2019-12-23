@@ -6,18 +6,18 @@ NAME = "Counter"
 GPIO = pinmap.D3
 
 ## Set to 0 for Wemos 1-button shield
-GPIO_VALUE = 0
+GPIO_VAL = 0
 
-INTERVAL = 60 # seconds
+FREQ = 60 # seconds
 
-UNIT_OF_MEASUREMENT = 'count/min'
+UNIT = 'count/min'
 
 LED = pinmap.LED
 
 #### Battery ####
 
-BATTERY_ENABLED = False
+BATT = True
 
-BATTERY_ADC = pinmap.A0
+BATT_ADC = pinmap.A0
 
-BATTERY_UPDATE_INTERVAL = 60 * 60 # seconds
+BATT_INT = 60 # seconds

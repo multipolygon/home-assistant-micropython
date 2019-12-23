@@ -1,7 +1,7 @@
-from lib.esp8266.wemos.d1mini import status_led
-from lib.home_assistant.main import HomeAssistant
-from lib.home_assistant.mqtt import HomeAssistantMQTT
+from lib.home_assistant.mqtt import MQTT
 from lib.home_assistant.sensor import Sensor
+from lib.home_assistant.sensors.battery import Battery
+from lib.esp8266.wemos.d1mini import status_led
 from micropython import schedule
 import config
 import secrets
@@ -9,57 +9,54 @@ import wifi
 
 class Internet():
     def __init__(self, state):
-        print(HomeAssistant.UID)
+        print(wifi.uid())
 
         status_led.slow_blink()
-        wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
         status_led.off()
 
-        HomeAssistant.NAME = config.NAME
-        HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
+        self.mqtt = MQTT(config.NAME, secrets)
 
-        self.ha = ha = HomeAssistantMQTT(secrets)
-
-        counter = ha.register(
+        counter = self.mqtt.add(
             'Counter',
             Sensor,
-            unit = config.UNIT_OF_MEASUREMENT,
+            unit = config.UNIT,
             icon = 'mdi:counter',
         )
 
+        if config.BATT:
+            battery = self.mqtt.add('Battery', Battery)
+
         status_led.fast_blink()
-        state.telemetry = ha.mqtt_connect_and_publish_config_fail_safe()
+        state.mqtt = self.mqtt.try_pub_cfg()
         status_led.off()
 
-        self.publish_scheduled = False
+        self._sched = False
 
-        def publish_state(_):
+        def pub_state(_):
             status_led.on()
-            self.publish_scheduled = False
+            self._sched = False
             counter.set_state(state.count)
-            if config.BATTERY_ENABLED:
-                counter.set_attr('battery', '%d%%' % state.battery)
+            if config.BATT:
+                battery.set_state(state.battery)
+                counter.set_attr('battery', state.battery)
             state.set(
-                telemetry = ha.publish_state()
+                mqtt = self.mqtt.pub_state()
             )
             status_led.off()
 
-        self.publish_state = publish_state
+        self.pub_state = pub_state
 
-    def schedule_publish_state(self):
-        if not self.publish_scheduled:
-            self.publish_scheduled = True
-            schedule(self.publish_state, None)
+    def on_state_change(self, state, changed):
+        if not self._sched:
+            for i in ('count', 'battery'):
+                if i in changed:
+                    self.pub_sched = True
+                    schedule(self.pub_state, None)
+                    break
 
-    def on_count_change(self, state):
-        self.schedule_publish_state()
-
-    def on_battery_change(self, state):
-        self.schedule_publish_state()
-            
-    def wait_for_messages(self):
-        self.ha.wait_for_messages(status_led = status_led)
+    def wait(self):
+        self.mqtt.wait(led = status_led)
 
     def deinit(self):
-        self.ha.mqtt_disconnect()
+        self.mqtt.mqtt_discon()

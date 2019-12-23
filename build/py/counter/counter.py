@@ -19,7 +19,7 @@ class Counter():
                 self.led.value(self.count % 2 == 0)
 
         self.pin.irq(
-            trigger = Pin.IRQ_RISING if config.GPIO_VALUE == 1 else Pin.IRQ_FALLING,
+            trigger = Pin.IRQ_RISING if config.GPIO_VAL == 1 else Pin.IRQ_FALLING,
             handler = increment,
         )
 
@@ -27,12 +27,12 @@ class Counter():
             self.state.set(count = self.count)
             self.count = 0
 
-        def interval(_):
+        def cb(_):
             schedule(reset, None)
         
         self.timer.init(
-            period = config.INTERVAL * 1000,
-            callback = interval,
+            period = config.FREQ * 1000,
+            callback = cb,
         )
 
     def deinit(self):

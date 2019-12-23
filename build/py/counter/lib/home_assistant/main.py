@@ -2,143 +2,129 @@
 ## https://github.com/home-assistant/home-assistant/blob/master/homeassistant/components/mqtt/abbreviations.py
 ## https://www.home-assistant.io/components/sensor/#device-class
 ## https://www.home-assistant.io/components/binary_sensor/#device-class
-## Note to self, do not put any proceedural code or logic in this module!
 
 from machine import unique_id
 from ubinascii import hexlify
 from uos import uname
 
 UTF8 = 'utf-8'
+ATTR = 'attr'
 
 try:
     from lib.version import build_date
 except:
     build_date = '?'
 
-class HomeAssistant():
+class HA():
     NAME = None
-    MANUFACTURER = "Echidna"
-    MODEL = uname().sysname.upper()
+    MANUF = 'Echidna'
+    MDL = uname().sysname.upper()
     UID = hexlify(unique_id()).decode(UTF8).upper()
-    BUILD_DATE = build_date
-    DISCOVERY_PREFIX = "homeassistant"
-    COMPONENT = "generic"
-    JSON_NAMESPACE = None
-    TOPIC_PREFIX = None
+    BUILD = build_date
+    DISCOV = 'homeassistant'
+    DEV_CLA = None
+    COMPNT = 'generic'
+    JSON_NS = None
     
-    def __init__(self, name=None, state={}, key = None):
-        self._name = name
-        self._state = state
+    def __init__(self, scope=None, dev_name=None, name=None, key=None, state={}):
+        self.scope = scope + '/' if scope else ''
+        self.dev_name = dev_name or 'Device'
+        self.name = name or self.DEV_CLA or self.COMPNT
+        self.key = key if key else self.name.lower().replace(' ', '_')
+        self.state = state
         self.set_attr()
-        self._key = key if key else self.slug()
 
-    def name(self):
-        return self._name or self.COMPONENT
-
-    def slug(self):
-        return self.name().lower().replace(' ', '_')
-
-    def state(self):
-        return self._state
-
-    def reset_state(self):
-        for key in self._state.keys():
-            del self._state[key]
-    
     def set_state(self, val, key=None):
-        ns = self.JSON_NAMESPACE or self.COMPONENT
-        if ns not in self._state:
-            self._state[ns] = {}
+        ns = self.JSON_NS or self.COMPNT
+        if ns not in self.state:
+            self.state[ns] = {}
         if key == None:
-            self._state[ns][self._key] = val
+            self.state[ns][self.key] = val
         else:
-            if self._key not in self._state[ns]:
-                self._state[ns][self._key] = {}
-            self._state[ns][self._key][key] = val
+            if self.key not in self.state[ns]:
+                self.state[ns][self.key] = {}
+            self.state[ns][self.key][key] = val
 
     def set_attr(self, key=None, val=None):
-        if 'attr' not in self._state:
-            self._state['attr'] = {}
+        if ATTR not in self.state:
+            self.state[ATTR] = {}
         if key != None:
             if val != None:
-                self._state['attr'][key] = val
+                self.state[ATTR][key] = val
             else:
-                del self._state['attr'][key]
+                del self.state[ATTR][key]
 
-    def config_topic(self):
-        object_id = "_".join((self.MANUFACTURER, self.MODEL, self.UID))
-        return self.topic_prefix() + "/".join((self.DISCOVERY_PREFIX, self.COMPONENT, object_id, self.name(), "config")).lower().replace(' ', '_')
+    def cfg_tpc(self):
+        object_id = '_'.join((self.MANUF, self.MDL, self.UID))
+        return self.scope + '/'.join((
+            self.DISCOV,
+            self.COMPNT,
+            object_id,
+            self.name,
+            'config'
+        )).lower().replace(' ', '_')
 
-    def config(self, *args, **argv):
-        return self.shorten_config(
-            self.merge_config(
-                {
-                    "name": self.full_name(),
-                    "json_attr_t": self.attributes_topic(),
-                    "json_attr_tpl": self.attributes_template(),
-                    "uniq_id": self.full_name(),
-                    "dev": self.device(),
-                },
-                self.component_config(*args, **argv)
-            )
+    def cfg(self, *arg, **kwarg):
+        return self.short_cfg(
+            name = self.ful_name(),
+            json_attr_t = self.attr_tpc(),
+            json_attr_tpl = self.attr_tpl(),
+            uniq_id = self.ful_name(),
+            dev = self.dev(),
+            **self.sub_cfg(*arg, **kwarg),
         )
 
-    def shorten_topic(self, topic):
-        return topic.replace(self.base_topic(), "~")
+    def sub_cfg(self, *arg, **kwarg):
+        return {}
 
-    def shorten_config(self, config):
-        for key, val in config.items():
-            if hasattr(val, 'replace'):
-                config[key] = self.shorten_topic(val)
-        config["~"] = self.base_topic()
-        return config
+    def short_tpc(self, topic):
+        return topic.replace(self.base_tpc(), '~')
 
-    def component_config(self, **args):
-        return None
+    def short_cfg(self, **cfg):
+        for k, v in cfg.items():
+            if v == None:
+                del cfg[k]
+            else:
+                try:
+                    cfg[k] = self.short_tpc(v)
+                except:
+                    pass
+        cfg['~'] = self.base_tpc()
+        return cfg
 
-    def device_name(self):
-        return " ".join((self.MODEL, self.UID, self.NAME or self.MANUFACTURER))
+    def ful_dev_name(self):
+        return ' '.join((self.MDL, self.UID, self.dev_name))
     
-    def full_name(self):
-        return " ".join((self.device_name(), self.name()))
+    def ful_name(self):
+        return ' '.join((self.ful_dev_name(), self.name))
 
-    def topic_prefix(self):
-        return self.TOPIC_PREFIX and (self.TOPIC_PREFIX + "/") or ""
+    def base_tpc(self):
+        return self.scope + '/'.join((self.MANUF, self.MDL, self.UID)).lower().replace(' ', '_')
+
+    def compnt_base_tpc(self):
+        return self.base_tpc() + '/'.join(('', self.JSON_NS or self.COMPNT, self.key))
+
+    def _tpl(self, s):
+        return '{{value_json.%s}}' % s
     
-    def base_topic(self):
-        return self.topic_prefix() + "/".join((self.MANUFACTURER, self.MODEL, self.UID)).lower().replace(' ', '_')
+    def val_tpl(self, key=None):
+        key = ('.%s' % key) if key != None else ''
+        return self._tpl('%s.%s%s' % (self.JSON_NS or self.COMPNT, self.key, key))
 
-    def component_base_topic(self):
-        return self.base_topic() + "/".join(("", self.JSON_NAMESPACE or self.COMPONENT, self._key))
+    def attr_tpc(self):
+        return self.base_tpc()
+
+    def attr_tpl(self):
+        return self._tpl('attr|tojson')
+
+    def cmd_tpc(self):
+        return self.compnt_base_tpc() + '/cmd'
     
-    def state_topic(self):
-        return self.base_topic()
-    
-    def value_template(self, key=None):
-        key = (".%s" % key) if key != None else ""
-        return "{{value_json.%s.%s%s}}" % (self.JSON_NAMESPACE or self.COMPONENT, self._key, key)
-
-    def attributes_topic(self):
-        return self.base_topic()
-
-    def attributes_template(self):
-        return "{{value_json.attr|tojson}}"
-
-    def command_topic(self):
-        return self.component_base_topic() + "/cmd"
-    
-    def device(self):
-        return {
-            "name": self.device_name(),
-            "mf": self.MANUFACTURER,
-            "mdl": self.MODEL,
-            "ids": self.UID,
-            "sw": self.BUILD_DATE,
-        }
-
-    def merge_config(self, target, source):
-        if target and source:
-            for key, val in source.items():
-                if val != None:
-                    target[key] = val
-        return target
+    def dev(self):
+        return dict(
+            name = self.ful_dev_name(),
+            mf = self.MANUF,
+            mdl = self.MDL,
+            ids = self.UID,
+            sw = self.BUILD,
+        )

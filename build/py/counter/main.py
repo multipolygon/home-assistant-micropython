@@ -1,22 +1,22 @@
-from battery import Battery
-from counter import Counter
-from internet import Internet
-from lib.state import State
 import config
+from lib.state import State
 
 state = State(
     count = -1,
     battery = 100,
 )
 
-internet = state.observer(Internet)
+from internet import Internet
+internet = state.add(Internet)
 
-state.observer(Counter)
+from counter import Counter
+state.add(Counter)
 
-if config.BATTERY_ENABLED:
-    state.observer(Battery)
+if config.BATT:
+    from lib.components.battery import Battery
+    state.add(Battery)
 
 try:
-    internet.wait_for_messages()
+    internet.wait()
 except KeyboardInterrupt:
     state.deinit()

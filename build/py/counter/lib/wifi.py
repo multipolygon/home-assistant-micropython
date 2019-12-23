@@ -5,7 +5,7 @@ import network
 
 sta_if = network.WLAN(network.STA_IF)
 
-def disable_access_point():
+def no_ap():
     network.WLAN(network.AP_IF).active(False)
 
 def is_connected():
@@ -19,6 +19,7 @@ def deactivate():
     sta_if.active(False)
 
 def connect(ssid, password, timeout=30, power_save=False):
+    no_ap()
     activate()
     sta_if.connect(ssid, password)
     for i in range(timeout):
