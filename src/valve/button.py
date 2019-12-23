@@ -6,7 +6,7 @@ class Button():
         def on(_):
             state.set(valve_open = not(state.valve_open))
 
-        self.button = DebouncedButton(config.BUTTON_GPIO, on, on_value=config.BUTTON_DOWN_VALUE)
+        self.button = DebouncedButton(config.BTN_GPIO, on, on_value=config.BTN_DOWN_VAL)
 
     def deinit(self):
         self.button.deinit()

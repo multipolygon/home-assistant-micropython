@@ -1,11 +1,12 @@
 button.py
+components/battery.py
 esp8266/wemos/d1mini/pinmap.py
 esp8266/wemos/d1mini/status_led.py
 home_assistant/main.py
-home_assistant/switch.py
 home_assistant/mqtt.py
 home_assistant/sensor.py
 home_assistant/sensors/battery.py
+home_assistant/switch.py
 random.py
 state.py
 wifi.py

@@ -4,13 +4,13 @@ import config
 
 class BallValve():
     def __init__(self, state):
-        self.motor = Pin(config.BALL_VALVE_MOTOR_GPIO, mode=Pin.OUT)
-        self.contact = Pin(config.BALL_VALVE_CONTACT_GPIO, mode=Pin.IN)
+        self.motor = Pin(config.MOTOR_GPIO, mode=Pin.OUT)
+        self.contact = Pin(config.CONTACT_GPIO, mode=Pin.IN)
         self.rotate(False)
 
     def rotate(self, valve_open):
         status_led.fast_blink()
-        while valve_open != (self.contact.value() == config.BALL_VALVE_OPEN_VALUE):
+        while valve_open != (self.contact.value() == config.VALVE_OPEN_VAL):
             self.motor.on()
         self.motor.off()
         if valve_open:
@@ -18,8 +18,8 @@ class BallValve():
         else:
             status_led.off()
             
-    def battery_is_low(self, percent):
-        return config.BATTERY_ENABLED and config.BATTERY_LOW_DISABLE != None and percent < config.BATTERY_LOW_DISABLE
+    def battery_is_low(self, val):
+        return config.BATT and config.BATT_LOW != None and val < config.BATT_LOW
 
     def on_valve_open_change(self, state):
         if state.valve_open and self.battery_is_low(state.battery):

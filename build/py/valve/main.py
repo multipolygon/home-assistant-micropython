@@ -6,19 +6,20 @@ state = State(
 )
 
 from ball_valve import BallValve
-state.observer(BallValve)
+state.add(BallValve)
 
-from button import Button
-state.observer(Button)
+if config.BTN:
+    from button import Button
+    state.add(Button)
 
-if config.BATTERY_ENABLED:
-    from battery import Battery
-    state.observer(Battery, priority = True)
+if config.BATT:
+    from lib.components.battery import Battery
+    state.add(Battery, priority = True)
 
 from internet import Internet
-internet = state.observer(Internet)
+internet = state.add(Internet)
 
 try:
-    internet.wait_for_messages()
+    internet.wait()
 except KeyboardInterrupt:
     state.deinit()

@@ -1,20 +1,20 @@
-from lib.home_assistant.main import HomeAssistant
+from lib.home_assistant.main import HA
 
-class Switch(HomeAssistant):
-    COMPONENT = "switch"
-    JSON_NAMESPACE = "sw"
-    PAYLOAD_ON = STATE_ON = "ON"
-    PAYLOAD_OFF = STATE_OFF = "OFF"
+class Switch(HA):
+    COMPNT = 'switch'
+    JSON_NS = 'sw'
+    ON = 'ON'
+    OFF = 'OFF'
 
-    def set_state(self, new_state):
-        return super().set_state(new_state and self.STATE_ON or self.STATE_OFF)
+    def set_state(self, val):
+        return super().set_state(self.ON if val else self.OFF)
     
-    def component_config(self, optimistic=True, retain=True, icon=None):
-        return {
-            "cmd_t": self.command_topic().replace(self.base_topic(), "~"),
-            "stat_t": self.state_topic(),
-            "val_tpl": self.value_template(),
-            "opt": optimistic,
-            "ret": retain,
-            "ic": icon,
-        }
+    def sub_cfg(self, opt=True, ret=True, icon=None):
+        return dict(
+            cmd_t = self.cmd_tpc(),
+            stat_t = self.base_tpc(),
+            val_tpl = self.val_tpl(),
+            opt = opt,
+            ret = ret,
+            ic = icon,
+        )
