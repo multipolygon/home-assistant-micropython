@@ -26,7 +26,7 @@ if config.MOTN:
     state.add(Auto, priority=True)
 
 if config.BATT:
-    from battery import Battery
+    from lib.components.battery import Battery
     state.add(Battery)
 
 try:

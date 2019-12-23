@@ -1,4 +1,5 @@
 button.py
+components/battery.py
 esp8266/wemos/d1mini/pinmap.py
 esp8266/wemos/d1mini/status_led.py
 home_assistant/binary_sensor.py
