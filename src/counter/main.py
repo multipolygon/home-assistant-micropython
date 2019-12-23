@@ -17,6 +17,6 @@ if config.BATT:
     state.add(Battery)
 
 try:
-    internet.wait()
+    state.start()
 except KeyboardInterrupt:
-    state.deinit()
+    state.stop()

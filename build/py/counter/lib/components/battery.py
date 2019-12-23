@@ -10,7 +10,6 @@ class Battery():
         self.adc = ADC(config.BATT_ADC)
         self.timr = Timer(-1)
         state.battery, state.battery_level = self.read()
-        self.poll()
 
     def read(self):
         n = 10
@@ -28,7 +27,7 @@ class Battery():
             battery_level = lvl,
         )
 
-    def poll(self):
+    def start(self):
         self._sched = False
         self.timr.deinit()
         
@@ -46,5 +45,5 @@ class Battery():
             callback=cb
         )
 
-    def deinit(self):
+    def stop(self):
         self.timr.deinit()

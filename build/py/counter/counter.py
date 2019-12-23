@@ -6,26 +6,26 @@ import config
 class Counter():
     def __init__(self, state):
         self.state = state
-        self.count = 0
+        self.count = state.count = 0
         self.pin = Pin(config.GPIO, mode=Pin.IN)
         self.led = Pin(config.LED, Pin.OUT) if config.LED else None
         self.timer = Timer(-1)
 
-        self.state.set(count = 0)
-
-        def increment(pin):
+    def start(self):
+        def increment(_):
             self.count += 1
             if self.led:
                 self.led.value(self.count % 2 == 0)
-
+                
         self.pin.irq(
             trigger = Pin.IRQ_RISING if config.GPIO_VAL == 1 else Pin.IRQ_FALLING,
             handler = increment,
         )
 
         def reset(_):
-            self.state.set(count = self.count)
+            c = self.count
             self.count = 0
+            self.state.set(count = c)
 
         def cb(_):
             schedule(reset, None)
@@ -35,6 +35,6 @@ class Counter():
             callback = cb,
         )
 
-    def deinit(self):
+    def stop(self):
         self.pin.irq(trigger=0)
         self.timer.deinit()

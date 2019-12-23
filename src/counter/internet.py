@@ -49,14 +49,14 @@ class Internet():
 
     def on_state_change(self, state, changed):
         if not self._sched:
-            for i in ('count', 'battery'):
+            for i in ('count', 'battery_level'):
                 if i in changed:
                     self.pub_sched = True
                     schedule(self.pub_state, None)
                     break
 
-    def wait(self):
+    def run(self):
         self.mqtt.wait(led = status_led)
 
-    def deinit(self):
-        self.mqtt.mqtt_discon()
+    def stop(self):
+        self.mqtt.discon()
