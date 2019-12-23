@@ -25,19 +25,23 @@ class State():
 
     def start(self):
         self.enabled = True
-
         for obj in self.obj:
             if hasattr(obj, 'start'):
                 print()
                 self._fn(obj.__class__, 'start')
                 obj.start()
                 self._mem()
-                
-        for obj in self.obj:
-            if hasattr(obj, 'run'):
-                print()
-                self._fn(obj.__class__, 'run')
-                obj.run()
+
+    def run(self):
+        try:
+            self.start()
+            for obj in self.obj:
+                if hasattr(obj, 'run'):
+                    print()
+                    self._fn(obj.__class__, 'run')
+                    obj.run()
+        except KeyboardInterrupt:
+            self.stop()
 
     def trig(self, obj, fn, *args):
         if hasattr(obj, fn):

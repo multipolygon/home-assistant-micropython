@@ -16,7 +16,5 @@ if config.BATT:
     from lib.components.battery import Battery
     state.add(Battery)
 
-try:
-    state.start()
-except KeyboardInterrupt:
-    state.stop()
+state.run()
+
