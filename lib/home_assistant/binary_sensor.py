@@ -1,21 +1,18 @@
-from lib.home_assistant.main import HomeAssistant
+from lib.home_assistant.main import HA
 
-class BinarySensor(HomeAssistant):
-    COMPONENT = "binary_sensor"
-    JSON_NAMESPACE = "bin"
-    PAYLOAD_ON = "ON"
-    PAYLOAD_OFF = "OFF"
+class BinarySensor(HA):
+    COMPNT = 'binary_sensor'
+    JSON_NS = 'bin'
+    ON = 'ON'
+    OFF = 'OFF'
 
-    def name(self):
-        return self._name or self.DEVICE_CLASS or self.COMPONENT
+    def set_state(self, val):
+        return super().set_state(self.ON if val else self.OFF)
     
-    def set_state(self, new_state):
-        return super().set_state(new_state and self.PAYLOAD_ON or self.PAYLOAD_OFF)
-    
-    def component_config(self, off_delay=None):
-        return {
-            "dev_cla": self.DEVICE_CLASS,
-            "off_dly": off_delay, ## seconds
-            "stat_t": self.state_topic(),
-            "val_tpl": self.value_template(),
-        }
+    def sub_cfg(self, off_dly=None):
+        return dict(
+            dev_cla = self.DEV_CLA,
+            off_dly = off_dly, ## seconds
+            stat_t = self.base_tpc(),
+            val_tpl = self.val_tpl(),
+        )

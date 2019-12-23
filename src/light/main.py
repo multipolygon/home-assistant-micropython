@@ -2,34 +2,34 @@ import config
 from lib.state import State
 
 state = State(
-    automatic = True,
-    brightness = config.INITIAL_BRIGHTNESS,
+    auto = True,
+    brightness = config.INIT_BRI,
     light = False,
     motion = False,
 )
 
 from internet import Internet
-internet = state.observer(Internet)
+internet = state.add(Internet)
 
 from light import Light
-state.observer(Light, priority=True)
+state.add(Light, priority=True)
 
-if config.BUTTON_ENABLED:
+if config.BTN:
     from button import Button
-    state.observer(Button)
+    state.add(Button)
 
-if config.MOTION_SENSOR_ENABLED:
-    from motion_detector import MotionDetector
-    state.observer(MotionDetector)
+if config.MOTN:
+    from motion import Motion
+    state.add(Motion)
 
-    from automation import Automation
-    state.observer(Automation, priority=True)
+    from auto import Auto
+    state.add(Auto, priority=True)
 
-if config.BATTERY_ENABLED:
+if config.BATT:
     from battery import Battery
-    state.observer(Battery)
+    state.add(Battery)
 
 try:
-    internet.wait_for_messages()
+    internet.wait()
 except KeyboardInterrupt:
     state.deinit()

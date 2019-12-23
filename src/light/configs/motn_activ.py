@@ -1,3 +1,5 @@
 from configs.basic import *
 
-NAME = "Light"
+MOTN = True
+MOTN_TIME = 600
+

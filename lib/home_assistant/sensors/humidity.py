@@ -1,6 +1,6 @@
 from lib.home_assistant.sensor import Sensor
 
-class HumiditySensor(Sensor):    
-    DEVICE_CLASS = "humidity" # Percentage of humidity in the air.
-    UNIT_OF_MEASUREMENT = "%"
-    ICON = "mdi:water-percent"
+class Humidity(Sensor):    
+    DEV_CLA = 'humidity'
+    UNIT = '%'
+    ICON = 'mdi:water-percent'

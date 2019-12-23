@@ -1,102 +1,102 @@
-from lib.esp8266.wemos.d1mini import status_led
-from lib.home_assistant.binary_sensors.motion import MotionBinarySensor
+from lib.home_assistant.mqtt import MQTT
 from lib.home_assistant.light import Light
-from lib.home_assistant.main import HomeAssistant
-from lib.home_assistant.mqtt import HomeAssistantMQTT
 from lib.home_assistant.switch import Switch
-from micropython import schedule
+from lib.home_assistant.binary_sensors.motion import Motion
+from lib.home_assistant.sensors.battery import Battery
+from lib.esp8266.wemos.d1mini import status_led
+import wifi
 import config
 import secrets
-import wifi
+from micropython import schedule
 
 class Internet():
     def __init__(self, state):
-        print(HomeAssistant.UID)
+        print(wifi.uid())
 
         status_led.slow_blink()
-        wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
         status_led.off()
 
-        HomeAssistant.NAME = config.NAME
-        HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
+        self.mqtt = MQTT(config.NAME, secrets)
 
-        self.ha = ha = HomeAssistantMQTT(secrets)
-
-        if config.COMPONENT != None:
-            if config.COMPONENT == 'light':
-                light = ha.register('Light', Light, brightness = config.LIGHT_DIMMABLE)
+        if config.COMPNT != None:
+            if config.COMPNT == 'Light':
+                light = self.mqtt.add(config.COMPNT, Light, bri = config.BRIGHTNESS)
                 
-                if config.LIGHT_DIMMABLE:
-                    def brightness_command(message):
+                if config.BRIGHTNESS:
+                    def bri_rx(message):
                         state.set(brightness = round(float(message)))
 
-                    ha.subscribe(light.brightness_command_topic(), brightness_command)
+                    self.mqtt.sub(light.bri_cmd_tpc(), bri_rx)
                 
-            elif config.COMPONENT == 'switch':
-                light = ha.register('Switch', Switch)
+            elif config.COMPNT == 'Switch':
+                light = self.mqtt.add(config.COMPNT, Switch)
 
-            def light_command(message):
-                state.set(light = message.decode('utf-8') == light.PAYLOAD_ON)
+            def light_rx(msg):
+                state.set(light = msg == light.ON)
 
-            ha.subscribe(light.command_topic(), light_command)
+            self.mqtt.sub(light.cmd_tpc(), light_rx)
 
-        if config.MOTION_SENSOR_ENABLED:
-            motion_sensor = ha.register('Motion', MotionBinarySensor)
+        if config.MOTN:
+            motion = self.mqtt.add('Motion', Motion)
 
-            if config.COMPONENT != None:
-                auto_switch = ha.register('Auto', Switch)
+            if config.COMPNT != None:
+                auto = self.mqtt.add('Auto', Switch)
 
-                def auto_switch_command(message):
-                    state.set(automatic = message.decode('utf-8') == auto_switch.PAYLOAD_ON)
+                def auto_rx(message):
+                    state.set(auto = message == auto.ON)
 
-                ha.subscribe(auto_switch.command_topic(), auto_switch_command)
+                self.mqtt.sub(auto.cmd_tpc(), auto_rx)
+
+        if config.BATT:
+            battery = self.mqtt.add('Battery', Battery)
 
         status_led.fast_blink()
-        state.telemetry = ha.mqtt_connect_and_publish_config_fail_safe()
+        state.telemetry = self.mqtt.try_pub_cfg()
         status_led.off()
 
-        self.publish_scheduled = False
+        self.pub_sched = False
 
-        def publish_state(_):
-            self.publish_scheduled = False
-            print('HA publish state.')
-            if config.COMPONENT != None:
+        def pub_state(_):
+            self.pub_sched = False
+            if config.COMPNT != None:
                 light.set_state(state.light)
-                if config.COMPONENT == 'light' and config.LIGHT_DIMMABLE:
-                    light.set_brightness_state(state.brightness)
-            if config.MOTION_SENSOR_ENABLED:
-                motion_sensor.set_state(state.motion)
-                if config.COMPONENT != None:
-                    auto_switch.set_state(state.automatic)
-            if config.BATTERY_ENABLED:
-                ha.set_attr('battery', '%d%%' % state.battery)
+                if config.COMPNT == 'light' and config.BRIGHTNESS:
+                    light.set_bri(state.brightness)
+            if config.MOTN:
+                motion.set_state(state.motion and state.auto)
+                if config.COMPNT != None:
+                    auto.set_state(state.auto)
+            if config.BATT:
+                battery.set_state(state.battery)
+                self.mqtt.set_attr('battery', state.battery)
             state.set(
-                telemetry = ha.publish_state()
+                telemetry = self.mqtt.pub_state()
             )
 
-        self.publish_state = publish_state
+        self.pub_state = pub_state
 
-    def schedule_publish_state(self):
-        if not self.publish_scheduled:
-            self.publish_scheduled = True
-            schedule(self.publish_state, None)
+    def sched_pub_state(self):
+        if not self.pub_sched:
+            self.pub_sched = True
+            schedule(self.pub_state, None)
 
-    def on_automatic_change(self, state):
-        self.schedule_publish_state()
+    def on_auto_change(self, state):
+        self.sched_pub_state()
 
     def on_battery_level_change(self, state):
-        self.schedule_publish_state()
+        self.sched_pub_state()
 
     def on_light_change(self, state):
-        if config.COMPONENT != None:
-            self.schedule_publish_state()
+        if config.COMPNT != None:
+            self.sched_pub_state()
 
     def on_motion_change(self, state):
-        self.schedule_publish_state()
+        if state.auto:
+            self.sched_pub_state()
 
-    def wait_for_messages(self):
-        self.ha.wait_for_messages(status_led = status_led)
+    def wait(self):
+        self.mqtt.wait()
 
     def deinit(self):
-        self.ha.mqtt_disconnect()
+        self.mqtt.discon()

@@ -1,3 +1,4 @@
 from configs.basic import *
 
-NAME = "Light"
+COMPNT = None
+MOTN = True
