@@ -1,7 +1,6 @@
-from lib.home_assistant.mqtt import HomeAssistantMQTT
-from lib.home_assistant.main import HomeAssistant
-from lib.home_assistant.climate import Climate, MODE_OFF, ALL_MODES
-from lib.home_assistant.sensors.temperature import TemperatureSensor
+from lib.home_assistant.mqtt import MQTT
+from lib.home_assistant.climate import Climate, MODE_OFF, MODES
+from lib.home_assistant.sensors.temperature import Temperature
 from lib.esp8266.wemos.d1mini import status_led
 from micropython import schedule
 import wifi
@@ -10,65 +9,57 @@ import secrets
 
 class Internet():
     def __init__(self, state):
-        print(HomeAssistant.UID)
+        print(wifi.uid())
 
         status_led.slow_blink()
-        wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
         status_led.off()
 
-        HomeAssistant.NAME = config.NAME
-        HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
+        self.mqtt = MQTT(config.NAME, secrets)
 
-        self.ha = ha = HomeAssistantMQTT(secrets)
-
-        controller = ha.register('Controller', Climate, key = 'ctl', max = config.TANK_MAXIMUM_TEMPERATURE)
-        solar_temperature_sensor = ha.register('Solar', TemperatureSensor, key = 'sol')
+        ctl = self.mqtt.add('Controller', Climate, key = 'ctl', max = config.TANK_MAX_TEMP)
+        temp = self.mqtt.add('Solar', Temperature, key = 'sol')
         
-        def controller_mode_command(message):
-            mode = message.decode('utf-8')
-            if mode in ALL_MODES:
-                state.set(mode = mode)
+        def set_mode(msg):
+            if msg in MODES:
+                state.set(mode = msg)
 
-        ha.subscribe(controller.mode_command_topic(), controller_mode_command)
+        self.mqtt.sub(ctl.mode_cmd_tpc(), set_mode)
 
-        def controller_temperature_command(message):
-            state.set(tank_target_temperature = round(float(message)))
+        def set_targ(msg):
+            state.set(tank_target_temp = round(float(msg)))
 
-        ha.subscribe(controller.temperature_command_topic(), controller_temperature_command)
+        self.mqtt.sub(ctl.targ_cmd_tpc(), set_targ)
 
         status_led.fast_blink()
-        state.telemetry = ha.mqtt_connect_and_publish_config_fail_safe()
+        state.mqtt = self.mqtt.try_pub_cfg()
         status_led.off()
 
-        ## Prevent publishing config in the future because it will fail with out-of-memory error:
-        ha.publish_config_on_connect = False
-        
-        self.publish_scheduled = False
+        self._sched = False
 
-        def publish_state(_):
-            self.publish_scheduled = False
-            controller.set_mode(state.mode)
-            controller.set_target_temperature(state.tank_target_temperature)
-            controller.set_current_temperature(state.tank_temperature)
-            controller.set_action("off" if state.mode == MODE_OFF else ("heating" if state.pump else "idle"))
-            solar_temperature_sensor.set_state(state.solar_temperature)
+        def pub_state(_):
+            self._sched = False
+            ctl.set_mode(state.mode)
+            ctl.set_targ(state.tank_target_temp)
+            ctl.set_temp(state.tank_temp)
+            ctl.set_actn('off' if state.mode == MODE_OFF else ('heating' if state.pump else 'idle'))
+            temp.set_state(state.solar_temp)
             state.set(
-                telemetry = ha.publish_state()
+                mqtt = self.mqtt.pub_state()
             )
 
-        self.publish_state = publish_state
+        self.pub_state = pub_state
 
     def on_state_change(self, state, changed):
-        if not self.publish_scheduled:
-            self.publish_scheduled = True
-            schedule(self.publish_state, None)
+        if not self._sched:
+            for i in ('mode', 'tank_target_temp', 'tank_temp', 'pump', 'solar_temp'):
+                if i in changed:
+                    self._sched = True
+                    schedule(self.pub_state, None)
+                break
 
-    def wait_for_messages(self):
-        self.ha.wait_for_messages(
-            status_led = status_led,
-            connection_required = False
-        )
+    def wait(self):
+        self.mqtt.wait(led = status_led)
 
     def deinit(self):
-        self.ha.mqtt_disconnect()
+        self.mqtt.discon()

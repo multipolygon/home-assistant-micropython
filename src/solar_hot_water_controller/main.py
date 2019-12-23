@@ -1,31 +1,30 @@
-from internet import Internet
-from lib.state import State
 import config
+from lib.state import State
 
 state = State(
-    solar_temperature = None,
-    tank_temperature = None,
-    tank_target_temperature = config.TANK_TARGET_TEMPERATURE,
+    solar_temp = None,
+    tank_temp = None,
+    tank_target_temp = config.TANK_TARGET_TEMP,
     pump = False,
     mode = 'auto',
-    telemetry = False,
 )
 
-internet = state.observer(Internet)
+from internet import Internet
+internet = state.add(Internet)
 
 from temperature import Temperature
-state.observer(Temperature)
+state.add(Temperature)
 
 from display import Display
-state.observer(Display, priority=True)
+state.add(Display, priority=True)
 
 from controller import Controller
-state.observer(Controller, priority=True)
+state.add(Controller, priority=True)
 
 from pump import Pump
-state.observer(Pump, priority=True)
+state.add(Pump, priority=True)
 
 try:
-    internet.wait_for_messages()
+    internet.wait()
 except KeyboardInterrupt:
     state.deinit()
