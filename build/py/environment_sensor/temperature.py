@@ -7,7 +7,7 @@ class Temperature():
         
         if sht30.is_present():
             t, rh = sht30.measure()
-            state['temperature'] = t
-            state['humidity'] = rh
+            state['temp'] = round(t,1)
+            state['humid'] = round(rh)
 
         del sht30

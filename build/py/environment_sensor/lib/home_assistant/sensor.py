@@ -1,22 +1,18 @@
-from lib.home_assistant.main import HomeAssistant
+from lib.home_assistant.main import HA
 
-class Sensor(HomeAssistant):
-    COMPONENT = "sensor"
-    JSON_NAMESPACE = "sen"
-    DEVICE_CLASS = None
-    UNIT_OF_MEASUREMENT = None
+class Sensor(HA):
+    COMPNT = 'sensor'
+    JSON_NS = 'sen'
+    UNIT = None
     ICON = None
 
-    def name(self):
-        return self._name or self.DEVICE_CLASS or self.COMPONENT
-
-    def component_config(self, expire_after=None, force_update=True, icon=None, unit=None):
-        return {
-            "dev_cla": self.DEVICE_CLASS,
-            "exp_aft": expire_after, ## seconds
-            "frc_upd": force_update,
-            "ic": icon if icon != None else self.ICON,
-            "stat_t": self.state_topic(),
-            "unit_of_meas": unit if unit != None else self.UNIT_OF_MEASUREMENT,
-            "val_tpl": self.value_template(),
-        }
+    def sub_cfg(self, exp_aft=None, frc_upd=True, icon=None, unit=None):
+        return dict(
+            dev_cla = self.DEV_CLA,
+            exp_aft = exp_aft, ## seconds
+            frc_upd = frc_upd,
+            ic = icon if icon != None else self.ICON,
+            stat_t = self.base_tpc(),
+            unit_of_meas = unit if unit != None else self.UNIT,
+            val_tpl = self.val_tpl(),
+        )

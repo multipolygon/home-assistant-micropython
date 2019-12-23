@@ -15,6 +15,6 @@ class Illuminance():
         if bh1750.is_present():
             lux = bh1750.luminance(BH1750.ONCE_HIRES_1)
             bh1750.off()
-            state['lux'] = lux
+            state['lux'] = round(lux)
 
         del bh1750

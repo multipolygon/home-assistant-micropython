@@ -1,11 +1,10 @@
-from lib.esp8266.wemos.d1mini import status_led
-from lib.home_assistant.main import HomeAssistant
-from lib.home_assistant.mqtt import HomeAssistantMQTT
+from lib.home_assistant.mqtt import MQTT
 from lib.home_assistant.sensor import Sensor
-from lib.home_assistant.sensors.battery import BatterySensor
-from lib.home_assistant.sensors.humidity import HumiditySensor
-from lib.home_assistant.sensors.illuminance import IlluminanceSensor
-from lib.home_assistant.sensors.temperature import TemperatureSensor
+from lib.home_assistant.sensors.battery import Battery
+from lib.home_assistant.sensors.humidity import Humidity
+from lib.home_assistant.sensors.illuminance import Illuminance
+from lib.home_assistant.sensors.temperature import Temperature
+from lib.esp8266.wemos.d1mini import status_led
 from micropython import schedule
 from machine import reset_cause, DEEPSLEEP_RESET
 from utime import sleep
@@ -15,47 +14,42 @@ import wifi
 
 class Internet():
     def __init__(self, state):
-        print(HomeAssistant.UID)
+        print(wifi.uid())
 
         if reset_cause() != DEEPSLEEP_RESET:
             status_led.slow_blink()
-        wifi.disable_access_point()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
         status_led.off()
 
-        HomeAssistant.NAME = config.NAME
-        HomeAssistant.TOPIC_PREFIX = secrets.MQTT_USER
+        mqtt = MQTT(config.NAME, secrets)
 
-        self.ha = ha = HomeAssistantMQTT(secrets)
+        opt = dict(exp_aft = config.FREQ * 2.5)
 
-        ha.set_attr("Interval", config.INTERVAL)
+        if 'temp' in state:
+            mqtt.add('Temp', Temperature, **opt).set_state(state['temp'])
 
-        opt = { 'expire_after': config.INTERVAL * 2.5 }
+        if 'humid' in state:
+            mqtt.add('Humid', Humidity, **opt).set_state(state['humid'])
 
-        if 'temperature' in state:
-            ha.register('Temp', TemperatureSensor, **opt).set_state(state['temperature'])
-
-        if 'humidity' in state:
-            ha.register('Humid', HumiditySensor, **opt).set_state(state['humidity'])
-
-        if 'illuminance' in state:
-            ha.register('Lux', IlluminanceSensor, **opt).set_state(state['illuminance'])
+        if 'lux' in state:
+            mqtt.add('Lux', Illuminance, **opt).set_state(state['lux'])
 
         if 'analog' in state:
-            ha.register('Analog', Sensor, unit = "%", icon = "mdi:gauge", **opt).set_state(state['analog'])
+            mqtt.add('Analog', Sensor, unit = "%", icon = "mdi:gauge", **opt).set_state(state['analog'])
 
         if 'battery' in state:
-            ha.set_attr('battery', '%d%%' % state['battery'])
-            if config.BATTERY_SENSOR:
-                ha.register('Battery', BatterySensor, key = 'bat', **opt).set_state(state['battery'])
+            mqtt.add('Battery', Battery, key = 'bat', **opt).set_state(state['battery'])
+            mqtt.set_attr('battery', state['battery'])
+
+        mqtt.set_attr("freq", config.FREQ)
 
         if wifi.is_connected():
             if reset_cause() != DEEPSLEEP_RESET:
                 status_led.fast_blink()
             else:
-                ha.publish_config_on_connect = False
-            ha.mqtt_connect()
-            ha.publish_state()
+                ha.do_pub_cfg = False
+            mqtt.connect()
+            mqtt.pub_state()
             status_led.off()
             sleep(5)
-            self.ha.mqtt_disconnect()
+            mqtt.discon()
