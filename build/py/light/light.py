@@ -5,14 +5,14 @@ import config
 class Light():
     def __init__(self, state):
         self.pwm = PWMPin(
-            config.LIGHT_GPIO,
-            pwm_enabled = config.LIGHT_DIMMABLE,
+            config.GPIO,
+            pwm_enabled = config.BRIGHTNESS,
             status_led = status_led
         )
         self.pwm.off()
 
     def on_light_on(self, state):
-        if config.BATTERY_LOW_DISABLE == None or state.battery > config.BATTERY_LOW_DISABLE:
+        if config.BATT == False or config.BATT_LOW == None or state.battery > config.BATT_LOW:
             self.pwm.on()
 
     def on_light_off(self, state):

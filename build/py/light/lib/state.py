@@ -1,27 +1,24 @@
 from gc import collect as gc_collect
 from gc import mem_free, mem_alloc
 
-class StateAttributeError(AttributeError):
-    pass
-
 class State():
     def __init__(self, **kwargs):
-        self.observers = []
+        self.obj = []
         for key, val in kwargs.items():
             setattr(self, key, val)
         self.mem_info('State')
                             
-    def observer(self, cls, priority=False):
+    def add(self, cls, priority=False):
         gc_collect()
         obj = cls(self)
         if priority:
-            self.observers.insert(0, obj)
+            self.obj.insert(0, obj)
         else:
-            self.observers.append(obj)
+            self.obj.append(obj)
         self.mem_info(cls.__name__)
         return obj
 
-    def trigger(self, obj, fn, *args):
+    def trig(self, obj, fn, *args):
         if hasattr(obj, fn):
             print(" --> %s.%s()" % (obj.__class__.__name__, fn))
             getattr(obj, fn)(self, *args)
@@ -37,20 +34,20 @@ class State():
                     setattr(self, key, val)
                     changed.append(key)
             else:
-                raise StateAttributeError(key)
+                raise AttributeError(key)
             
-        if len(changed) != 0 and len(self.observers) != 0:
-            for obj in self.observers:
+        if len(changed) != 0 and len(self.obj) != 0:
+            for obj in self.obj:
                 for key in changed:
-                    self.trigger(obj, "on_%s_%s" % (key, 'on' if getattr(self, key) else 'off'))
-                    self.trigger(obj, "on_%s_change" % key)
-                self.trigger(obj, "on_state_change", changed)
+                    self.trig(obj, "on_%s_%s" % (key, 'on' if getattr(self, key) else 'off'))
+                    self.trig(obj, "on_%s_change" % key)
+                self.trig(obj, "on_state_change", changed)
 
     def deinit(self):
-        for obj in self.observers:
+        for obj in self.obj:
             if hasattr(obj, 'deinit'):
                 obj.deinit()
-        del self.observers
+        del self.obj
         gc_collect()
 
     def mem_info(self, s=''):

@@ -2,12 +2,12 @@ from machine import Pin
 from micropython import schedule
 import config
 
-class MotionDetector():
+class Motion():
     def __init__(self, state):
-        self.pin = Pin(config.MOTION_SENSOR_GPIO, mode=Pin.IN)
+        self.pin = Pin(config.MOTN_GPIO, mode=Pin.IN)
 
         def update(_):
-            state.set(motion = self.pin.value() == config.MOTION_DETECTED_VALUE)
+            state.set(motion = self.pin.value() == config.MOTN_VAL)
 
         def handler(pin):
             schedule(update, None)

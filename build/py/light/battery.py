@@ -2,35 +2,46 @@ from machine import ADC
 from machine import Timer
 from micropython import schedule
 import config
+from utime import sleep_ms
 
 class Battery():
     def __init__(self, state):
         self.state = state
-        self.adc = ADC(config.BATTERY_ADC)
-        self.timer = Timer(-1)
-        state.battery = self.percent()
+        self.adc = ADC(config.BATT_ADC)
+        self.timr = Timer(-1)
+        state.battery, state.battery_level = self.read()
         self.poll()
 
-    def percent(self):
-        return round(self.adc.read() / 1024 * 100)
+    def read(self):
+        n = 10
+        val = 0
+        for i in range(n):
+            sleep_ms(100)
+            val += self.adc.read()
+        percent = round(val / n / 1024 * 100)
+        return (percent, round(percent / 20))
 
     def update(self):
-        self.state.set(battery = self.percent())
+        pc, lvl = self.read()
+        self.state.set(
+            battery = pc,
+            battery_level = lvl,
+        )
 
     def poll(self):
-        self.update_scheduled = False
-        self.timer.deinit()
+        self.sched = False
+        self.timr.deinit()
         
-        def update(_):
-            self.update_scheduled = False
+        def upd(_):
+            self.sched = False
             self.update()
 
-        def schedule_update(_):
-            if not self.update_scheduled:
-                self.update_scheduled = True
-                schedule(update, None)
+        def sched(_):
+            if not self.sched:
+                self.sched = True
+                schedule(upd, None)
         
-        self.timer.init(period=config.BATTERY_UPDATE_INTERVAL * 1000, callback=schedule_update)
+        self.timr.init(period=config.BATT_INT * 1000, callback=sched)
 
     def deinit(self):
-        self.timer.deinit()
+        self.timr.deinit()

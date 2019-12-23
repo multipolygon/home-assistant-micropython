@@ -1,3 +1,3 @@
 from configs.basic import *
 
-NAME = "Light"
+BTN = True
