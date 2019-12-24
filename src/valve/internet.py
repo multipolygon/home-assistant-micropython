@@ -10,12 +10,7 @@ import wifi
 
 class Internet():
     def __init__(self, state):
-        print(wifi.uid())
-
-        status_led.slow_blink()
-        wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-        status_led.off()
-
+        state.mqtt = False
         self.mqtt = MQTT(config.NAME, secrets)
 
         valve = self.mqtt.add(
@@ -48,15 +43,6 @@ class Internet():
 
         self.pub_state = pub_state
 
-        status_led.fast_blink()
-        if reset_cause() == DEEPSLEEP_RESET:
-            self.mqtt.do_pub_cfg = False
-            state.mqtt = self.mqtt.connect()
-        else:
-            state.mqtt = self.mqtt.try_pub_cfg()
-        pub_state(None)
-        status_led.off()
-
     def on_state_change(self, state, changed):
         if not self._sched:
             for i in ('valve_open', 'battery_level'):
@@ -66,6 +52,17 @@ class Internet():
                     break
 
     def run(self):
+        print(wifi.uid())
+        status_led.slow_blink()
+        wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
+        status_led.fast_blink()
+        if reset_cause() == DEEPSLEEP_RESET:
+            self.mqtt.do_pub_cfg = False
+            self.mqtt.connect()
+        else:
+            self.mqtt.try_pub_cfg()
+        self.pub_state(None)
+        status_led.off()
         self.mqtt.wait(led = status_led)
 
     def stop(self):
