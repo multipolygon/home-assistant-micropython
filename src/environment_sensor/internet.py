@@ -44,10 +44,10 @@ class Internet():
         mqtt.set_attr("freq", config.FREQ)
 
         if wifi.is_connected():
-            if reset_cause() != DEEPSLEEP_RESET:
-                status_led.fast_blink()
+            if reset_cause() == DEEPSLEEP_RESET:
+                mqtt.do_pub_cfg = False
             else:
-                ha.do_pub_cfg = False
+                status_led.fast_blink()
             mqtt.connect()
             mqtt.pub_state()
             status_led.off()

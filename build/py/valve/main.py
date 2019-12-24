@@ -6,20 +6,21 @@ state = State(
 )
 
 from ball_valve import BallValve
-state.add(BallValve)
+valve = state.add(BallValve)
 
-if config.BTN:
-    from button import Button
-    state.add(Button)
+batt_low = False
 
 if config.BATT:
     from lib.components.battery import Battery
-    state.add(Battery, priority = True)
+    state.add(Battery)
+    batt_low = valve.check_battery(state)
 
-from internet import Internet
-internet = state.add(Internet)
+if not batt_low:
+    if config.BTN:
+        from button import Button
+        state.add(Button)
 
-try:
-    internet.wait()
-except KeyboardInterrupt:
-    state.deinit()
+    from internet import Internet
+    internet = state.add(Internet)
+
+    state.run()

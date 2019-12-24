@@ -21,6 +21,7 @@ class MQTT():
         self.cfg = []
         self.cb = {}
         self.do_pub_cfg = True
+        self.reconnect = True
         self.mqtt = None
         self.topic = None
         self.mac = wifi.mac()
@@ -103,6 +104,7 @@ class MQTT():
                     self.pub_cfg()
             except Exception as e:
                 print_exception(e)
+                self.discon()
         self.do_pub_cfg = False
         return False
 
@@ -114,7 +116,7 @@ class MQTT():
         self.set_attr("mac", self.mac)
         self.set_attr("rssi", wifi.rssi())
 
-    def pub_json(self, tpc, obj, **opt):
+    def pub_json(self, tpc, obj, **kwarg):
         gc_collect()
         print(tpc)
         print(obj)
@@ -124,12 +126,12 @@ class MQTT():
             with BytesIO() as json:
                 json_dump(obj, json)
                 gc_collect()
-                self.mqtt.publish(tpc, json.getvalue(), **opt)
+                self.mqtt.publish(tpc, json.getvalue(), **kwarg)
                 sleep(0.5)
             gc_collect()
             return True
         return False
-            
+    
     def pub_state(self):
         gc_collect()
         return self.pub_json(self.obj[0].base_tpc(), self.state)
@@ -156,7 +158,7 @@ class MQTT():
         gc_collect()
 
     def wait(self, led=None):
-        while True:
+        while self.reconnect:
             try:
                 if wifi.is_connected():
                     self.connect()
@@ -169,11 +171,13 @@ class MQTT():
                 else:
                     print('No WiFi')
             except Exception as e:
+                print('MQTT' + ':')
                 print_exception(e)
                 self.discon()
-            if led:
-                led.slow_blink()
-                sleep(random_int(5))
-                led.off()
-            else:
-                sleep(random_int(8))
+            if self.reconnect:
+                if led:
+                    led.slow_blink()
+                    sleep(random_int(5))
+                    led.off()
+                else:
+                    sleep(random_int(8))

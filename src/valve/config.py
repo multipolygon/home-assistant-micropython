@@ -26,4 +26,6 @@ BATT_ADC = pinmap.A0
 
 BATT_INT = 60 # seconds
 
-BATT_LOW = 10 # percent or None
+BATT_LOW = 20 # percent or None
+
+BATT_LOW_SLEEP = 60 * 60 # seconds
