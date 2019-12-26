@@ -15,7 +15,7 @@ SOLAR_MAX_TEMP = 110
 TANK_MAX_TEMP = 80
 TANK_TARGET_TEMP = 65
 
-FREQ = 30 # seconds
+FREQ = 5 # seconds
 AVERAGE = 6
 
 def pump_logic(state):

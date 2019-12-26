@@ -56,10 +56,13 @@ class Internet():
                 if i in changed:
                     self._sched = True
                     schedule(self.pub_state, None)
-                break
+                    break
 
-    def wait(self):
+    def start(self):
+        self.pub_state(0)
+
+    def run(self):
         self.mqtt.wait(led = status_led)
 
-    def deinit(self):
+    def stop(self):
         self.mqtt.discon()

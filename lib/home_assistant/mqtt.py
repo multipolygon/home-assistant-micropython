@@ -95,18 +95,20 @@ class MQTT():
         return ok
 
     def try_pub_cfg(self):
+        ok = False
         if wifi.is_connected():
             try:
                 if not self.mqtt:
                     self.do_pub_cfg = True
                     self.connect()
+                    ok = True
                 else:
-                    self.pub_cfg()
+                    ok = self.pub_cfg()
             except Exception as e:
                 print_exception(e)
                 self.discon()
         self.do_pub_cfg = False
-        return False
+        return ok
 
     def set_attr(self, key, val):
         self.obj[0].set_attr(key, val)

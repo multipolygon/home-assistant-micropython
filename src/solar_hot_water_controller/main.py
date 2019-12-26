@@ -24,7 +24,4 @@ state.add(Controller, priority=True)
 from pump import Pump
 state.add(Pump, priority=True)
 
-try:
-    internet.wait()
-except KeyboardInterrupt:
-    state.deinit()
+state.run()

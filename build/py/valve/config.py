@@ -10,7 +10,7 @@ VALVE_OPEN_VAL = 0
 
 #### Button ####
 
-BTN = True
+BTN = False
 
 ## Wemos 1-button shield is D3 by default:
 BTN_GPIO = pinmap.D3

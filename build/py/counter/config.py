@@ -3,7 +3,7 @@ from lib.esp8266.wemos.d1mini import pinmap
 NAME = "Counter"
 
 ## Wemos 1-button shield is D3 by default
-GPIO = pinmap.D3
+GPIO = pinmap.D8
 
 ## Set to 0 for Wemos 1-button shield
 GPIO_VAL = 0
@@ -16,7 +16,7 @@ LED = pinmap.LED
 
 #### Battery ####
 
-BATT = True
+BATT = False
 
 BATT_ADC = pinmap.A0
 

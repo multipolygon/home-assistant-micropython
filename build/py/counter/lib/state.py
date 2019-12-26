@@ -69,12 +69,14 @@ class State():
                 self.trig(obj, 'on_state_change', changed)
 
     def stop(self):
+        self.enabled = False
         for obj in self.obj:
             if hasattr(obj, 'stop'):
                 print()
                 self._fn(obj.__class__, 'stop')
                 obj.stop()
-        del self.obj
+                del obj
+        self.obj = []
         self._mem()
 
     def _fn(self, cls, fn, pf=''):

@@ -18,7 +18,6 @@ class Temperature():
         self.solar_temp = [self.read_solar_temp()] * config.AVERAGE
         self.tank_temp = [self.read_tank_temp()] * config.AVERAGE
         self.update()
-        self.poll()
 
     def update(self):
         self.counter = (self.counter + 1) % config.AVERAGE
@@ -50,7 +49,7 @@ class Temperature():
         status_led.invert()
         return val / n
 
-    def poll(self):
+    def start(self):
         self._sched = False
         self.timer.deinit()
         
@@ -64,9 +63,9 @@ class Temperature():
                 schedule(_cb, None)
         
         self.timer.init(
-            period=round(config.FREQ / config.AVERAGE * 1000),
+            period=round(config.FREQ * 1000),
             callback=cb
         )
 
-    def deinit(self):
+    def stop(self):
         self.timer.deinit()

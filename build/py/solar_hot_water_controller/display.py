@@ -14,7 +14,6 @@ class Display():
             'MQTT:',
             '%8s' % ('OK' if status.mqtt else '--'),
         )            
-        sleep(2)
     
     def on_state_change(self, state, changed):
         if 'mqtt' in changed:
@@ -27,6 +26,6 @@ class Display():
                 '%-5s%3s' % (state.mode.upper(), 'ON' if state.pump else 'OFF'),
             )
 
-    def deinit(self):
+    def stop(self):
         self.oled.clear()
         self.oled.power_off()
