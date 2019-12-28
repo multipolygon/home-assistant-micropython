@@ -1,7 +1,7 @@
 from gc import collect as gc_collect
 from gc import mem_free, mem_alloc
 
-class State():
+class Hub():
     def __init__(self, **kwargs):
         print()
         self._fn(self.__class__, '__init__')

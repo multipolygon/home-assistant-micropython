@@ -9,5 +9,5 @@ home_assistant/sensor.py
 home_assistant/sensors/temperature.py
 pwm_pin.py
 random.py
-state.py
+hub.py
 wifi.py

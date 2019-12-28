@@ -1,7 +1,7 @@
 import config
-from lib.state import State
+from lib.hub import Hub
 
-state = State(
+hub = Hub(
     solar_temp = None,
     tank_temp = None,
     tank_target_temp = config.TANK_TARGET_TEMP,
@@ -10,18 +10,18 @@ state = State(
 )
 
 from internet import Internet
-internet = state.add(Internet)
+internet = hub.add(Internet)
 
 from temperature import Temperature
-state.add(Temperature)
+hub.add(Temperature)
 
 from display import Display
-state.add(Display, priority=True)
+hub.add(Display, priority=True)
 
 from controller import Controller
-state.add(Controller, priority=True)
+hub.add(Controller, priority=True)
 
 from pump import Pump
-state.add(Pump, priority=True)
+hub.add(Pump, priority=True)
 
-state.run()
+hub.run()
