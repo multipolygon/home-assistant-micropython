@@ -15,8 +15,8 @@ class Retain():
                 state.set(**obj)
 
     def on_state_change(self, state, changed):
-        for k in RETAIN:
-            if k in changed:
+        for k in changed:
+            if k in RETAIN:
                 obj = {}
                 for k in RETAIN:
                     obj[k] = getattr(state, k)
