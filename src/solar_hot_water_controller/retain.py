@@ -9,17 +9,11 @@ class Retain():
         if FN in listdir():
             with open(FN) as f:
                 obj = load(f)
-                for k in obj:
-                    if k not in RETAIN:
-                        del k
-                state.set(**obj)
+            state.set(**{k: obj[k] for k in RETAIN if k in obj})
 
     def on_state_change(self, state, changed):
         for k in changed:
             if k in RETAIN:
-                obj = {}
-                for k in RETAIN:
-                    obj[k] = getattr(state, k)
                 with open(FN, 'w') as f:
-                    dump(obj, f)
+                    dump({k: getattr(state, k) for k in RETAIN}, f)
                 break
