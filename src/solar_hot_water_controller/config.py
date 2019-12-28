@@ -57,3 +57,7 @@ def solar_adc_to_temp(adc):
 
 def tank_adc_to_temp(adc):
     return (adc - 36.1997) / 6.26956 ## (adc - 285.54) / 5.269
+
+RETAIN = (
+    'tank_target_temp',
+)

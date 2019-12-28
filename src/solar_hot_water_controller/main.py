@@ -24,4 +24,7 @@ hub.add(Controller, priority=True)
 from pump import Pump
 hub.add(Pump, priority=True)
 
+from retain import Retain
+hub.add(Retain)
+
 hub.run()
