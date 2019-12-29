@@ -1,5 +1,5 @@
-esp8266/bh1750/bh1750.py
-esp8266/sht30/sht30.py
+esp8266/bh1750.py=https://raw.githubusercontent.com/PinkInk/upylib/master/bh1750/bh1750/__init__.py
+esp8266/sht30.py=https://raw.githubusercontent.com/rsc1975/micropython-sht30/master/sht30.py
 esp8266/wemos/d1mini/pinmap.py
 esp8266/wemos/d1mini/status_led.py
 home_assistant/main.py
