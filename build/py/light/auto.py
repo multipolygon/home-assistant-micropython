@@ -1,55 +1,49 @@
 from machine import Timer
 from micropython import schedule
-import config
+from config import MOTN_TIME
 
-WAIT, ON_AUTO, ON_MAN, OFF = range(4)
+OFF, ON, AUTO = 0, 1, 2
 
 class Auto():
     def __init__(self, state):
-        self.mode = WAIT
-        self.timr = Timer(-1)
-
-        def off(_):
-            state.set(light = False)
-            
-        def sched_off(_):
-            schedule(off, None)
-
-        self.off = sched_off
-
-    def on_auto_on(self, state):
-        if self.mode == OFF:
-            self.mode = WAIT
-
-    def on_auto_off(self, state):
-        if self.mode == ON_AUTO:
-            self.timr.deinit()
-            state.set(light = False)
+        self.update_on = ('motion', 'light', 'auto')
         self.mode = OFF
+        self.tmr = Timer(-1)
 
-    def on_light_on(self, state):
-        if self.mode == WAIT:
-            self.mode = ON_MAN
-
-    def on_light_off(self, state):
-        self.timr.deinit()
-        if self.mode != OFF:
-            self.mode = WAIT
-
-    def on_motion_on(self, state):
-        self.timr.deinit()
-        if self.mode == WAIT:
-            self.mode = ON_AUTO
-            state.set(light = True)
+        def _cb(_):
+            state.set(light = False)
             
-    def on_motion_off(self, state):
-        self.timr.deinit()
-        if self.mode == ON_AUTO:
-            self.timr.init(
-                period=config.MOTN_TIME * 1000,
-                mode=Timer.ONE_SHOT,
-                callback=self.off
-            )
+        def cb(_):
+            schedule(_cb, None)
 
-    def deinit(self):
-        self.timr.deinit()
+        self.cb = cb
+
+    def update(self, state, changed):
+        if 'motion' in changed:
+            self.tmr.deinit()
+            if state.motion:
+                if state.auto and self.mode == OFF:
+                    self.mode = AUTO
+                    state.set(light = True)
+            else:
+                if self.mode == AUTO:
+                    self.tmr.init(
+                        period = MOTN_TIME * 1000,
+                        mode = Timer.ONE_SHOT,
+                        callback = self.cb
+                    )
+
+        if 'light' in changed:
+            if state.light:
+                if self.mode == OFF:
+                    self.mode = ON
+            else:
+                self.mode = OFF
+
+        if 'auto' in changed:
+            if self.mode == AUTO and not state.auto:
+                self.tmr.deinit()
+                state.set(light = False)
+
+    def stop(self, state):
+        self.tmr.deinit()

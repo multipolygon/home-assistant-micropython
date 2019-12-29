@@ -2,7 +2,6 @@
 ## https://github.com/home-assistant/home-assistant/blob/master/homeassistant/components/mqtt/abbreviations.py
 ## https://www.home-assistant.io/components/sensor/#device-class
 ## https://www.home-assistant.io/components/binary_sensor/#device-class
-## Note to self, do not put any proceedural code or logic in this module!
 
 from machine import unique_id
 from ubinascii import hexlify
@@ -67,10 +66,10 @@ class HA():
 
     def cfg(self, *arg, **kwarg):
         return self.short_cfg(
-            name = self.full_name(),
+            name = self.ful_name(),
             json_attr_t = self.attr_tpc(),
             json_attr_tpl = self.attr_tpl(),
-            uniq_id = self.full_name(),
+            uniq_id = self.ful_name(),
             dev = self.dev(),
             **self.sub_cfg(*arg, **kwarg),
         )
@@ -93,11 +92,11 @@ class HA():
         cfg['~'] = self.base_tpc()
         return cfg
 
-    def full_dev_name(self):
+    def ful_dev_name(self):
         return ' '.join((self.MDL, self.UID, self.dev_name))
     
-    def full_name(self):
-        return ' '.join((self.full_dev_name(), self.name))
+    def ful_name(self):
+        return ' '.join((self.ful_dev_name(), self.name))
 
     def base_tpc(self):
         return self.scope + '/'.join((self.MANUF, self.MDL, self.UID)).lower().replace(' ', '_')
@@ -123,7 +122,7 @@ class HA():
     
     def dev(self):
         return dict(
-            name = self.full_dev_name(),
+            name = self.ful_dev_name(),
             mf = self.MANUF,
             mdl = self.MDL,
             ids = self.UID,

@@ -1,35 +1,36 @@
 import config
-from lib.state import State
+from lib.hub import Hub
 
-state = State(
-    auto = True,
-    brightness = config.INIT_BRI,
+hub = Hub(
     light = False,
+    brightness = config.INIT_BRI,
     motion = False,
+    enable = False,
+    auto = False,
 )
-
-from internet import Internet
-internet = state.add(Internet)
-
-from light import Light
-state.add(Light, priority=True)
-
-if config.BTN:
-    from button import Button
-    state.add(Button)
-
-if config.MOTN:
-    from motion import Motion
-    state.add(Motion)
-
-    from auto import Auto
-    state.add(Auto, priority=True)
 
 if config.BATT:
     from lib.components.battery import Battery
-    state.add(Battery)
+    hub.add(Battery)
 
-try:
-    internet.wait()
-except KeyboardInterrupt:
-    state.deinit()
+from internet import Internet
+internet = hub.add(Internet)
+
+from light import Light
+hub.add(Light, priority=True)
+
+if config.MOTN:
+    from motion import Motion
+    hub.add(Motion)
+
+    from auto import Auto
+    hub.add(Auto, priority=True)
+
+if config.BTN:
+    from button import Button
+    hub.add(Button)
+
+from lib.components.retain import Retain
+hub.add(Retain, priority=True)
+
+hub.run()

@@ -1,25 +1,20 @@
 from lib.esp8266.wemos.d1mini import status_led
-from lib.pwm_pin import PWMPin
-import config
+from lib.pwm import PWM
+from config import GPIO, BRIGHTNESS, BATT, BATT_LOW
 
 class Light():
     def __init__(self, state):
-        self.pwm = PWMPin(
-            config.GPIO,
-            pwm_enabled = config.BRIGHTNESS,
-            status_led = status_led
-        )
+        self.update_on = ('light', 'brightness')
+        self.pwm = PWM(GPIO, pwm = BRIGHTNESS, led = status_led)
         self.pwm.off()
 
-    def on_light_on(self, state):
-        if config.BATT == False or config.BATT_LOW == None or state.battery > config.BATT_LOW:
-            self.pwm.on()
+    def update(self, state, changed):
+        if state.light:
+            if BATT == False or BATT_LOW == None or state.battery > BATT_LOW:
+                self.pwm.set_duty(state.brightness)
+                self.pwm.on()
+        else:
+            self.pwm.off()
 
-    def on_light_off(self, state):
-        self.pwm.off()
-
-    def on_brightness_change(self, state):
-        self.pwm.set_duty_percent(state.brightness)
-
-    def deinit(self):
+    def stop(self, state):
         self.pwm.off()

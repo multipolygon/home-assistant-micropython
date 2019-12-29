@@ -1,21 +1,22 @@
 from machine import Pin
 from micropython import schedule
-import config
+from config import MOTN_GPIO, MOTN_VAL
 
 class Motion():
     def __init__(self, state):
-        self.pin = Pin(config.MOTN_GPIO, mode=Pin.IN)
+        self.pin = Pin(MOTN_GPIO, mode=Pin.IN)
 
-        def update(_):
-            state.set(motion = self.pin.value() == config.MOTN_VAL)
+    def start(self, state):
+        def _cb(_):
+            state.set(motion = state.enable and self.pin.value() == MOTN_VAL)
 
-        def handler(pin):
-            schedule(update, None)
+        def cb(pin):
+            schedule(_cb, None)
 
         self.pin.irq(
-            handler = handler,
             trigger = Pin.IRQ_RISING | Pin.IRQ_FALLING,
+            handler = cb,
         )
 
-    def deinit(self):
+    def stop(self, state):
         self.pin.irq(trigger=0)

@@ -1,3 +1,5 @@
 from configs.basic import *
 
-NAME = "Light"
+NAME = 'Light'
+
+RETAIN = ('enable', 'auto', 'brightness')

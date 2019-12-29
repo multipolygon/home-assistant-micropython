@@ -3,7 +3,7 @@ from lib.esp8266.wemos.d1mini import pinmap
 #### Light / Switch ####
 
 ## Change the component for Home Assistant:
-COMPNT = 'Light' # options: 'Light', 'Switch', None
+COMPNT = 'light' # options: 'light', 'switch', None
 
 ## Relay shield is D1 by default:
 GPIO = pinmap.D1
