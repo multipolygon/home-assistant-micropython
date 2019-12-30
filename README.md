@@ -14,7 +14,7 @@ For example usage see:
 
 - [./build/py/counter/](./build/py/counter/) ← basic
 - [./build/py/environment_sensor/](./build/py/environment_sensor/) ← medium
-- [./build/py/light/](./build/py/light/) ← basic
+- [./build/py/light_solar_security/](./build/py/light_solar_security/) ← medium
 - [./build/py/solar_hot_water_controller/](./build/py/solar_hot_water_controller/) ← complex
 - [./build/py/valve/](./build/py/valve/) ← medium
 
