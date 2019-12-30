@@ -1,11 +1,11 @@
-from lib.button import Button as DebouncedButton
+from debounced_button import DebouncedButton
 import config
 
 class Button():
     def __init__(self, state):
         pass
 
-    def start(self, state)
+    def start(self, state):
         def on(_):
             state.set(light = not(state.light))
 

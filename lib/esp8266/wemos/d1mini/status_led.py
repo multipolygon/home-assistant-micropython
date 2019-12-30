@@ -1,6 +1,6 @@
 from machine import Pin, PWM
 
-from lib.esp8266.wemos.d1mini import pinmap
+import esp8266.wemos.d1mini.pinmap as pinmap
 
 led = Pin(pinmap.LED, Pin.OUT)
 pwm = PWM(led)
