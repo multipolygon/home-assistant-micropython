@@ -11,7 +11,8 @@ parser.add_argument("--modified-only", "-m", action="store_true", help="Only tra
 parser.add_argument("--build", "-b", action="store_true", help="Build only without calling mpfshell.")
 parser.add_argument("--transfer", "-t", action="store_true", help="Use mpfshell to copy files to device.")
 parser.add_argument("--cross-compile", "-x", action="store_true", help="Cross-compile (compress) to Micropython byte code.")
-parser.add_argument("--config", '-c', action="store", type=str, help='Use specific file in _config.')
+parser.add_argument("--config", '-c', action="store", type=str, help='Use specific file in src/+/_config.')
+parser.add_argument("--secrets", '-s', action="store", type=str, help='Use specific file in lib/_secrets.')
 parser.add_argument("source", action="store", type=str, help="Src directory containing micropython main.py file.")
 args = parser.parse_args()
 
@@ -72,6 +73,9 @@ def build():
         config_file = os.path.join(source_dir, '_config', args.config + '.py')
         _copy_file(config_file, os.path.join(build_dir, 'config.py'))
         _copy_dependencies(config_file, 2)
+    if args.secrets:
+        secrets_file = os.path.join(base_dir, 'secrets', args.secrets + '.py')
+        _copy_file(secrets_file, os.path.join(build_dir, 'secrets.py'))
 
 def cross_compile():
     for build_file in glob.iglob(os.path.join(build_dir, "**", "*"), recursive=True):

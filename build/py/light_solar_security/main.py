@@ -30,7 +30,7 @@ if config.BTN:
     from button import Button
     hub.add(Button)
 
-if 'RETAIN' in config and config.RETAIN:
+if hasattr(config, 'RETAIN') and config.RETAIN:
     from components.retain import Retain
     hub.add(Retain, priority=True)
 
