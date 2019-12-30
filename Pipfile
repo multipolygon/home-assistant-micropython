@@ -11,6 +11,7 @@ mpfshell = "*"
 rshell = "*"
 mpy-cross = "*"
 paho-mqtt = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.7"
