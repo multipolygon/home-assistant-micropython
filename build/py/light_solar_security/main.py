@@ -1,5 +1,5 @@
 import config
-from lib.hub import Hub
+from hub import Hub
 
 hub = Hub(
     light = False,
@@ -10,7 +10,7 @@ hub = Hub(
 )
 
 if config.BATT:
-    from lib.components.battery import Battery
+    from components.battery import Battery
     hub.add(Battery)
 
 from internet import Internet
@@ -30,7 +30,8 @@ if config.BTN:
     from button import Button
     hub.add(Button)
 
-from lib.components.retain import Retain
-hub.add(Retain, priority=True)
+if 'RETAIN' in config and config.RETAIN:
+    from components.retain import Retain
+    hub.add(Retain, priority=True)
 
 hub.run()

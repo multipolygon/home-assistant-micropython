@@ -1,5 +1,5 @@
-from lib.esp8266.wemos.d1mini import status_led
-from lib.pwm import PWM
+import esp8266.wemos.d1mini.status_led as status_led
+from pwm import PWM
 from config import GPIO, BRIGHTNESS, BATT, BATT_LOW
 
 class Light():

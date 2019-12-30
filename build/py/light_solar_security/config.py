@@ -1,4 +1,8 @@
-from lib.esp8266.wemos.d1mini import pinmap
+import esp8266.wemos.d1mini.pinmap as pinmap
+
+NAME = 'Light'
+
+RETAIN = ('enable', 'auto', 'brightness')
 
 #### Light / Switch ####
 

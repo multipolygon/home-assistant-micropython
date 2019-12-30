@@ -1,4 +1,4 @@
-from lib.home_assistant.main import HA
+from home_assistant.main import HA
 
 class Switch(HA):
     COMPNT = 'switch'

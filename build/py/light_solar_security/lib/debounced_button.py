@@ -2,7 +2,7 @@ from machine import Pin
 from machine import Timer
 from micropython import schedule
 
-class Button():
+class DebouncedButton():
     def __init__(self, gpio, on_callback=None, off_callback=None, timeout_ms=1500, on_value=1):
         self.enabled = True
         self.pin = Pin(gpio, mode=Pin.IN)

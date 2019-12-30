@@ -1,9 +1,9 @@
-from lib.home_assistant.mqtt import MQTT
-from lib.home_assistant.light import Light
-from lib.home_assistant.switch import Switch
-from lib.home_assistant.binary_sensors.motion import Motion
-from lib.home_assistant.sensors.battery import Battery
-from lib.esp8266.wemos.d1mini import status_led
+from home_assistant.mqtt import MQTT
+from home_assistant.light import Light
+from home_assistant.switch import Switch
+from home_assistant.binary_sensors.motion import Motion
+from home_assistant.sensors.battery import Battery
+from esp8266.wemos.d1mini import status_led
 import wifi
 import config
 import secrets
