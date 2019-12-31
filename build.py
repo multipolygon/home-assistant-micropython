@@ -6,6 +6,7 @@ import os, sys, subprocess, datetime, glob
 from platform import system
 import ast
 from time import sleep
+from urllib.request import urlretrieve
 
 def args():
     p = ArgumentParser()
@@ -14,6 +15,7 @@ def args():
     
     b = p.add_argument_group('build')
     b.add_argument("--build", "-b", action="store_true", help="Build only without calling mpfshell.")
+    b.add_argument("--fetch", '-f', action="store_true", help="Download vendor libs found in requirements.txt")
     b.add_argument("--cross-compile", "-x", action="store_true", help="Cross-compile (compress) to Micropython byte code.")
     b.add_argument("--config", '-c', action="store", type=str, help='Copy specified file as config.py')
     b.add_argument("--clean", '-d', action="store_true", help="Remove build files.")
@@ -54,6 +56,19 @@ def trash(dir):
         print('Trash: ' + trash_dir)
         os.makedirs(trash_dir, exist_ok=True)
         move(dir, os.path.join(trash_dir, '{:%Y.%m.%d-%H.%M.%S}'.format(datetime.datetime.now())))
+
+REQUIREMENTS_FILE = 'requirements.txt'
+        
+def fetch_requirements():
+    requirements_file = os.path.join(source_dir, REQUIREMENTS_FILE)
+    if not os.path.isfile(requirements_file):
+        raise FileNotFoundError(requirements_file)
+    with open(requirements_file) as f:
+        for target_file, url in (line.strip().split('=',1) for line in f.readlines() if line.strip() != '' and line[0] != "#"):
+            target_path = os.path.join(lib_dir, 'vendor', target_file)
+            print(url)
+            print(' --> ' + os.path.relpath(target_path))
+            urlretrieve(url, target_path)
     
 def _copy_file(source_file, target_file, depth=1):
     print(('-' * depth * 2) + '> ' + target_file)
@@ -161,6 +176,9 @@ def transfer():
 if args.clean:
     trash(build_dir)
     trash(x_build_dir)
+
+if args.fetch:
+    fetch_requirements()
     
 if args.build:
     build()

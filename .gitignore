@@ -1,14 +1,16 @@
 secrets.*
-secrets/*
+secrets/**
 !secrets/blank.py
-bin/*
+bin/**
 !bin/.keep
-wip
+wip/
 scratch.*
 build/mpy
 !build/mpy/.keep
 _timestamp*
-_trash
+_trash/
+**/lib/vendor/**
+!lib/vendor/README.*
 
 *~
 .DS_Store
@@ -17,4 +19,3 @@ __pycache__
 .#*
 
 request*.sh
-
