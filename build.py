@@ -126,16 +126,17 @@ TIMESTAMP_FILE = '_timestamp.txt'
 TIMESTAMP_FILE_REMOTE = '_timestamp.remote.txt'
     
 def _get_timestamp(port):
-    commands = [
-        "open %s" % port,
-        "get %s %s" % (TIMESTAMP_FILE, TIMESTAMP_FILE_REMOTE),
-    ]
-    if os.path.isfile(TIMESTAMP_FILE_REMOTE):
-        os.remove(TIMESTAMP_FILE_REMOTE)
-    subprocess.call("mpfshell --noninteractive -c %s" % "\\; ".join(commands), shell=True)
-    if os.path.isfile(TIMESTAMP_FILE_REMOTE):
-        with open(TIMESTAMP_FILE_REMOTE) as f:
-            return float(f.read())
+    if args.modified_only:
+        commands = [
+            "open %s" % port,
+            "get %s %s" % (TIMESTAMP_FILE, TIMESTAMP_FILE_REMOTE),
+        ]
+        if os.path.isfile(TIMESTAMP_FILE_REMOTE):
+            os.remove(TIMESTAMP_FILE_REMOTE)
+        subprocess.call("mpfshell --noninteractive -c %s" % "\\; ".join(commands), shell=True)
+        if os.path.isfile(TIMESTAMP_FILE_REMOTE):
+            with open(TIMESTAMP_FILE_REMOTE) as f:
+                return float(f.read())
     return 0
 
 def transfer():
