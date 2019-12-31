@@ -1,7 +1,7 @@
-from lib.home_assistant.mqtt import MQTT
-from lib.home_assistant.sensor import Sensor
-from lib.home_assistant.sensors.battery import Battery
-from lib.esp8266.wemos.d1mini import status_led
+from home_assistant.mqtt import MQTT
+from home_assistant.sensor import Sensor
+from home_assistant.sensors.battery import Battery
+import esp8266.wemos.d1mini.status_led as status_led
 from micropython import schedule
 import config
 import secrets
@@ -9,6 +9,8 @@ import wifi
 
 class Internet():
     def __init__(self, state):
+        self.update_on = ('count', 'battery_level')
+        
         print(wifi.uid())
 
         status_led.slow_blink()
@@ -47,16 +49,16 @@ class Internet():
 
         self.pub_state = pub_state
 
-    def on_state_change(self, state, changed):
+    def update(self, state, changed):
         if not self._sched:
-            for i in ('count', 'battery_level'):
-                if i in changed:
-                    self.pub_sched = True
-                    schedule(self.pub_state, None)
-                    break
+            self.pub_sched = True
+            schedule(self.pub_state, 0)
 
-    def run(self):
+    def start(self, state):
+        self.pub_state(0)
+
+    def run(self, state):
         self.mqtt.wait(led = status_led)
 
-    def stop(self):
+    def stop(self, state):
         self.mqtt.discon()

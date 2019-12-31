@@ -1,20 +1,20 @@
 import config
-from lib.state import State
+from hub import Hub
 
-state = State(
+hub = Hub(
     count = -1,
     battery = 100,
 )
 
 from internet import Internet
-internet = state.add(Internet)
+internet = hub.add(Internet)
 
 from counter import Counter
-state.add(Counter)
+hub.add(Counter)
 
 if config.BATT:
-    from lib.components.battery import Battery
-    state.add(Battery)
+    from components.battery import Battery
+    hub.add(Battery)
 
-state.run()
+hub.run()
 
