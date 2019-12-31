@@ -1,7 +1,7 @@
-from lib.home_assistant.mqtt import MQTT
-from lib.home_assistant.climate import Climate, MODE_OFF, MODES
-from lib.home_assistant.sensors.temperature import Temperature
-from lib.esp8266.wemos.d1mini import status_led
+from home_assistant.mqtt import MQTT
+from home_assistant.climate import Climate, MODE_OFF, MODES
+from home_assistant.sensors.temperature import Temperature
+import esp8266.wemos.d1mini.status_led as status_led
 from micropython import schedule
 import wifi
 import config
@@ -9,6 +9,8 @@ import secrets
 
 class Internet():
     def __init__(self, state):
+        self.update_on = ('mode', 'tank_target_temp', 'tank_temp', 'pump', 'solar_temp')
+        
         print(wifi.uid())
 
         status_led.slow_blink()
@@ -50,19 +52,16 @@ class Internet():
 
         self.pub_state = pub_state
 
-    def on_state_change(self, state, changed):
+    def update(self, state, changed):
         if not self._sched:
-            for i in ('mode', 'tank_target_temp', 'tank_temp', 'pump', 'solar_temp'):
-                if i in changed:
-                    self._sched = True
-                    schedule(self.pub_state, None)
-                    break
+            self._sched = True
+            schedule(self.pub_state, 0)
 
-    def start(self):
+    def start(self, state):
         self.pub_state(0)
 
-    def run(self):
+    def run(self, state):
         self.mqtt.wait(led = status_led)
 
-    def stop(self):
+    def stop(self, state):
         self.mqtt.discon()

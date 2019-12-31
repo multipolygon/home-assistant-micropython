@@ -1,4 +1,4 @@
-from lib.home_assistant.sensor import Sensor
+from home_assistant.sensor import Sensor
 
 class Temperature(Sensor):
     DEV_CLA = 'temperature'

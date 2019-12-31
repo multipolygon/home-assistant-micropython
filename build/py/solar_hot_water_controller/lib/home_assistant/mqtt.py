@@ -1,5 +1,5 @@
 from gc import collect as gc_collect
-from lib.random import random_int
+from random import random_int
 from sys import print_exception
 from uio import BytesIO
 from ujson import dump as json_dump

@@ -1,4 +1,4 @@
-from lib.esp8266.wemos.d1mini import status_led
+import esp8266.wemos.d1mini.status_led as status_led
 from machine import ADC, Pin
 from machine import Timer
 from micropython import schedule
@@ -49,7 +49,7 @@ class Temperature():
         status_led.invert()
         return val / n
 
-    def start(self):
+    def start(self, state):
         self._sched = False
         self.timer.deinit()
         
@@ -60,12 +60,12 @@ class Temperature():
         def cb(_):
             if not self._sched:
                 self._sched = True
-                schedule(_cb, None)
+                schedule(_cb, 0)
         
         self.timer.init(
             period=round(config.FREQ * 1000),
             callback=cb
         )
 
-    def stop(self):
+    def stop(self, state):
         self.timer.deinit()

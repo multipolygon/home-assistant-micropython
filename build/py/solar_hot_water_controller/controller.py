@@ -1,8 +1,11 @@
 from config import PUMP_ON, PUMP_OFF, pump_logic, pump_boost
-from lib.home_assistant.climate import MODE_OFF, MODE_AUTO, MODE_HEAT
+from home_assistant.climate import MODE_OFF, MODE_AUTO, MODE_HEAT
 
 class Controller():
-    def update(self, state):
+    def __init__(self, state):
+        self.update_on = ('mode', 'solar_temp', 'tank_temp', 'tank_target_temp')
+        
+    def update(self, state, changed):
         if state.mode == MODE_OFF:
             state.set(pump = PUMP_OFF)
 
@@ -20,9 +23,3 @@ class Controller():
 
         else:
             state.set(mode = MODE_AUTO)
-    
-    def on_state_change(self, state, changed):
-        for i in ('mode', 'solar_temp', 'tank_temp', 'tank_target_temp'):
-            if i in changed:
-                self.update(state)
-                break

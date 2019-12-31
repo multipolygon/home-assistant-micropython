@@ -1,5 +1,5 @@
 import config
-from lib.hub import Hub
+from hub import Hub
 
 hub = Hub(
     solar_temp = None,
@@ -24,7 +24,7 @@ hub.add(Controller, priority=True)
 from pump import Pump
 hub.add(Pump, priority=True)
 
-from retain import Retain
+from components.retain import Retain
 hub.add(Retain)
 
 hub.run()

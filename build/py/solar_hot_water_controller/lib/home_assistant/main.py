@@ -11,7 +11,7 @@ UTF8 = 'utf-8'
 ATTR = 'attr'
 
 try:
-    from lib.version import build_date
+    from version import build_date
 except:
     build_date = '?'
 
