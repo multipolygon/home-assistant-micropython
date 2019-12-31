@@ -1,4 +1,4 @@
-from lib.esp8266.wemos.d1mini import status_led
+import esp8266.wemos.d1mini.status_led as status_led
 from machine import Pin
 import config
 from esp import deepsleep
@@ -7,14 +7,18 @@ from micropython import schedule
 
 class BallValve():
     def __init__(self, state):
+        self.update_on = ('valve_open', 'battery')
         self.motor = Pin(config.MOTOR_GPIO, mode=Pin.OUT)
         self.contact = Pin(config.CONTACT_GPIO, mode=Pin.IN)
         state.valve_open = False
         self.rotate(False)
 
     def rotate(self, valve_open):
+        ## TODO: Use timer to turn off motor
         status_led.fast_blink()
-        while valve_open != (self.contact.value() == config.VALVE_OPEN_VAL):
+        for i in range(1000): ## try for 10 sec
+            if valve_open == (self.contact.value() == config.VALVE_OPEN_VAL):
+                break
             self.motor.on()
             sleep_ms(10)
         self.motor.off()
@@ -23,17 +27,21 @@ class BallValve():
         else:
             status_led.off()
 
-    def on_valve_open_change(self, state):
-        if state.valve_open and self.battery_is_low(state.battery):
-            status_led.slow_blink()
-        else:
-            self.rotate(state.valve_open)
+    def update(self, state, changed):
+        if 'battery' in changed:
+            self.check_battery(state)
+
+        if 'valve_open' in changed:
+            if state.valve_open and self.battery_is_low(state):
+                status_led.slow_blink()
+            else:
+                self.rotate(state.valve_open)
             
-    def battery_is_low(self, val):
-        return config.BATT and config.BATT_LOW != None and val < config.BATT_LOW
+    def battery_is_low(self, state):
+        return config.BATT and config.BATT_LOW != None and state.battery < config.BATT_LOW
 
     def check_battery(self, state):
-        if self.battery_is_low(state.battery):
+        if self.battery_is_low(state):
             print('Batt low!')
             state.set(valve_open = False)
             if config.BATT_LOW_SLEEP != None:
@@ -49,5 +57,3 @@ class BallValve():
                 return True
         return False
 
-    def on_battery_change(self, state):
-        self.check_battery(state)

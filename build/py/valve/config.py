@@ -1,4 +1,4 @@
-from lib.esp8266.wemos.d1mini import pinmap
+import lib.esp8266.wemos.d1mini.pinmap as pinmap
 
 NAME = "Valve"
 
@@ -10,7 +10,7 @@ VALVE_OPEN_VAL = 0
 
 #### Button ####
 
-BTN = False
+BTN = True
 
 ## Wemos 1-button shield is D3 by default:
 BTN_GPIO = pinmap.D3
@@ -26,6 +26,6 @@ BATT_ADC = pinmap.A0
 
 BATT_INT = 60 # seconds
 
-BATT_LOW = 20 # percent or None
+BATT_LOW = None # 20 # percent or None
 
-BATT_LOW_SLEEP = 60 * 60 # seconds
+BATT_LOW_SLEEP = 30 * 60 # seconds

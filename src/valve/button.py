@@ -1,13 +1,13 @@
-from lib.button import Button as DebouncedButton
+from debounced_button import DebouncedButton
 import config
 
 class Button():
     def __init__(self, state):
-        self.state = state
+        pass
 
-    def start(self):
+    def start(self, state):
         def press(_):
-            self.state.set(valve_open = not(self.state.valve_open))
+            state.set(valve_open = not(state.valve_open))
 
         self.button = DebouncedButton(
             config.BTN_GPIO,
@@ -15,5 +15,5 @@ class Button():
             on_value=config.BTN_DOWN_VAL
         )
 
-    def stop(self):
+    def stop(self, state):
         self.button.deinit()
