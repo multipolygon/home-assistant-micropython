@@ -124,21 +124,21 @@ def _get_timestamp(port):
     return 0
 
 def transfer():
-    build_dir = x_build_dir if args.cross_compile else build_dir
+    dir = x_build_dir if args.cross_compile else build_dir
     port = os.path.split(list(glob.iglob("/dev/tty.usbserial-*"))[0])[-1]
     timestamp = _get_timestamp(port)
     commands = ["open %s" % port]
     if args.secrets:
         commands.append("put %s secrets.py" % os.path.relpath(args.secrets))
-    commands.append("lcd %s" % os.path.relpath(build_dir))
+    commands.append("lcd %s" % os.path.relpath(dir))
     newest = 0
-    for build_file in glob.iglob(os.path.join(build_dir, "**", "*"), recursive=True):
+    for build_file in glob.iglob(os.path.join(dir, "**", "*"), recursive=True):
         if os.path.isfile(build_file) and os.path.split(build_file)[1] != TIMESTAMP_FILE:
             mtime = os.path.getmtime(build_file)
             if mtime > newest:
                 newest = mtime
             if not(args.modified_only) or mtime > timestamp:
-                build_file = build_file.replace(build_dir, "")
+                build_file = build_file.replace(dir, "")
                 target_dir, target_file = os.path.split(build_file)
                 dir_path = ""
                 for sub_dir in target_dir.split('/'):
@@ -149,7 +149,7 @@ def transfer():
                             commands.append(cmd)
                 commands.append("put .%s" % build_file)
     if not(args.modified_only) or newest > timestamp:
-        with open(os.path.join(build_dir, TIMESTAMP_FILE), 'w') as f:
+        with open(os.path.join(dir, TIMESTAMP_FILE), 'w') as f:
             f.write(str(newest))
         commands.append("put %s" % TIMESTAMP_FILE)
     commands.append("ls")
