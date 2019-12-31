@@ -1,14 +1,2 @@
-esp8266/bh1750.py=https://raw.githubusercontent.com/PinkInk/upylib/master/bh1750/bh1750/__init__.py
-esp8266/sht30.py=https://raw.githubusercontent.com/rsc1975/micropython-sht30/master/sht30.py
-esp8266/wemos/d1mini/pinmap.py
-esp8266/wemos/d1mini/status_led.py
-home_assistant/main.py
-home_assistant/mqtt.py
-home_assistant/sensor.py
-home_assistant/sensors/battery.py
-home_assistant/sensors/humidity.py
-home_assistant/sensors/illuminance.py
-home_assistant/sensors/temperature.py
-random.py
-state.py
-wifi.py
+bh1750.py=https://raw.githubusercontent.com/PinkInk/upylib/master/bh1750/bh1750/__init__.py
+sht30.py=https://raw.githubusercontent.com/rsc1975/micropython-sht30/master/sht30.py

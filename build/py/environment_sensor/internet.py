@@ -1,10 +1,10 @@
-from lib.home_assistant.mqtt import MQTT
-from lib.home_assistant.sensor import Sensor
-from lib.home_assistant.sensors.battery import Battery
-from lib.home_assistant.sensors.humidity import Humidity
-from lib.home_assistant.sensors.illuminance import Illuminance
-from lib.home_assistant.sensors.temperature import Temperature
-from lib.esp8266.wemos.d1mini import status_led
+from home_assistant.mqtt import MQTT
+from home_assistant.sensor import Sensor
+from home_assistant.sensors.battery import Battery
+from home_assistant.sensors.humidity import Humidity
+from home_assistant.sensors.illuminance import Illuminance
+from home_assistant.sensors.temperature import Temperature
+import esp8266.wemos.d1mini.status_led as status_led
 from micropython import schedule
 from machine import reset_cause, DEEPSLEEP_RESET
 from utime import sleep
@@ -44,12 +44,13 @@ class Internet():
         mqtt.set_attr("freq", config.FREQ)
 
         if wifi.is_connected():
-            if reset_cause() != DEEPSLEEP_RESET:
-                status_led.fast_blink()
+            if reset_cause() == DEEPSLEEP_RESET:
+                mqtt.do_pub_cfg = False
             else:
-                ha.do_pub_cfg = False
+                status_led.fast_blink()
             mqtt.connect()
             mqtt.pub_state()
             status_led.off()
             sleep(5)
             mqtt.discon()
+            sleep(5)

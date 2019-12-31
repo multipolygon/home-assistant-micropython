@@ -1,8 +1,8 @@
-from lib.esp8266.wemos.d1mini import pinmap
+import esp8266.wemos.d1mini.pinmap as pinmap
 
 class Temperature():
     def __init__(self, state):
-        from lib.esp8266.sht30.sht30 import SHT30
+        from vendor.sht30 import SHT30
         sht30 = SHT30(scl_pin = pinmap.SCL, sda_pin = pinmap.SDA)
         
         if sht30.is_present():
