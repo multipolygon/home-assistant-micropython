@@ -23,7 +23,7 @@ def args():
     t = p.add_argument_group('transfer')
     t.add_argument("--transfer", "-t", action="store_true", help="Use mpfshell to copy files to device.")
     t.add_argument("--modified-only", "-m", action="store_true", help="Only transfer modified files.")
-    t.add_argument("--secrets", '-s', action="store", type=str, help='Transfer specified file as secrets.py')
+    t.add_argument("--secrets", '-s', action="store", type=str, help='Transfer specified file as secrets.json')
     
     return p.parse_args()
 
@@ -122,6 +122,18 @@ def cross_compile():
         copystat(build_file, target_file)
     copyfile(os.path.join(lib_dir, 'boot.py'), os.path.join(x_build_dir, 'boot.py'))
 
+def _port():
+    return os.path.split(list(glob.iglob("/dev/tty.usbserial-*"))[0])[-1]
+
+def secrets():
+    commands = [
+        "open %s" % _port(),
+        "put %s secrets.json" % os.path.relpath(args.secrets),
+    ]
+    if not args.transfer:
+        commands.append("repl")
+    subprocess.call("mpfshell %s -c %s" % ("--noninteractive" if args.transfer else "", "\\; ".join(commands)), shell=True)
+
 TIMESTAMP_FILE = '_timestamp.txt'
 TIMESTAMP_FILE_REMOTE = '_timestamp.remote.txt'
     
@@ -141,11 +153,9 @@ def _get_timestamp(port):
 
 def transfer():
     dir = x_build_dir if args.cross_compile else build_dir
-    port = os.path.split(list(glob.iglob("/dev/tty.usbserial-*"))[0])[-1]
+    port = _port()
     timestamp = _get_timestamp(port)
     commands = ["open %s" % port]
-    if args.secrets:
-        commands.append("put %s secrets.py" % os.path.relpath(args.secrets))
     commands.append("lcd %s" % os.path.relpath(dir))
     newest = 0
     for build_file in glob.iglob(os.path.join(dir, "**", "*"), recursive=True):
@@ -187,5 +197,8 @@ if args.build:
 if args.cross_compile:
     cross_compile()
 
+if args.secrets:
+    secrets()
+    
 if args.transfer:
     transfer()

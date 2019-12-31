@@ -1,6 +1,3 @@
-secrets.*
-secrets/**
-!secrets/blank.py
 bin/**
 !bin/.keep
 wip/
