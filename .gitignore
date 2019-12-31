@@ -5,6 +5,9 @@ bin/*
 !bin/.keep
 wip
 scratch.*
+build/mpy
+!build/mpy/.keep
+_timestamp*
 
 *~
 .DS_Store
