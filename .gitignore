@@ -8,6 +8,7 @@ scratch.*
 build/mpy
 !build/mpy/.keep
 _timestamp*
+_trash
 
 *~
 .DS_Store

@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from shutil import copy2 as copyfile
-from shutil import copystat
+from shutil import copystat, move
 import mpy_cross
 import os, sys, subprocess, datetime, glob
 from platform import system
@@ -16,7 +16,7 @@ def args():
     b.add_argument("--build", "-b", action="store_true", help="Build only without calling mpfshell.")
     b.add_argument("--cross-compile", "-x", action="store_true", help="Cross-compile (compress) to Micropython byte code.")
     b.add_argument("--config", '-c', action="store", type=str, help='Copy specified file as config.py')
-    b.add_argument("--clean", action="store_true", help="Remove build files.")
+    b.add_argument("--clean", '-d', action="store_true", help="Remove build files.")
     
     t = p.add_argument_group('transfer')
     t.add_argument("--transfer", "-t", action="store_true", help="Use mpfshell to copy files to device.")
@@ -47,6 +47,14 @@ if not os.path.isfile(main_file):
 with open(os.path.join(lib_dir, 'version.py'), 'w') as f:
     f.write("build_date = '{:%Y/%m/%d}'\n".format(datetime.datetime.today()))
 
+def trash(dir):
+    if os.path.isdir(dir):
+        dir_path, dir_name = os.path.split(dir)
+        trash_dir = os.path.join(dir_path, '_trash', dir_name)
+        print('Trash: ' + trash_dir)
+        os.makedirs(trash_dir, exist_ok=True)
+        move(dir, os.path.join(trash_dir, '{:%Y.%m.%d-%H.%M.%S}'.format(datetime.datetime.now())))
+    
 def _copy_file(source_file, target_file, depth=1):
     print(('-' * depth * 2) + '> ' + target_file)
     target_dir, target_name = os.path.split(target_file)
@@ -150,6 +158,10 @@ def transfer():
         print(c)
     subprocess.call("mpfshell -c %s" % "\\; ".join(commands), shell=True)
 
+if args.clean:
+    trash(build_dir)
+    trash(x_build_dir)
+    
 if args.build:
     build()
 
