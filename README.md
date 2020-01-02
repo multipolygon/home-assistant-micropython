@@ -1,4 +1,8 @@
-# MicroPython IoT Devices for Home Assistant
+# MicroPython ←[MQTT-Discovery]→ Home Assistant
+
+A MicroPython lib for automatically registering IoT devices with a Home Assistant server via the MQTT-discovery protocol.
+
+(And various example devices using the lib, such as thermostats, valves and sensors.)
 
 ## Project Details
 

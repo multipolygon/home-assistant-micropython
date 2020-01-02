@@ -37,7 +37,7 @@ MOTN_GPIO = pinmap.D2
 MOTN_VAL = 0
 
 ## Turn off light n-seconds after being turned on:
-MOTN_TIME = 10 # seconds
+MOTN_TIME = 20 # seconds
 
 #### Battery ####
 
