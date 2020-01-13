@@ -74,7 +74,7 @@ class MQTT():
 
     def add(self, name, cls, key = None, **cfg):
         obj = cls(
-            scope = self.secrets.MQTT_USER,
+            prefix = self.secrets.MQTT_PREFIX,
             dev_name = self.name,
             name = name,
             key = key,

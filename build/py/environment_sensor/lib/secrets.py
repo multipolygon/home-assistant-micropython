@@ -8,6 +8,7 @@ l = (
     'MQTT_SERVER',
     'MQTT_USER',
     'MQTT_PASSWORD',
+    'MQTT_PREFIX',
 )
 
 try:

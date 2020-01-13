@@ -49,6 +49,7 @@ class Internet():
             else:
                 status_led.fast_blink()
             mqtt.connect()
+            sleep(1)
             mqtt.pub_state()
             status_led.off()
             sleep(5)

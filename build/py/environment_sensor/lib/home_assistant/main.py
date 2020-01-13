@@ -26,8 +26,8 @@ class HA():
     COMPNT = 'generic'
     JSON_NS = None
     
-    def __init__(self, scope=None, dev_name=None, name=None, key=None, state={}):
-        self.scope = scope + '/' if scope else ''
+    def __init__(self, prefix=None, dev_name=None, name=None, key=None, state={}):
+        self.prefix = prefix + '/' if prefix else ''
         self.dev_name = dev_name or 'Device'
         self.name = name or self.DEV_CLA or self.COMPNT
         self.key = key if key else self.name.lower().replace(' ', '_')
@@ -56,7 +56,7 @@ class HA():
 
     def cfg_tpc(self):
         object_id = '_'.join((self.MANUF, self.MDL, self.UID))
-        return self.scope + '/'.join((
+        return self.prefix + '/'.join((
             self.DISCOV,
             self.COMPNT,
             object_id,
@@ -99,7 +99,7 @@ class HA():
         return ' '.join((self.ful_dev_name(), self.name))
 
     def base_tpc(self):
-        return self.scope + '/'.join((self.MANUF, self.MDL, self.UID)).lower().replace(' ', '_')
+        return self.prefix + '/'.join((self.MANUF, self.MDL, self.UID)).lower().replace(' ', '_')
 
     def compnt_base_tpc(self):
         return self.base_tpc() + '/'.join(('', self.JSON_NS or self.COMPNT, self.key))
