@@ -34,4 +34,7 @@ if hasattr(config, 'RETAIN') and config.RETAIN:
     from components.retain import Retain
     hub.add(Retain, priority=True)
 
+from components.daily_reset import DailyReset
+hub.add(DailyReset)
+
 hub.run()
