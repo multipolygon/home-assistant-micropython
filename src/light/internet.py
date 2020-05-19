@@ -6,6 +6,7 @@ from home_assistant.sensors.battery import Battery
 from esp8266.wemos.d1mini import status_led
 import wifi
 import config
+import uid
 import secrets
 from micropython import schedule
 
@@ -24,17 +25,15 @@ class Internet():
     def __init__(self, state):
         self.update_on = set()
         
-        print(wifi.uid())
-
         status_led.slow_blink()
         wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
         status_led.off()
 
-        self.mqtt = MQTT(config.NAME, secrets)
+        self.mqtt = MQTT(config.NAME, secrets, uid = uid.UID)
 
         if config.COMPNT != None:
             self.update_on.add(LIGHT)
-            
+
             if config.COMPNT == LIGHT:
                 light = self.mqtt.add(t(LIGHT), Light, bri = config.BRIGHTNESS)
                 
@@ -46,6 +45,9 @@ class Internet():
                 
             elif config.COMPNT == SWITCH:
                 light = self.mqtt.add(t(SWITCH), Switch)
+
+            else:
+                print('ERR', COMPNT);
 
             def light_rx(msg):
                 state.set(light = msg == light.ON)
@@ -76,11 +78,7 @@ class Internet():
             battery = self.mqtt.add(t(BATT), Battery)
 
         status_led.fast_blink()
-        if config.BATT and config.BATT_LOW and state.battery < config.BATT_LOW:
-            self.mqtt.do_pub_cfg = False
-            self.mqtt.connect()
-        else:
-            self.mqtt.try_pub_cfg()
+        self.mqtt.try_pub_cfg()
         status_led.off()
 
         self._sched = False

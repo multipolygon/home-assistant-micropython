@@ -13,7 +13,8 @@ class RxEx(Exception):
     pass
 
 class MQTT():
-    def __init__(self, name, secrets):
+    def __init__(self, name, secrets, uid=None):
+        self.uid = uid
         self.name = name
         self.secrets = secrets
         self.state = {}
@@ -75,6 +76,7 @@ class MQTT():
     def add(self, name, cls, key = None, **cfg):
         obj = cls(
             prefix = self.secrets.MQTT_PREFIX,
+            uid = self.uid,
             dev_name = self.name,
             name = name,
             key = key,

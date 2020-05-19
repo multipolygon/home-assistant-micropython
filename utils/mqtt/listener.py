@@ -2,11 +2,21 @@ import os
 import datetime
 import re
 import paho.mqtt.client as mqtt
-import secrets
 import json
+from argparse import ArgumentParser
+
+def args():
+    p = ArgumentParser()
+    p.add_argument("--secrets", '-s', action="store", type=str, help='Transfer specified file as secrets.json')
+    return p.parse_args()
+
+args = args()
+
+with open(args.secrets) as f:
+    secrets = json.loads(f.read())
 
 client = mqtt.Client("mqtt_forwarder")
-client.username_pw_set(secrets.MQTT_USER, password = secrets.MQTT_PASSWORD)
+client.username_pw_set(secrets['MQTT_USER'], password = secrets['MQTT_PASSWORD'])
 
 def on_message(client, userdata, message):
     try:
@@ -30,9 +40,9 @@ def on_message(client, userdata, message):
 
 client.on_message = on_message
 
-client.connect(secrets.MQTT_SERVER)
+client.connect(secrets['MQTT_SERVER'])
 
-client.subscribe(secrets.MQTT_USER + '/#')
+client.subscribe(secrets['MQTT_PREFIX'] + '/#')
 
 print('Running...')
 

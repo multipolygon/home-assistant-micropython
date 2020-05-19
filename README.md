@@ -103,7 +103,7 @@ Downloads: https://micropython.org/download#esp32
 
 From the top-level project directory, run the `transfer.py` helper script, replacing `$APP` with the desired code directory:
 
-    pipenv run python transfer.py ./deivce/$APP/
+    pipenv run python build.py --help
 
 ### Output
 

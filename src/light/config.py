@@ -5,7 +5,7 @@ NAME = 'Light'
 #### Light / Switch ####
 
 ## Change the component for Home Assistant:
-COMPNT = 'Light' # options: 'Light', 'Switch', None
+COMPNT = 'light' # options: 'Light', 'Switch', None
 
 ## Relay shield is D1 by default:
 GPIO = pinmap.D1
@@ -44,7 +44,7 @@ BATT = False
 BATT_ADC = pinmap.A0
 
 ## Update interval:
-BATT_INT = 60 # seconds
+BATT_INT = 10 * 60 # seconds
 
 ## Disable light when battery below:
-BATT_LOW = None # percent or None
+BATT_LOW = 10 # percent or None

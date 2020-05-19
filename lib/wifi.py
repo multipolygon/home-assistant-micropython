@@ -4,6 +4,7 @@ import network
 ## Just a bunch of wrappers with human-readable names ##
 
 sta_if = network.WLAN(network.STA_IF)
+sta_if.active(False)
 
 def no_ap():
     network.WLAN(network.AP_IF).active(False)

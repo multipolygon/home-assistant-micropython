@@ -49,6 +49,12 @@ class Hub():
                 obj.stop(self)
         self.mem_alloc()
 
+    def get(self, k):
+        if hasattr(self, k):
+            return getattr(self, k)
+        else:
+            return None
+
     def set(self, **kwargs):
         changed = set()
         

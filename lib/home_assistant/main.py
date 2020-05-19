@@ -26,9 +26,10 @@ class HA():
     COMPNT = 'generic'
     JSON_NS = None
     
-    def __init__(self, prefix=None, dev_name=None, name=None, key=None, state={}):
+    def __init__(self, prefix=None, uid=None, dev_name=None, name=None, key=None, state={}):
         self.prefix = prefix + '/' if prefix else ''
-        self.dev_name = dev_name or 'Device'
+        self.uid = uid or self.UID
+        self.dev_name = dev_name or self.MDL
         self.name = name or self.DEV_CLA or self.COMPNT
         self.key = key if key else self.name.lower().replace(' ', '_')
         self.state = state
@@ -55,7 +56,7 @@ class HA():
                 del self.state[ATTR][key]
 
     def cfg_tpc(self):
-        object_id = '_'.join((self.MANUF, self.MDL, self.UID))
+        object_id = '_'.join((self.uid, self.dev_name))
         return self.prefix + '/'.join((
             self.DISCOV,
             self.COMPNT,
@@ -93,13 +94,16 @@ class HA():
         return cfg
 
     def ful_dev_name(self):
-        return ' '.join((self.MDL, self.UID, self.dev_name))
+        return ' '.join((self.uid, self.dev_name))
     
     def ful_name(self):
-        return ' '.join((self.ful_dev_name(), self.name))
+        if self.name == self.dev_name:
+            return self.ful_dev_name()
+        else:
+            return ' '.join((self.ful_dev_name(), self.name))
 
     def base_tpc(self):
-        return self.prefix + '/'.join((self.MANUF, self.MDL, self.UID)).lower().replace(' ', '_')
+        return self.prefix + '/'.join((self.dev_name, self.uid)).lower().replace(' ', '_')
 
     def compnt_base_tpc(self):
         return self.base_tpc() + '/'.join(('', self.JSON_NS or self.COMPNT, self.key))

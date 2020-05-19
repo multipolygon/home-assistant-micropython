@@ -1,12 +1,13 @@
 from argparse import ArgumentParser
+from platform import system
 from shutil import copy2 as copyfile
 from shutil import copystat, move
-import mpy_cross
-import os, sys, subprocess, datetime, glob
-from platform import system
-import ast
+from tempfile import NamedTemporaryFile
 from time import sleep
 from urllib.request import urlretrieve
+import ast
+import mpy_cross
+import os, sys, subprocess, datetime, glob
 
 def args():
     p = ArgumentParser()
@@ -14,26 +15,30 @@ def args():
     p.add_argument("source", action="store", type=str, help="Directory containing micropython main.py file.")
     
     b = p.add_argument_group('build')
-    b.add_argument("--build", "-b", action="store_true", help="Build only without calling mpfshell.")
     b.add_argument("--fetch", '-f', action="store_true", help="Download vendor libs found in requirements.txt")
     b.add_argument("--cross-compile", "-x", action="store_true", help="Cross-compile (compress) to Micropython byte code.")
-    b.add_argument("--config", '-c', action="store", type=str, help='Copy specified file as config.py')
+    b.add_argument("--config", '-c', action="store", type=str, help='Copy specified file to device as config.py')
     b.add_argument("--clean", '-d', action="store_true", help="Remove build files.")
     
     t = p.add_argument_group('transfer')
     t.add_argument("--transfer", "-t", action="store_true", help="Use mpfshell to copy files to device.")
     t.add_argument("--modified-only", "-m", action="store_true", help="Only transfer modified files.")
     t.add_argument("--secrets", '-s', action="store", type=str, help='Transfer specified file as secrets.json')
+    t.add_argument("--uid", '-i', action="store", type=str, help='Device unique id for MQTT saved as uid.py')
+    t.add_argument("--build", "-b", action="store_true", help="Build only without calling mpfshell.")
+    t.add_argument("--port", '-p', action="store", type=str, help='Device port')
+    t.add_argument("--repl", action="store_true", help="REPL.")
     
     return p.parse_args()
 
 args = args()
 
+port = args.port or os.path.split(list(glob.iglob("/dev/tty.usbserial-*"))[0])[-1]
 base_dir = os.path.abspath(".")
 lib_dir = os.path.join(base_dir, "lib")
 source_dir = os.path.abspath(args.source)
 main_file = os.path.join(source_dir, 'main.py')
-_build_dir_name = os.path.split(source_dir)[1] + (("_%s" % os.path.splitext(os.path.split(args.config)[1])[0]) if args.config else "")
+_build_dir_name = os.path.split(source_dir)[1]
 build_dir = os.path.join(base_dir, "build", "py", _build_dir_name)
 x_build_dir = os.path.join(base_dir, "build", "mpy", _build_dir_name)
 
@@ -103,9 +108,6 @@ def _copy_dependencies(source_file, depth=1):
 def build():
     _copy_file(main_file, main_file.replace(source_dir, build_dir))
     _copy_dependencies(main_file, 2)
-    if args.config:
-        _copy_file(args.config, os.path.join(build_dir, 'config.py'))
-        _copy_dependencies(args.config, 2)
 
 def cross_compile():
     files = []
@@ -122,30 +124,20 @@ def cross_compile():
         copystat(build_file, target_file)
     copyfile(os.path.join(lib_dir, 'boot.py'), os.path.join(x_build_dir, 'boot.py'))
 
-def _port():
-    return os.path.split(list(glob.iglob("/dev/tty.usbserial-*"))[0])[-1]
-
-def secrets():
-    commands = [
-        "open %s" % _port(),
-        "put %s secrets.json" % os.path.relpath(args.secrets),
-    ]
-    if not args.transfer:
-        commands.append("repl")
-    subprocess.call("mpfshell %s -c %s" % ("--noninteractive" if args.transfer else "", "\\; ".join(commands)), shell=True)
+def _mpfshell(commands, noninteractive="--noninteractive"):
+    subprocess.call("mpfshell %s -c %s" % (noninteractive, "\\; ".join(["open %s" % port] + commands)), shell=True)
 
 TIMESTAMP_FILE = '_timestamp.txt'
 TIMESTAMP_FILE_REMOTE = '_timestamp.remote.txt'
     
-def _get_timestamp(port):
+def _get_timestamp():
     if args.modified_only:
         commands = [
-            "open %s" % port,
             "get %s %s" % (TIMESTAMP_FILE, TIMESTAMP_FILE_REMOTE),
         ]
         if os.path.isfile(TIMESTAMP_FILE_REMOTE):
             os.remove(TIMESTAMP_FILE_REMOTE)
-        subprocess.call("mpfshell --noninteractive -c %s" % "\\; ".join(commands), shell=True)
+        _mpfshell(commands)
         if os.path.isfile(TIMESTAMP_FILE_REMOTE):
             with open(TIMESTAMP_FILE_REMOTE) as f:
                 return float(f.read())
@@ -153,9 +145,8 @@ def _get_timestamp(port):
 
 def transfer():
     dir = x_build_dir if args.cross_compile else build_dir
-    port = _port()
-    timestamp = _get_timestamp(port)
-    commands = ["open %s" % port]
+    timestamp = _get_timestamp()
+    commands = []
     commands.append("lcd %s" % os.path.relpath(dir))
     newest = 0
     for build_file in glob.iglob(os.path.join(dir, "**", "*"), recursive=True):
@@ -179,11 +170,32 @@ def transfer():
             f.write(str(newest))
         commands.append("put %s" % TIMESTAMP_FILE)
     commands.append("ls")
-    commands.append("repl")
     for c in commands:
         print(c)
-    subprocess.call("mpfshell -c %s" % "\\; ".join(commands), shell=True)
+    _mpfshell(commands)
 
+def config():
+    _mpfshell([
+        "put %s config.py" % os.path.relpath(args.config),
+    ])
+
+def secrets():
+    _mpfshell([
+        "put %s secrets.json" % os.path.relpath(args.secrets),
+    ])
+    
+def uid():
+    f = NamedTemporaryFile('w', suffix=".py", delete=False)
+    f.write('UID = "%s"' % args.uid)
+    f.close()
+    _mpfshell([
+        "put %s uid.py" % f.name,
+    ])
+    os.unlink(f.name)
+
+def repl():
+    _mpfshell(['repl'], noninteractive="")
+    
 if args.clean:
     trash(build_dir)
     trash(x_build_dir)
@@ -196,9 +208,18 @@ if args.build:
 
 if args.cross_compile:
     cross_compile()
-
-if args.secrets:
-    secrets()
     
 if args.transfer:
     transfer()
+
+if args.config:
+    config()
+    
+if args.secrets:
+    secrets()
+
+if args.uid:
+    uid()
+    
+if args.repl:
+    repl()
