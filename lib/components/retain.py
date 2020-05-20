@@ -5,7 +5,7 @@ from config import RETAIN
 class Retain():
     F = 'retain.json'
     
-    def __init__(self, state):
+    def __init__(self, hub):
         self.update_on = RETAIN
         if self.F in listdir():
             with open(self.F) as f:
@@ -13,7 +13,9 @@ class Retain():
                     d = load(f)
                 except:
                     d = {}
-            state.set(**{k: d[k] for k in RETAIN if k in d})
+            for k in RETAIN:
+                if k in d:
+                    setattr(hub, k, d[k])
 
     def update(self, state, changed):
         with open(self.F, 'w') as f:

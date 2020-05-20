@@ -17,7 +17,7 @@ except:
 
 class HA():
     NAME = None
-    MANUF = 'Echidna'
+    MANUF = 'HAMPy'
     MDL = uname().sysname.upper()
     UID = hexlify(unique_id()).decode(UTF8).upper()
     BUILD = build_date
@@ -56,11 +56,10 @@ class HA():
                 del self.state[ATTR][key]
 
     def cfg_tpc(self):
-        object_id = '_'.join((self.uid, self.dev_name))
         return self.prefix + '/'.join((
             self.DISCOV,
             self.COMPNT,
-            object_id,
+            '_'.join((self.uid, self.dev_name)),
             self.name,
             'config'
         )).lower().replace(' ', '_')

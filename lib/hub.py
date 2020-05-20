@@ -14,7 +14,9 @@ class Hub():
         gc_collect()
         self.print(cls, '__init__')
         obj = cls(self)
-        on = set(obj.update_on if hasattr(obj, 'update_on') else ())
+        on = set(obj.update_on if hasattr(obj, 'update') and hasattr(obj, 'update_on') else ())
+        if on:
+            print('update_on', ':', on)
         if priority:
             self.obj.insert(0, (obj, on))
         else:
@@ -69,11 +71,10 @@ class Hub():
             
         if self.activ and changed and self.obj:
             for obj, on in self.obj:
-                if hasattr(obj, 'update'):
-                    if on & changed:
-                        self.print(obj.__class__, 'update', pf='  ')
-                        obj.update(self, changed)
-                        self.mem_alloc()
+                if on & changed:
+                    self.print(obj.__class__, 'update', pf='  ')
+                    obj.update(self, changed)
+                    self.mem_alloc()
 
     def print(self, cls, fn, pf=''):
         print('%s%s.%s' % (pf, cls.__name__, fn))

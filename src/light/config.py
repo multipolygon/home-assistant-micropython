@@ -5,7 +5,7 @@ NAME = 'Light'
 #### Light / Switch ####
 
 ## Change the component for Home Assistant:
-COMPNT = 'light' # options: 'Light', 'Switch', None
+COMPNT = 'light' # or 'switch' or None
 
 ## Relay shield is D1 by default:
 GPIO = pinmap.D1
