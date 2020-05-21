@@ -13,11 +13,11 @@ hub.add(Sensor)
 
 from battery import Battery
 hub.add(Battery)
-
-from deepsleep import Deepsleep
-hub.add(Deepsleep)
     
 from internet import Internet
 hub.add(Internet)
+
+from deepsleep import Deepsleep
+hub.add(Deepsleep)
 
 hub.run()

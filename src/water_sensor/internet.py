@@ -12,14 +12,13 @@ import wifi
 
 class Internet():
     def __init__(self, hub):
-        pass
-    
-    def start(self, hub):
         # Note, ESP8266 chip real-time clock will overflow every 7h45m
         hour = localtime()[3]
         print('hour', hour)
-        
-        if hub.water or hour == 0 or reset_cause() != DEEPSLEEP_RESET:
+        hub.internet = hub.water or hour == 0 or reset_cause() != DEEPSLEEP_RESET
+    
+    def start(self, hub):
+        if hub.internet:
             status_led.slow_blink()
             wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
             status_led.off()

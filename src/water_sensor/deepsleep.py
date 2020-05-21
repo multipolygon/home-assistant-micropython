@@ -2,32 +2,36 @@ from machine import Timer
 from esp import deepsleep
 from utime import sleep
 import config
-from machine import reset_cause, DEEPSLEEP_RESET
 
 class Deepsleep():
     def __init__(self, hub):
+        self.update_on = ['internet']
         self.tmr = Timer(-1)
 
-    def _active(self, hub):
-        return hub.enable and hub.water
-
-    def start(self, hub):
+    def _set_tmr(self, hub):
         self.tmr.deinit()
         
         def cb(_):
-            t = config.ALARM_SLEEP if self._active(hub) else config.NORMAL_SLEEP
+            t = config.ALARM_SLEEP if hub.water and hub.enable else config.NORMAL_SLEEP
             print('deepsleep', t)
-            hub.stop()
+            try:
+                hub.stop()
+            except:
+                pass
             sleep(5)
             deepsleep(t * 1000000)
 
-        period = 60000 if self._active(hub) or reset_cause() != DEEPSLEEP_RESET else 10000
-
         self.tmr.init(
-            period = period,
+            period = (60000 if hub.internet else 10000),
             mode = Timer.ONE_SHOT,
             callback = cb
         )
+
+    def start(self, hub):
+        self._set_tmr(hub)
+
+    def update(self, hub, changed):
+        self._set_tmr(hub)
 
     def stop(self, hub):
         self.tmr.deinit()
