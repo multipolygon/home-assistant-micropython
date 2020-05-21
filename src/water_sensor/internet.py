@@ -15,7 +15,7 @@ class Internet():
     
     def start(self, hub):
         # Note, ESP8266 chip real-time clock will overflow every 7h45m
-        hour = localtime()[4]
+        hour = localtime()[3]
         print('hour', hour)
         
         if hub.water or hour == 0:
