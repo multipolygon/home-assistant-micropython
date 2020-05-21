@@ -14,7 +14,7 @@ class Hub():
         gc_collect()
         self.print(cls, '__init__')
         obj = cls(self)
-        on = set(obj.update_on if hasattr(obj, 'update') and hasattr(obj, 'update_on') else ())
+        on = set(obj.update_on) if hasattr(obj, 'update') and hasattr(obj, 'update_on') else set()
         if on:
             print('update_on', ':', on)
         if priority:
@@ -25,6 +25,7 @@ class Hub():
         return obj
 
     def run(self):
+        self.print(self.__class__, 'run')
         try:
             self.start()
             for obj, _ in self.obj:
@@ -36,6 +37,9 @@ class Hub():
             self.stop()
 
     def start(self):
+        self.print(self.__class__, 'start')
+        for i in set((i for _, s in self.obj for i in s)):
+            print(i, '=', getattr(self, i))
         self.activ = True
         for obj, _ in self.obj:
             if hasattr(obj, 'start'):
@@ -44,6 +48,7 @@ class Hub():
                 self.mem_alloc()
 
     def stop(self):
+        self.print(self.__class__, 'stop')
         self.activ = False
         for obj, _ in self.obj:
             if hasattr(obj, 'stop'):

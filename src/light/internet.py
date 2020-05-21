@@ -35,7 +35,7 @@ class Internet():
             self.update_on.add(LIGHT)
 
             if config.COMPNT == LIGHT:
-                light = self.mqtt.add(t(LIGHT), Light, bri = config.BRIGHTNESS)
+                light = self.mqtt.add(t(LIGHT), Light, prim = True, bri = config.BRIGHTNESS)
                 
                 if config.BRIGHTNESS:
                     def bri_rx(msg):

@@ -38,7 +38,8 @@ def connect(ssid, password, timeout=30, power_save=False):
     return False
 
 def disconnect(power_save=True):
-    sta_if.disconnect()
+    if is_connected():
+        sta_if.disconnect()
     if power_save:
         deactivate()
 

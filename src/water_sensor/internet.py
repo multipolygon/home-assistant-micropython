@@ -1,7 +1,7 @@
 from home_assistant.mqtt import MQTT
 from home_assistant.switch import Switch
 from home_assistant.sensors.battery import Battery
-from home_assistant.binary_sensors.problem import Problem
+from home_assistant.binary_sensors.moisture import Moisture
 import esp8266.wemos.d1mini.status_led as status_led
 from utime import sleep, localtime
 from uid import UID
@@ -14,7 +14,11 @@ class Internet():
         pass
     
     def start(self, hub):
-        if hub.trigger or localtime()[4] == 0:
+        # Note, ESP8266 chip real-time clock will overflow every 7h45m
+        hour = localtime()[4]
+        print('hour', hour)
+        
+        if hub.water or hour == 0:
             status_led.slow_blink()
             wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
             status_led.off()
@@ -22,7 +26,7 @@ class Internet():
             if wifi.is_connected():
                 self.mqtt = MQTT(config.NAME, secrets, uid = UID)
 
-                self.mqtt.add('', Problem, key = 'trig', exp_aft = config.NORMAL_SLEEP).set_state(hub.trigger)
+                self.mqtt.add('Water', Moisture, prim = True, key = 'trig').set_state(hub.water)
 
                 enable = self.mqtt.add('Enable', Switch)
 
@@ -49,4 +53,5 @@ class Internet():
     def stop(self, state):
         if hasattr(self, 'mqtt'):
             self.mqtt.discon()
-            status_led.off()
+        wifi.disconnect()
+        status_led.off()
