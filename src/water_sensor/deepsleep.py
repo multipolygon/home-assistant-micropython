@@ -2,6 +2,7 @@ from machine import Timer
 from esp import deepsleep
 from utime import sleep
 import config
+from machine import reset_cause, DEEPSLEEP_RESET
 
 class Deepsleep():
     def __init__(self, hub):
@@ -20,7 +21,7 @@ class Deepsleep():
             sleep(5)
             deepsleep(t * 1000000)
 
-        period = 60000 if self._active(hub) else 10000
+        period = 60000 if self._active(hub) or reset_cause() != DEEPSLEEP_RESET else 10000
 
         self.tmr.init(
             period = period,

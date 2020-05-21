@@ -73,12 +73,13 @@ class MQTT():
             self.mqtt = None
         gc_collect()
 
-    def add(self, name, cls, key = None, **cfg):
+    def add(self, name, cls, prim = False, key = None, **cfg):
         obj = cls(
             prefix = self.secrets.MQTT_PREFIX,
             uid = self.uid,
             dev_name = self.name,
             name = name,
+            prim = prim,
             key = key,
             state = self.state,
         )
