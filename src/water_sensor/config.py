@@ -2,7 +2,7 @@ from lib.esp8266.wemos.d1mini import pinmap
 
 NAME = "Water Sensor"
 
-RETAIN = ['enable']
+RETAIN = ['enable', 'water']
 
 OUT_PIN = pinmap.D2
 IN_PIN = pinmap.D8 # pull down

@@ -5,6 +5,9 @@ hub.enable = True
 from components.retain import Retain
 hub.add(Retain)
 
+# If water was detected last run, send another update:
+hub.internet = hub.get('water')
+
 from alarm import Alarm
 hub.add(Alarm)
 

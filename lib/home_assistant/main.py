@@ -95,7 +95,10 @@ class HA():
         )
 
     def sub_cfg(self, *arg, **kwarg):
-        """Sub Config"""
+        """Sub Config
+        Mix-in config for component subclass.
+        Component subclasses should implement this method.
+        """
         return {}
 
     def short_tpc(self, topic):

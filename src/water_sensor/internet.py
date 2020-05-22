@@ -15,27 +15,26 @@ class Internet():
         # Note, ESP8266 chip real-time clock will overflow every 7h45m
         hour = localtime()[3]
         print('hour', hour)
-        hub.internet = hub.water or hour == 0 or reset_cause() != DEEPSLEEP_RESET
+        hub.internet = hub.get('internet') or hub.water or hour == 0 or reset_cause() != DEEPSLEEP_RESET
     
     def start(self, hub):
         if hub.internet:
             status_led.slow_blink()
             wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-            status_led.off()
 
             if wifi.is_connected():
                 self.mqtt = MQTT(config.NAME, secrets, uid = UID)
 
-                self.mqtt.add('Water', Moisture, prim = True, key = 'water').set_state(hub.water)
+                self.mqtt.add('Water', Moisture, prim = True, key = 'water', off_dly = config.NORMAL_SLEEP).set_state(hub.water)
 
-                enable = self.mqtt.add('Enable', Switch)
+                enable = self.mqtt.add('Enable', Switch, icon = "mdi:bell")
 
                 def enable_rx(msg):
                     hub.set(enable = msg == enable.ON)
 
                 self.mqtt.sub(enable.cmd_tpc(), enable_rx)
                 
-                # self.mqtt.add('Battery', Battery, key = 'bat', exp_aft = 24 * 60 * 60).set_state(hub.battery)
+                self.mqtt.add('Battery', Battery, key = 'bat').set_state(hub.battery)
 
                 self.mqtt.set_attr('battery', hub.battery)
                 self.mqtt.set_attr('rssi', wifi.rssi())
@@ -44,13 +43,17 @@ class Internet():
                 self.mqtt.try_pub_cfg()
                 sleep(1)
                 self.mqtt.pub_state()
-                status_led.off()
 
-    def run(self, state):
+    def run(self, hub):
+        if hub.water:
+            status_led.slow_blink()
+        else:
+            status_led.off()
+
         if hasattr(self, 'mqtt'):
             self.mqtt.wait()
                 
-    def stop(self, state):
+    def stop(self, hub):
         if hasattr(self, 'mqtt'):
             self.mqtt.discon()
         wifi.disconnect()
