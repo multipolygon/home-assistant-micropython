@@ -15,19 +15,21 @@ def args():
     p.add_argument("source", action="store", type=str, help="Directory containing micropython main.py file.")
     
     b = p.add_argument_group('build')
+    b.add_argument("--build", "-b", action="store_true", help="Build only without calling mpfshell.")
     b.add_argument("--fetch", '-f', action="store_true", help="Download vendor libs found in requirements.txt")
     b.add_argument("--cross-compile", "-x", action="store_true", help="Cross-compile (compress) to Micropython byte code.")
-    b.add_argument("--config", '-c', action="store", type=str, help='Copy specified file to device as config.py')
     b.add_argument("--clean", '-d', action="store_true", help="Remove build files.")
     
     t = p.add_argument_group('transfer')
     t.add_argument("--transfer", "-t", action="store_true", help="Use mpfshell to copy files to device.")
     t.add_argument("--modified-only", "-m", action="store_true", help="Only transfer modified files.")
-    t.add_argument("--secrets", '-s', action="store", type=str, help='Transfer specified file as secrets.json')
-    t.add_argument("--uid", '-i', action="store", type=str, help='Device unique id for MQTT saved as uid.py')
-    t.add_argument("--build", "-b", action="store_true", help="Build only without calling mpfshell.")
     t.add_argument("--port", '-p', action="store", type=str, help='Device port')
-    t.add_argument("--repl", action="store_true", help="REPL.")
+    t.add_argument("--repl", '-r', action="store_true", help="REPL.")
+
+    c = p.add_argument_group('config')
+    c.add_argument("--config", '-c', action="store", type=str, help='Copy specified file to device as config.py')
+    c.add_argument("--secrets", '-s', action="store", type=str, help='Transfer specified file as secrets.json')
+    c.add_argument("--uid", '-i', action="store", type=str, help='Device unique id for MQTT saved as uid.py')
     
     return p.parse_args()
 

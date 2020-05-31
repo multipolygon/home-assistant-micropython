@@ -1,6 +1,5 @@
-from machine import unique_id
-from ubinascii import hexlify
 from uos import uname
+from wifi import mac
 
 UTF8 = 'utf-8'
 ATTR = 'attr'
@@ -21,7 +20,7 @@ class HA():
     NAME = None
     MANUF = 'HAMPy'
     MDL = uname().sysname.upper()
-    UID = hexlify(unique_id()).decode(UTF8).upper()
+    UID = mac()
     BUILD = build_date
     DISCOV = 'homeassistant'
     DEV_CLA = None
@@ -176,6 +175,6 @@ class HA():
             name = self.ful_dev_name(),
             mf = self.MANUF,
             mdl = self.MDL,
-            ids = self.ful_dev_name(), # Prevent duplicates
+            ids = self.UID,
             sw = self.BUILD,
         )

@@ -1,22 +1,22 @@
 from gc import collect as gc_collect
-from random import random_int
+from rand import randint
 from sys import print_exception
 from uio import BytesIO
 from ujson import dump as json_dump
 from umqtt.simple import MQTTClient
 from utime import sleep
+from uos import stat
+import machine
 import wifi
 
 UTF8 = 'utf-8'
 
-class RxEx(Exception):
-    pass
-
 class MQTT():
-    def __init__(self, name, secrets, uid=None):
-        self.uid = uid
+    def __init__(self, name, secrets, uid=None, led=None):
         self.name = name
         self.secrets = secrets
+        self.uid = uid
+        self.led = led
         self.state = {}
         self.obj = []
         self.cfg = []
@@ -26,6 +26,15 @@ class MQTT():
         self.mqtt = None
         self.topic = None
         self.mac = wifi.mac()
+        self.err = 0
+
+    def log(self, e):
+        print('mqtt', self.err, ':')
+        print_exception(e)
+        m = 'a' if stat('secrets.json')[6] < 10000 else 'w' # reset log when it gets too big
+        with open('mqtt' + '.' + 'log', m) as f:
+            f.write("\n\n[%d]\n" % self.err)
+            print_exception(e, f)
 
     def connect(self):
         self.discon()
@@ -38,16 +47,20 @@ class MQTT():
         )
 
         def rx(tpc, msg):
-            msg = msg.decode(UTF8)
-            gc_collect()
+            print('  >', 'rx', tpc)
+            print('  >', 'rx', msg)
             try:
+                msg = msg.decode(UTF8)
+                gc_collect()
                 for t, cb in self.cb.items():
                     if t == tpc:
+                        print('  >', 'rx', 'cb')
                         cb(msg)
                         break
             except Exception as e:
-                print_exception(e)
-                raise RxEx()
+                self.log(e)
+            else:
+                self.err = 0
         
         self.mqtt.set_callback(rx)
 
@@ -88,13 +101,17 @@ class MQTT():
         return obj
 
     def pub_cfg(self):
+        if self.led:
+            self.led.fast_blink()
         ok = True
         for i, obj in enumerate(self.obj):
             print(obj.__class__.__name__)
             gc_collect()
             if not self.pub_json(obj.cfg_tpc(), obj.cfg(**self.cfg[i]), retain=True):
                 ok = False
-                print('>fail')
+                print('pub_cfg', 'err')
+        if self.led:
+            self.led.off()
         return ok
 
     def try_pub_cfg(self):
@@ -108,7 +125,7 @@ class MQTT():
                 else:
                     ok = self.pub_cfg()
             except Exception as e:
-                print_exception(e)
+                self.log(e)
                 self.discon()
         self.do_pub_cfg = False
         return ok
@@ -121,21 +138,28 @@ class MQTT():
         self.set_attr("mac", self.mac)
         self.set_attr("rssi", wifi.rssi())
 
-    def pub_json(self, tpc, obj, **kwarg):
-        gc_collect()
-        print(tpc)
-        print(obj)
+    def publish(self, tpc, msg, **kwarg):
+        print('  <', 'tx', tpc)
+        print('  <', 'tx', msg)
         if wifi.is_connected() and self.mqtt:
             if type(tpc) != type(b''):
                 tpc = tpc.encode(UTF8)
-            with BytesIO() as json:
-                json_dump(obj, json)
-                gc_collect()
-                self.mqtt.publish(tpc, json.getvalue(), **kwarg)
-                sleep(0.5)
-            gc_collect()
+            if type(msg) != type(b''):
+                msg = msg.encode(UTF8)
+            self.mqtt.publish(tpc, msg, **kwarg)
+            sleep(0.5)
+            print('  <', 'tx', 'ok')
             return True
         return False
+
+    def pub_json(self, tpc, obj, **kwarg):
+        gc_collect()
+        with BytesIO() as json:
+            json_dump(obj, json)
+            gc_collect()
+            ok = self.publish(tpc, json.getvalue(), **kwarg)
+        gc_collect()
+        return ok
     
     def pub_state(self):
         gc_collect()
@@ -162,27 +186,25 @@ class MQTT():
             self.topic += b'#'
         gc_collect()
 
-    def wait(self, led=None):
+    def wait(self):
         while self.reconnect:
             try:
-                if wifi.is_connected():
-                    self.connect()
-                    while True:
-                        gc_collect()
-                        try:
-                            self.mqtt.wait_msg()
-                        except RxEx:
-                            pass
-                else:
-                    print('No WiFi')
+                self.connect()
+                while True:
+                    gc_collect()
+                    self.mqtt.wait_msg()
             except Exception as e:
-                print('MQTT' + ':')
-                print_exception(e)
+                self.err += 1
+                self.log(e)
                 self.discon()
-            if self.reconnect:
-                if led:
-                    led.slow_blink()
-                    sleep(random_int(5))
-                    led.off()
+                if self.err > 1000:
+                    machine.reset()
+                if self.err > 60:
+                    if self.led:
+                        led.slow_blink()
+                    # add a bit of randomness in case every device on the network are all retrying at the same time:
+                    sleep(60 + randint(3))
+                    if self.led:
+                        self.led.off()
                 else:
-                    sleep(random_int(8))
+                    sleep(self.err)

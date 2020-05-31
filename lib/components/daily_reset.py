@@ -1,12 +1,12 @@
 from machine import Timer, reset
-from random import random_int
+from rand import randint
 
 N = 6
 
 class DailyReset():
     def __init__(self, state):
         self.tmr = Timer(-1)
-        self.hrs = 24 * N + random_int(2)
+        self.hrs = (24 + randint(4)) * N
 
     def start(self, state):
         self.tmr.deinit()

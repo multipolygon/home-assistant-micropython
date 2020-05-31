@@ -2,6 +2,10 @@ from lib.esp8266.wemos.d1mini import pinmap
 
 NAME = 'Light'
 
+#### LED ####
+
+LED_GPIO = pinmap.LED
+
 #### Light / Switch ####
 
 ## Change the component for Home Assistant:
@@ -16,13 +20,10 @@ INIT_BRI = 100 # percent
 
 #### Button ####
 
-BTN = False
+BTN = True
 
 ## Wemos 1-button shield is D3 by default:
 BTN_GPIO = pinmap.D3
-
-## Set to 0 for Wemos 1-button shield:
-BTN_VAL = 0
 
 #### Motion Sensor ####
 

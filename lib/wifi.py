@@ -19,7 +19,9 @@ def deactivate():
     ## Does this actually save power???
     sta_if.active(False)
 
-def connect(ssid, password, timeout=30, power_save=False):
+def connect(ssid, password, timeout=30, power_save=False, led=None):
+    if led:
+        led.slow_blink()
     no_ap()
     activate()
     sta_if.connect(ssid, password)
@@ -29,13 +31,12 @@ def connect(ssid, password, timeout=30, power_save=False):
         else:
             print('WiFi:%d' % i)
             sleep(1)
-    if is_connected():
-        print('Ok')
-        return True
-    print('Fail')
-    if power_save:
+    print('wifi', 'ok' if is_connected() else 'err')
+    if not(is_connected()) and power_save:
         deactivate()
-    return False
+    if led:
+        led.off()
+    return is_connected()
 
 def disconnect(power_save=True):
     if is_connected():
@@ -54,7 +55,7 @@ def uid():
 def mac():
     from ubinascii import hexlify
     s = hexlify(network.WLAN().config('mac')).decode("utf-8").upper()
-    return ":".join((s[i:i+2] for i in range(0,len(s),2)))
+    return "".join((s[i:i+2] for i in range(0,len(s),2)))
 
 def ip():
     if sta_if.status() == network.STAT_GOT_IP:

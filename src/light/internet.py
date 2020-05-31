@@ -3,12 +3,16 @@ from home_assistant.light import Light
 from home_assistant.switch import Switch
 from home_assistant.binary_sensors.motion import Motion
 from home_assistant.sensors.battery import Battery
-from esp8266.wemos.d1mini import status_led
+from status_led import StatusLED
 import wifi
 import config
-import uid
 import secrets
 from micropython import schedule
+
+try:
+    from uid import UID
+except:
+    UID = None
 
 LIGHT = 'light'
 SWITCH = 'switch'
@@ -22,14 +26,11 @@ def t(s):
     return s[0].upper() + s[1:]
 
 class Internet():
-    def __init__(self, state):
+    def __init__(self, hub):
         self.update_on = set()
-        
-        status_led.slow_blink()
-        wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
-        status_led.off()
-
-        self.mqtt = MQTT(config.NAME, secrets, uid = uid.UID)
+        led = StatusLED(gpio=config.LED_GPIO)
+        wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD, led=led)
+        self.mqtt = MQTT(config.NAME, secrets, uid = UID, led=led)
 
         if config.COMPNT != None:
             self.update_on.add(LIGHT)
@@ -39,18 +40,18 @@ class Internet():
                 
                 if config.BRIGHTNESS:
                     def bri_rx(msg):
-                        state.set(brightness = round(float(msg)))
+                        hub.set(brightness = round(float(msg)))
 
                     self.mqtt.sub(light.bri_cmd_tpc(), bri_rx)
                 
             elif config.COMPNT == SWITCH:
-                light = self.mqtt.add(t(SWITCH), Switch)
+                light = self.mqtt.add(t(SWITCH), Switch, prim = True)
 
             else:
                 print('ERR', COMPNT);
 
             def light_rx(msg):
-                state.set(light = msg == light.ON)
+                hub.set(light = msg == light.ON)
 
             self.mqtt.sub(light.cmd_tpc(), light_rx)
 
@@ -60,7 +61,7 @@ class Internet():
             enable = self.mqtt.add(t(EN), Switch)
 
             def enable_rx(msg):
-                state.set(enable = msg == enable.ON)
+                hub.set(enable = msg == enable.ON)
 
             self.mqtt.sub(enable.cmd_tpc(), enable_rx)
 
@@ -68,7 +69,7 @@ class Internet():
                 auto = self.mqtt.add(t(AUTO), Switch)
 
                 def auto_rx(msg):
-                    state.set(auto = msg == auto.ON)
+                    hub.set(auto = msg == auto.ON)
 
                 self.mqtt.sub(auto.cmd_tpc(), auto_rx)
 
@@ -77,40 +78,46 @@ class Internet():
             
             battery = self.mqtt.add(t(BATT), Battery)
 
-        status_led.fast_blink()
         self.mqtt.try_pub_cfg()
-        status_led.off()
 
         self._sched = False
 
         def pub(_):
             self._sched = False
             if config.COMPNT != None:
-                light.set_state(state.light)
+                if hub.light_cmd:
+                    hub.light_cmd = False
+                    try:
+                        self.mqtt.publish(light.cmd_tpc(), light.ON if hub.light else light.OFF, retain = True)
+                    except:
+                        pass
+                light.set_state(hub.light)
                 if config.COMPNT == LIGHT and config.BRIGHTNESS:
-                    light.set_bri(state.brightness)
+                    light.set_bri(hub.brightness)
             if config.MOTN:
-                motion.set_state(state.motion)
-                enable.set_state(state.enable)
+                motion.set_state(hub.motion)
+                enable.set_state(hub.enable)
                 if config.COMPNT != None:
-                    auto.set_state(state.auto)
+                    auto.set_state(hub.auto)
             if config.BATT:
-                battery.set_state(state.battery)
-                self.mqtt.set_attr(BATT, state.battery)
+                battery.set_state(hub.battery)
+                self.mqtt.set_attr(BATT, hub.battery)
+            if wifi.is_connected():
+                self.mqtt.set_attr('rssi', wifi.rssi())
             self.mqtt.pub_state()
 
         self.pub = pub
 
-    def start(self, state):
+    def start(self, hub):
         self.pub(0)
 
-    def run(self, state):
+    def run(self, hub):
         self.mqtt.wait()
 
-    def update(self, state, changed):
+    def update(self, hub, changed):
         if not self._sched:
             self._sched = True
             schedule(self.pub, None)
 
-    def stop(self, state):
+    def stop(self, hub):
         self.mqtt.discon()

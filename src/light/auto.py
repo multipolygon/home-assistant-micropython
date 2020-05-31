@@ -5,26 +5,26 @@ from config import MOTN_TIME
 OFF, ON, AUTO = 0, 1, 2
 
 class Auto():
-    def __init__(self, state):
+    def __init__(self, hub):
         self.update_on = ('motion', 'light', 'auto')
         self.mode = OFF
         self.tmr = Timer(-1)
 
         def _cb(_):
-            state.set(light = False)
+            hub.set(light = False)
             
         def cb(_):
             schedule(_cb, None)
 
         self.cb = cb
 
-    def update(self, state, changed):
+    def update(self, hub, changed):
         if 'motion' in changed:
             self.tmr.deinit()
-            if state.motion:
-                if state.auto and self.mode == OFF:
+            if hub.motion:
+                if hub.auto and self.mode == OFF:
                     self.mode = AUTO
-                    state.set(light = True)
+                    hub.set(light = True)
             else:
                 if self.mode == AUTO:
                     self.tmr.init(
@@ -34,16 +34,16 @@ class Auto():
                     )
 
         if 'light' in changed:
-            if state.light:
+            if hub.light:
                 if self.mode == OFF:
                     self.mode = ON
             else:
                 self.mode = OFF
 
         if 'auto' in changed:
-            if self.mode == AUTO and not state.auto:
+            if self.mode == AUTO and not hub.auto:
                 self.tmr.deinit()
-                state.set(light = False)
+                hub.set(light = False)
 
-    def stop(self, state):
+    def stop(self, hub):
         self.tmr.deinit()
