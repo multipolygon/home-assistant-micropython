@@ -50,6 +50,8 @@ class Internet():
             else:
                 print('ERR', COMPNT);
 
+            self.mqtt.sub_dev_cmd(light.compnt_base_tpc())
+
             def light_rx(msg):
                 hub.set(light = msg == light.ON)
 

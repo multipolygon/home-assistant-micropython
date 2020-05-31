@@ -31,8 +31,9 @@ class MQTT():
     def log(self, e):
         print('mqtt', self.err, ':')
         print_exception(e)
-        m = 'a' if stat('secrets.json')[6] < 10000 else 'w' # reset log when it gets too big
-        with open('mqtt' + '.' + 'log', m) as f:
+        n = 'mqtt' + '.' + 'log'
+        m = 'a' if stat(n)[6] < 10000 else 'w' # reset log when it gets too big
+        with open(n, m) as f:
             f.write("\n\n[%d]\n" % self.err)
             print_exception(e, f)
 
@@ -72,6 +73,7 @@ class MQTT():
             sleep(0.5)
             
         if self.topic != None:
+            print('subscribe', self.topic)
             self.mqtt.subscribe(self.topic)
             sleep(0.5)
 
@@ -167,6 +169,7 @@ class MQTT():
         gc_collect()
 
     def sub(self, tpc, cb):
+        print('sub', tpc)
         gc_collect()
         self.cb[tpc.encode(UTF8)] = cb
         first = next(iter(self.cb))
@@ -185,6 +188,25 @@ class MQTT():
                     self.topic += chr(char)
             self.topic += b'#'
         gc_collect()
+
+    def sub_dev_cmd(self, tpc):
+        def uid(msg):
+            with open('uid' + '.py', 'w') as f:
+                f.write('UID = "%s"' % msg)
+
+        self.sub(tpc + '/' + 'uid', uid)
+
+        def reset(msg):
+            sleep(randint(3))
+            machine.reset()
+
+        self.sub(tpc + '/' + 'reset', reset)
+
+        def secrets(msg):
+            with open('secrets' + '.' + 'json', 'w') as f:
+                f.write(msg)
+
+        self.sub(tpc + '/' + 'secrets', secrets)
 
     def wait(self):
         while self.reconnect:
