@@ -2,6 +2,10 @@ from lib.esp8266.wemos.d1mini import pinmap
 
 NAME = 'Light'
 
+#### LED ####
+
+LED_GPIO = pinmap.LED
+
 #### Light / Switch ####
 
 ## Change the component for Home Assistant:
@@ -35,7 +39,7 @@ MOTN_GPIO = pinmap.D3
 MOTN_VAL = 1
 
 ## Turn off light n-seconds after being turned on:
-MOTN_TIME = 5 * 60 # seconds
+MOTN_TIME = 15 * 60 # seconds
 
 #### Battery ####
 
