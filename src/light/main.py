@@ -21,6 +21,7 @@ if config.BATT:
 
 if config.MOTN:
     config.RETAIN.add('auto')
+    config.RETAIN.add('enable')
 
 if len(config.RETAIN) > 0:
     from components.retain import Retain

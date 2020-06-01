@@ -11,7 +11,7 @@ class Auto():
         self.tmr = Timer(-1)
 
         def _cb(_):
-            hub.set(light = False)
+            hub.set(light = False, light_cmd = True)
             
         def cb(_):
             schedule(_cb, None)
@@ -24,7 +24,7 @@ class Auto():
             if hub.motion:
                 if hub.auto and self.mode == OFF:
                     self.mode = AUTO
-                    hub.set(light = True)
+                    hub.set(light = True, light_cmd = True)
             else:
                 if self.mode == AUTO:
                     self.tmr.init(
@@ -43,7 +43,7 @@ class Auto():
         if 'auto' in changed:
             if self.mode == AUTO and not hub.auto:
                 self.tmr.deinit()
-                hub.set(light = False)
+                hub.set(light = False, light_cmd = True)
 
     def stop(self, hub):
         self.tmr.deinit()

@@ -20,7 +20,7 @@ INIT_BRI = 100 # percent
 
 #### Button ####
 
-BTN = True
+BTN = False
 
 ## Wemos 1-button shield is D3 by default:
 BTN_GPIO = pinmap.D3
