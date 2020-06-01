@@ -43,6 +43,7 @@ class MQTT():
         self.mqtt = MQTTClient(
             self.mac,
             self.secrets.MQTT_SERVER,
+            keepalive=60,
             user=self.secrets.MQTT_USER.encode(UTF8),
             password=self.secrets.MQTT_PASSWORD.encode(UTF8)
         )
