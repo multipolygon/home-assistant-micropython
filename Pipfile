@@ -12,6 +12,7 @@ rshell = "*"
 mpy-cross = "*"
 paho-mqtt = "*"
 pylint = "*"
+tabulate = "*"
 
 [requires]
 python_version = "3.7"
