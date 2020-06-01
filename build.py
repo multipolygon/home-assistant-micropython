@@ -35,7 +35,11 @@ def args():
 
 args = args()
 
-port = args.port or os.path.split(list(glob.iglob("/dev/tty.usbserial-*"))[0])[-1]
+try:
+    port = args.port or os.path.split(list(glob.iglob("/dev/tty.usbserial-*"))[0])[-1]
+except:
+    port = ""
+    
 base_dir = os.path.abspath(".")
 lib_dir = os.path.join(base_dir, "lib")
 source_dir = os.path.abspath(args.source)
