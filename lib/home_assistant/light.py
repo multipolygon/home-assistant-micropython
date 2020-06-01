@@ -1,6 +1,6 @@
 from home_assistant.main import HA
 
-CMD_KEY = 'cmd'
+CMD_KEY = 'set'
 BRI_KEY = 'bri'
 
 class Light(HA):
@@ -16,7 +16,7 @@ class Light(HA):
         return super().set_state(val, key = BRI_KEY)
 
     def bri_cmd_tpc(self):
-        return '/'.join((self.compnt_base_tpc(), BRI_KEY))
+        return self.compnt_base_tpc() + '/' + BRI_KEY
 
     def sub_cfg(self, opt=True, ret=True, bri=False):
         return dict(
