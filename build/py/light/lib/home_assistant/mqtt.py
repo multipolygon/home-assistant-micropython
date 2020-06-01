@@ -32,7 +32,10 @@ class MQTT():
         print('mqtt', self.err, ':')
         print_exception(e)
         n = 'mqtt' + '.' + 'log'
-        m = 'a' if stat(n)[6] < 10000 else 'w' # reset log when it gets too big
+        try:
+            m = 'a' if stat(n)[6] < 10000 else 'w' # reset log when it gets too big
+        except:
+            m = 'a'
         with open(n, m) as f:
             f.write("\n\n[%d]\n" % self.err)
             print_exception(e, f)
