@@ -1,9 +1,12 @@
 from gc import collect as gc_collect
 from gc import mem_free, mem_alloc
+from uos import statvfs
 
 class Hub():
     def __init__(self, **kwargs):
         self.print(self.__class__, '__init__')
+        s = statvfs('/')
+        print('statvfs', round((s[2] - s[3]) / s[2] * 100), '%', 'of', round(s[1] * s[2] / pow(2,20), 1), 'mb')
         self.activ = False
         self.obj = []
         for k, v in kwargs.items():
