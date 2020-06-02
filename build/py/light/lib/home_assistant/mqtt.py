@@ -33,7 +33,7 @@ class MQTT():
         print_exception(e)
         n = 'mqtt' + '.' + 'log'
         try:
-            m = 'a' if stat(n)[6] < 10000 else 'w' # reset log when it gets too big
+            m = 'a' if stat(n)[6] < 5000 else 'w' # reset log when it gets too big
         except:
             m = 'a'
         with open(n, m) as f:
@@ -52,6 +52,8 @@ class MQTT():
         )
 
         def rx(tpc, msg):
+            if self.led:
+                self.led.on()
             print('  >', 'rx', tpc)
             print('  >', 'rx', msg)
             try:
@@ -66,6 +68,8 @@ class MQTT():
                 self.log(e)
             else:
                 self.err = 0
+            if self.led:
+                self.led.off()
         
         self.mqtt.set_callback(rx)
 

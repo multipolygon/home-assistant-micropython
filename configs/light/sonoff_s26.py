@@ -1,5 +1,3 @@
-from lib.esp8266.wemos.d1mini import pinmap
-
 NAME = 'Switch'
 
 #### LED ####
