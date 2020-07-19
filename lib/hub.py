@@ -1,6 +1,7 @@
 from gc import collect as gc_collect
 from gc import mem_free, mem_alloc
 from uos import statvfs
+from time import sleep_ms
 
 class Hub():
     def __init__(self, **kwargs):
@@ -82,6 +83,7 @@ class Hub():
                 if on & changed:
                     self.print(obj.__class__, 'update', pf='  ')
                     obj.update(self, changed)
+                    sleep_ms(100)
                     self.mem_alloc()
 
     def print(self, cls, fn, pf=''):

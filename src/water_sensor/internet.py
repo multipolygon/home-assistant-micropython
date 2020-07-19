@@ -15,14 +15,20 @@ class Internet():
         # Note, ESP8266 chip real-time clock will overflow every 7h45m
         hour = localtime()[3]
         print('hour', hour)
-        hub.internet = hub.get('internet') or hub.water or hour == 0 or reset_cause() != DEEPSLEEP_RESET
+        self.do_pub_cfg = hour == 0 or reset_cause() != DEEPSLEEP_RESET
+        print('do_pub_cfg', self.do_pub_cfg)
+        hub.internet = hub.get('internet') or hub.water or self.do_pub_cfg
     
     def start(self, hub):
         if hub.internet:
-            status_led.slow_blink()
+            status_led.fast_blink()
             wifi.connect(secrets.WIFI_NAME, secrets.WIFI_PASSWORD)
+            status_led.off()
+            sleep(2)
 
             if wifi.is_connected():
+                status_led.fast_blink()
+                
                 self.mqtt = MQTT(config.NAME, secrets, uid = UID)
 
                 self.mqtt.add('Water', Moisture, prim = True, key = 'water', off_dly = config.NORMAL_SLEEP).set_state(hub.water)
@@ -39,10 +45,12 @@ class Internet():
                 self.mqtt.set_attr('battery', hub.battery)
                 self.mqtt.set_attr('rssi', wifi.rssi())
 
-                status_led.fast_blink()
-                self.mqtt.try_pub_cfg()
+                self.mqtt.do_pub_cfg = self.do_pub_cfg
+                self.mqtt.connect()
                 sleep(1)
                 self.mqtt.pub_state()
+                sleep(1)
+                status_led.off()
 
     def run(self, hub):
         if hub.water:

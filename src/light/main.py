@@ -11,7 +11,7 @@ hub = Hub(
     battery = 100,
 )
 
-config.RETAIN = set(('light',))
+config.RETAIN = set()
 
 if config.BRIGHTNESS:
     config.RETAIN.add('brightness')

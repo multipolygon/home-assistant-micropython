@@ -1,4 +1,4 @@
-from lib.esp8266.wemos.d1mini import pinmap
+import esp8266.wemos.d1mini.pinmap as pinmap
 
 NAME = 'Light'
 
@@ -48,4 +48,4 @@ BATT_ADC = pinmap.A0
 BATT_INT = 10 * 60 # seconds
 
 ## Disable light when battery below:
-BATT_LOW = 10 # percent or None
+BATT_LOW = None # percent or None

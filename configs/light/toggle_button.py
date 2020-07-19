@@ -2,7 +2,9 @@ import esp8266.wemos.d1mini.pinmap as pinmap
 
 NAME = 'Light'
 
-RETAIN = ()
+#### LED ####
+
+LED_GPIO = pinmap.LED
 
 #### Light / Switch ####
 
@@ -10,7 +12,7 @@ RETAIN = ()
 COMPNT = 'light' # options: 'light', 'switch', None
 
 ## Relay shield is D1 by default:
-GPIO = pinmap.D5
+GPIO = pinmap.D1
 
 BRIGHTNESS = False
 

@@ -1,13 +1,13 @@
-from lib.esp8266.wemos.d1mini import pinmap
+import esp8266.wemos.d1mini.pinmap as pinmap
 
 NAME = "Env Sensor"
 
 FREQ = 600 # seconds
 
-BATT = True
+BATT = False
 
 BATT_ADC = pinmap.A0
 
-ANALOG = True
+ANALOG = False
 
 ANALOG_ADC = pinmap.A0

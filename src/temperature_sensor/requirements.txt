@@ -1,0 +1,1 @@
+sht30.py=https://raw.githubusercontent.com/rsc1975/micropython-sht30/master/sht30.py

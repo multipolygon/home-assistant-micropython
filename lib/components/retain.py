@@ -18,5 +18,4 @@ class Retain():
                     setattr(hub, k, d[k])
 
     def update(self, state, changed):
-        with open(self.F, 'w') as f:
-            dump({k: getattr(state, k) for k in RETAIN}, f)
+        pass

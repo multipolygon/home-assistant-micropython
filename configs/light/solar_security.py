@@ -4,6 +4,10 @@ NAME = 'Light'
 
 RETAIN = ('enable', 'auto', 'brightness')
 
+#### LED ####
+
+LED_GPIO = pinmap.LED
+
 #### Light / Switch ####
 
 ## Change the component for Home Assistant:

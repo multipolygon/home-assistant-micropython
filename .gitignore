@@ -16,3 +16,4 @@ __pycache__
 .#*
 
 request*.sh
+examples.sh
